@@ -41,3 +41,29 @@
         <input type="date" id="return_date" name="return_date">
         <button type="submit">Забронировать</button>
     </form>
+
+    <!-- Ticket Modal -->
+    <div id="ticketModal">
+        <div id="ticketContent">
+            <span id="closeBtn">&times;</span>
+            <h3>Ваш билет забронирован!</h3>
+            <p id="ticketInfo"></p>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('ticketForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const dest = document.getElementById('destination').value;
+            const depart = document.getElementById('depart_date').value;
+            const ret = document.getElementById('return_date').value;
+            const info = `Направление: ${dest.charAt(0).toUpperCase() + dest.slice(1)}, вылет ${depart}, возвращение ${ret}`;
+            document.getElementById('ticketInfo').textContent = info;
+            document.getElementById('ticketModal').style.display = 'flex';
+        });
+        document.getElementById('closeBtn').addEventListener('click', function() {
+            document.getElementById('ticketModal').style.display = 'none';
+        });
+    </script>
+</body>
+</html>

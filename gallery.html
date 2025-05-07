@@ -1,0 +1,50 @@
+<!-- gallery.html -->
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Фотки</title>
+    <style>
+        body { margin: 20px; font-family: Arial, sans-serif; background-color: #f0fcff; color: #00334d; }
+        .tabs { display: flex; gap: 10px; margin-bottom: 20px; }
+        .tab-button { padding: 10px 20px; background-color: #e6f7ff; border: none; border-radius: 4px; cursor: pointer; }
+        .tab-button.active, .tab-button:hover { background-color: #cceeff; }
+        .tab-content { display: none; }
+        .tab-content.active { display: flex; flex-wrap: wrap; gap: 10px; }
+        .tab-content img { width: 150px; height: 150px; object-fit: cover; border-radius: 8px; border: 2px solid #cceeff; }
+    </style>
+</head>
+<body>
+    <h2>Фотогалерея</h2>
+    <div class="tabs">
+        <button class="tab-button active" data-target="friends">Катя и подружки</button>
+        <button class="tab-button" data-target="family">Катя и семья</button>
+        <button class="tab-button" data-target="fun">Смешные фоточки</button>
+    </div>
+    <div class="tab-content active" id="friends">
+        <img src="images/friends1.jpg" alt="Друзья 1">
+        <img src="images/friends2.jpg" alt="Друзья 2">
+        <img src="images/friends3.jpg" alt="Друзья 3">
+    </div>
+    <div class="tab-content" id="family">
+        <img src="images/family1.jpg" alt="Семья 1">
+        <img src="images/family2.jpg" alt="Семья 2">
+    </div>
+    <div class="tab-content" id="fun">
+        <img src="images/fun1.jpg" alt="Веселое 1">
+        <img src="images/fun2.jpg" alt="Веселое 2">
+        <img src="images/fun3.jpg" alt="Веселое 3">
+    </div>
+    <script>
+        const buttons = document.querySelectorAll('.tab-button');
+        buttons.forEach(btn => {
+            btn.addEventListener('click', () => {
+                buttons.forEach(b => b.classList.remove('active'));
+                document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+                btn.classList.add('active');
+                document.getElementById(btn.dataset.target).classList.add('active');
+            });
+        });
+    </script>
+</body>
+</html>

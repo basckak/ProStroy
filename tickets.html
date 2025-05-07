@@ -11,20 +11,33 @@
         select, input { width: 100%; padding: 8px; margin-bottom: 12px; border: 1px solid #cceeff; border-radius: 4px; }
         button { padding: 10px 20px; cursor: pointer; background-color: #cceeff; border: none; border-radius: 4px; font-weight: bold; }
         button:hover { background-color: #b3e6ff; }
+        /* Ticket modal styles */
+        #ticketModal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); align-items: center; justify-content: center; }
+        #ticketContent { background: #fff; padding: 20px; border-radius: 8px; width: 80%; max-width: 500px; text-align: center; position: relative; }
+        #ticketContent h3 { margin-top: 0; color: #006699; }
+        #ticketContent p { margin: 10px 0; }
+        #closeBtn { position: absolute; top: 10px; right: 10px; cursor: pointer; font-size: 18px; }
     </style>
 </head>
 <body>
-    <h2>Выберите билет</h2>
-    <form action="#" method="get">
-        <label for="type">Тип билета:</label>
-        <select id="type" name="type">
-            <option value="standard">Стандартный</option>
-            <option value="vip">VIP</option>
-            <option value="deluxe">Deluxe</option>
+    <h2>Выберите направление и даты</h2>
+    <form id="ticketForm">
+        <label for="destination">Направление:</label>
+        <select id="destination" name="destination">
+            <option value="bali">Бали</option>
+            <option value="seychelles">Сейшелы</option>
+            <option value="phuquoc">Фукуок</option>
+            <option value="maldives">Мальдивы</option>
+            <option value="hawaii">Гавайи</option>
+            <option value="thailand">Таиланд</option>
+            <option value="vietnam">Вьетнам</option>
+            <option value="brazil">Бразилия</option>
+            <option value="japan">Япония</option>
+            <option value="france">Франция</option>
         </select>
-        <label for="quantity">Количество:</label>
-        <input type="number" id="quantity" name="quantity" min="1" max="10" value="1">
+        <label for="depart_date">Дата вылета:</label>
+        <input type="date" id="depart_date" name="depart_date">
+        <label for="return_date">Дата возвращения:</label>
+        <input type="date" id="return_date" name="return_date">
         <button type="submit">Забронировать</button>
     </form>
-</body>
-</html>

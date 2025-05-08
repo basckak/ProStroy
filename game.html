@@ -7,7 +7,14 @@
     <style>
         body { margin: 0; overflow: hidden; background-color: #f0fcff; }
         #gameCanvas { display: block; margin: 0 auto; background: #e6f7ff; }
-        #score { position: absolute; top: 10px; left: 10px; font-family: Arial, sans-serif; color: #00334d; font-size: 18px; }
+        #score {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            font-family: Arial, sans-serif;
+            color: #00334d;
+            font-size: 18px;
+        }
     </style>
 </head>
 <body>
@@ -16,15 +23,26 @@
     <script>
         const canvas = document.getElementById('gameCanvas');
         const ctx = canvas.getContext('2d');
-        let dino = { x: 50, y: 150, width: 40, height: 40, dy: 0, gravity: 1.2, jumpStrength: -15, grounded: false };
+
+        // Параметры динозавра
+        let dino = {
+            x: 50, y: 150,
+            width: 40, height: 40,
+            dy: 0, gravity: 1.2, jumpStrength: -15,
+            grounded: false
+        };
+
         let obstacles = [];
         let frame = 0;
         let score = 0;
         let gameOver = false;
 
+        // Заранее загружаем изображение динозавра
+        const dinoImg = new Image();
+        dinoImg.src = 'Тема.png';
+
         function drawDino() {
-            ctx.fillStyle = '#004466';
-            ctx.fillRect(dino.x, dino.y, dino.width, dino.height);
+            ctx.drawImage(dinoImg, dino.x, dino.y, dino.width, dino.height);
         }
 
         function drawObstacle(obs) {
@@ -33,14 +51,15 @@
         }
 
         function spawnObstacle() {
-            const height = Math.random() * 30 + 20;
-            obstacles.push({ x: canvas.width, y: 200 - height, width: 20, height: height });
+            const h = Math.random() * 30 + 20;
+            obstacles.push({ x: canvas.width, y: 200 - h, width: 20, height: h });
         }
 
         function update() {
             if (gameOver) return;
             frame++;
-            // Dino physics
+
+            // Физика прыжка
             dino.dy += dino.gravity;
             dino.y += dino.dy;
             if (dino.y + dino.height >= 200) {
@@ -48,13 +67,19 @@
                 dino.dy = 0;
                 dino.grounded = true;
             }
-            // Spawn obstacles
+
+            // Спавн препятствий
             if (frame % 90 === 0) spawnObstacle();
-            // Move obstacles
+
+            // Движение и коллизии
             obstacles.forEach((obs, i) => {
                 obs.x -= 6;
-                // Collision
-                if (dino.x < obs.x + obs.width && dino.x + dino.width > obs.x && dino.y < obs.y + obs.height && dino.y + dino.height > obs.y) {
+                if (
+                    dino.x < obs.x + obs.width &&
+                    dino.x + dino.width > obs.x &&
+                    dino.y < obs.y + obs.height &&
+                    dino.y + dino.height > obs.y
+                ) {
                     gameOver = true;
                 }
                 if (obs.x + obs.width < 0) {
@@ -63,6 +88,7 @@
                     document.getElementById('score').textContent = 'Счёт: ' + score;
                 }
             });
+
             draw();
             if (!gameOver) requestAnimationFrame(update);
             else showGameOver();
@@ -70,12 +96,13 @@
 
         function draw() {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
-            // ground line
+            // линия земли
             ctx.strokeStyle = '#00334d';
             ctx.beginPath();
             ctx.moveTo(0, 200);
             ctx.lineTo(canvas.width, 200);
             ctx.stroke();
+
             drawDino();
             obstacles.forEach(drawObstacle);
         }
@@ -89,7 +116,7 @@
             ctx.fillText('Игра окончена! Нажмите пробел для перезапуска.', canvas.width/2, canvas.height/2);
         }
 
-        document.addEventListener('keydown', function(e) {
+        document.addEventListener('keydown', e => {
             if (e.code === 'Space') {
                 if (!gameOver && dino.grounded) {
                     dino.dy = dino.jumpStrength;
@@ -110,7 +137,8 @@
             update();
         }
 
-        update();
+        // Старт игры
+        dinoImg.onload = update;
     </script>
 </body>
 </html>

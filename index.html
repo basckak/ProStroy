@@ -1,308 +1,56 @@
-
 <!doctype html>
 <html lang="ru">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>ProStroy — Главное</title>
-<style>
-  :root{
-    /* палитра как на странице авторизации */
-    --bg:#0b1220;
-    --surface:#111a2c;
-    --surface-2:#0e172a;
-    --text:#eef3f9;
-    --muted:#9fb0c9;
-    --green:#1ed760;
-    --green-ink:#062915;
-    --badge:#ffd166;
-    --danger:#ff7a7a;
-    --radius:16px;
-    --shadow:0 14px 40px rgba(0,0,0,.35);
-    --border: rgba(255,255,255,.08);
-  }
-  *{box-sizing:border-box}
-  html,body{height:100%}
-  body{
-    margin:0; background:var(--bg); color:var(--text);
-    font-family:system-ui,-apple-system,"Segoe UI",Roboto,Ubuntu,"Helvetica Neue",Arial;
-  }
-
-  /* topbar */
-  .topbar{
-    position:sticky; top:0; z-index:50;
-    background:rgba(11,18,32,.7); backdrop-filter:blur(8px);
-    border-bottom:1px solid var(--border);
-  }
-  .wrap{max-width:1200px; margin:0 auto; padding:12px 20px; display:flex; align-items:center; gap:18px}
-  .brand{display:flex; align-items:center; gap:12px; font-weight:800}
-  .brand-badge{width:36px;height:36px;border-radius:10px;display:grid;place-items:center;background:linear-gradient(135deg,var(--green),#27f07b);color:var(--green-ink);box-shadow:var(--shadow)}
-  nav{margin-left:auto; display:flex; gap:12px; align-items:center}
-  .nav-link{color:var(--text); text-decoration:none; padding:8px 10px; border-radius:10px}
-  .nav-link:hover{background:rgba(255,255,255,.05)}
-  /* user */
-  .user{position:relative; display:flex; align-items:center; gap:10px; cursor:pointer}
-  .avatar{width:34px;height:34px;border-radius:50%;display:grid;place-items:center;background:linear-gradient(135deg,#18243f,#0e172a); border:1px solid var(--border); font-weight:800}
-  .user-menu{position:absolute; right:0; top:44px; background:var(--surface); border:1px solid var(--border); border-radius:12px; box-shadow:var(--shadow); min-width:220px; display:none}
-  .user-menu a{display:block; padding:10px 12px; color:var(--text); text-decoration:none}
-  .user-menu a:hover{background:rgba(255,255,255,.05)}
-  .user.open .user-menu{display:block}
-
-  /* hero */
-  .hero{position:relative; overflow:hidden; min-height:300px; display:grid; place-items:center}
-  .hero::before{
-    content:""; position:absolute; inset:0;
-    /* заменишь при желании на свою фотку стройки */
-    background:url("https://images.unsplash.com/photo-1710541123329-1f8a60932d74?q=80&w=1920&auto=format&fit=crop") center/cover no-repeat;
-    filter:brightness(.55) saturate(1.1);
-    z-index:-2;
-  }
-  .hero::after{content:""; position:absolute; inset:0; background:radial-gradient(1000px 360px at 70% -10%, rgba(30,215,96,.15), transparent 60%); z-index:-1}
-  .hero h1{margin:0; font-size:clamp(26px,4vw,44px); text-align:center}
-  .hero p{margin:8px 0 0; text-align:center; color:var(--muted)}
-
-  /* alerts */
-  .alerts{max-width:1200px;margin:-34px auto 8px;padding:0 20px; display:grid; gap:10px; grid-template-columns:repeat(auto-fit,minmax(220px,1fr))}
-  .pill{display:flex;align-items:center;gap:10px;padding:12px 14px;background:rgba(255,255,255,.04);border:1px solid var(--border);border-radius:12px;text-decoration:none;color:var(--text)}
-  .pill:hover{border-color:rgba(46,255,149,.35); background:rgba(46,255,149,.06)}
-  .dot{width:10px;height:10px;border-radius:50%}
-  .g{background:var(--green)} .y{background:var(--badge)} .r{background:var(--danger)}
-
-  /* grid / cards */
-  .grid{max-width:1200px;margin:16px auto 40px;padding:0 20px;display:grid;gap:16px;grid-template-columns:repeat(auto-fill,minmax(250px,1fr))}
-  .card{background:linear-gradient(180deg,var(--surface),var(--surface-2)); border:1px solid var(--border); border-radius:var(--radius); box-shadow:var(--shadow); padding:18px; text-decoration:none; color:inherit; display:flex; flex-direction:column; gap:12px}
-  .card:hover{transform:translateY(-3px); border-color:rgba(46,255,149,.35)}
-  .row{display:flex;align-items:center;justify-content:space-between; gap:10px}
-  .badge{background:var(--badge);color:#2b2305;font-weight:800;padding:2px 10px;border-radius:999px;font-size:12px;letter-spacing:.3px}
-  .muted{color:var(--muted); font-size:14px}
-
-  /* document chips */
-  .chips{display:flex; flex-wrap:wrap; gap:8px; margin-top:6px}
-  .chip{padding:6px 10px; border-radius:999px; background:rgba(255,255,255,.06); border:1px solid var(--border); font-size:13px}
-  .chip:hover{border-color:rgba(46,255,149,.35); background:rgba(46,255,149,.06)}
-  .chip .n{background:var(--green); color:var(--green-ink); padding:0 8px; border-radius:999px; margin-left:6px; font-weight:800}
-
-  /* CTA bar */
-  .cta-bar{max-width:1200px;margin:6px auto 24px;padding:0 20px;display:flex;gap:12px;flex-wrap:wrap}
-  .cta{display:inline-flex;align-items:center;gap:10px;padding:12px 16px;border-radius:12px;background:var(--green);color:var(--green-ink);font-weight:800;text-decoration:none;box-shadow:0 6px 24px rgba(30,215,96,.35)}
-  .cta:hover{filter:brightness(1.05)}
-  .ico{width:20px;height:20px}
-
-  /* mega menu (Отчёты) */
-  .menu{position:relative}
-  .mega{position:absolute; left:0; top:38px; background:var(--surface); border:1px solid var(--border); border-radius:14px; box-shadow:var(--shadow); padding:16px; display:none; z-index:40; width:min(920px,90vw)}
-  .menu.open .mega{display:grid}
-  .mega{grid-template-columns:repeat(4,minmax(180px,1fr)); gap:16px}
-  .mega h4{margin:6px 0 8px; font-size:14px}
-  .mega a{display:block; color:var(--text); text-decoration:none; padding:4px 0; font-size:14px}
-  .mega a:hover{color:#d9ffea}
-</style>
+  <meta charset="utf-8">
+  <title>ProStroy · Панель</title>
 </head>
 <body>
+  <!-- Статичный топ-бар -->
+  <table width="100%" border="1" cellspacing="0" cellpadding="8">
+    <tr>
+      <td>
+        <b>ProStroy — Панель управления</b> | Тема: строительная
+      </td>
+    </tr>
+  </table>
 
-<header class="topbar">
-  <div class="wrap">
-    <div class="brand">
-      <div class="brand-badge">PS</div>
-      <div>ProStroy</div>
-    </div>
+  <!-- Макет: слева меню, справа контент во фрейме -->
+  <table width="100%" border="1" cellspacing="0" cellpadding="8">
+    <tr>
+      <!-- Левое меню -->
+      <td width="220" valign="top">
+        <p><b>Навигация</b></p>
 
-    <!-- навигация -->
-    <nav>
-      <a class="nav-link" href="#documents">Документы</a>
-      <a class="nav-link" href="#requests">Заявки</a>
-      <a class="nav-link" href="#fleet">Автотранспорт</a>
-      <a class="nav-link" href="#pto">ПТО</a>
-      <a class="nav-link" href="#sites">Объекты</a>
+        <form target="main" action="pages/home.html" method="get">
+          <button type="submit">Главная</button>
+        </form>
 
-      <div class="menu">
-        <a class="nav-link" id="reportsBtn" href="javascript:void(0)">Отчёты ▾</a>
-        <!-- мегаменю отчётов -->
-        <div class="mega" id="reportsMenu">
-          <div>
-            <h4>МКД</h4>
-            <a href="#">Счётчики</a>
-            <a href="#">Сумма согласованных заявок на закупку ТМЦ</a>
-            <h4 style="margin-top:12px">Документы</h4>
-            <a href="#">Реестр документов</a>
-            <h4 style="margin-top:12px">Материалы</h4>
-            <a href="#">Мои заявки на материалы</a>
-          </div>
-          <div>
-            <h4>Дебиторская задолженность</h4>
-            <a href="#">Статистика по должникам</a>
-            <a href="#">Дебиторская по компаниям</a>
-            <h4 style="margin-top:12px">Маршруты согласования</h4>
-            <a href="#">Маршруты согласования</a>
-          </div>
-            <div>
-              <h4>Справочники</h4>
-              <a href="#">Типы глобальных документов</a>
-              <a href="#">Статьи затрат заявок на оплату по РР</a>
-              <a href="#">Список компаний</a>
-              <a href="#">Группы работ</a>
-              <h4 style="margin-top:12px">Пользователи</h4>
-              <a href="#">Табель по сотруднику</a>
-              <a href="#">Табель подчинённых</a>
-              <a href="#">Отчёт по сотрудникам</a>
-            </div>
-            <div>
-              <h4>Ремонтные работы</h4>
-              <a href="#">Мои ремонтные работы</a>
-              <a href="#">Список ремонтных работ</a>
-              <a href="#">Заявки на оплату</a>
-              <a href="#">Статистика по мастерам</a>
-              <a href="#">Заявки на оплату ЦФО</a>
-              <a href="#">Отчёт по выполненным работам</a>
-              <a href="#">Статистика по ответственным</a>
-              <a href="#">Группы ремонтных работ</a>
-              <h4 style="margin-top:12px">Прочее</h4>
-              <a href="#">Проблемы МКД</a>
-              <a href="#">Добавить проблему МКД</a>
-              <a href="#">Заявки на оплату (финансы)</a>
-              <a href="#">Обращения: категории / группы / список</a>
-            </div>
-        </div>
-      </div>
+        <form target="main" action="pages/contracts.html" method="get">
+          <button type="submit">Договоры</button>
+        </form>
 
-      <!-- user -->
-      <div class="user" id="userBox" title="Личный кабинет">
-        <div class="avatar" id="avatar">PS</div>
-        <div id="userName">{{$Json.user}}</div>
-        <div class="user-menu" id="userMenu">
-          <a href="#profile">Личный кабинет</a>
-          <a href="#settings">Настройки</a>
-          <a href="#logout">Выйти</a>
-        </div>
-      </div>
-    </nav>
-  </div>
-</header>
+        <form target="main" action="pages/transport.html" method="get">
+          <button type="submit">Заявки на автотранспорт</button>
+        </form>
 
-<section class="hero">
-  <div class="wrap" style="display:block; text-align:center;">
-    <h1>Главное меню</h1>
-    <p>Задачи, согласования, заявки, ПТО, договоры и объекты — всё под рукой.</p>
-  </div>
-</section>
+        <form target="main" action="pages/pto.html" method="get">
+          <button type="submit">ПТО / Журналы</button>
+        </form>
 
-<!-- быстрые уведомления -->
-<div class="alerts">
-  <a class="pill" href="#approvals"><span class="dot y"></span> На согласовании: <strong id="cnt-approve">28</strong></a>
-  <a class="pill" href="#read"><span class="dot g"></span> На ознакомлении: <strong id="cnt-read">168</strong></a>
-  <a class="pill" href="#rejected"><span class="dot r"></span> Отвергнутые: <strong id="cnt-reject">160</strong></a>
-</div>
+        <form target="main" action="pages/reports.html" method="get">
+          <button type="submit">Отчёты</button>
+        </form>
 
-<!-- быстрые действия -->
-<div class="cta-bar">
-  <a class="cta" href="#new-request">
-    <svg class="ico" viewBox="0 0 24 24" fill="none"><path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
-    Новая заявка
-  </a>
-  <a class="cta" href="#upload-doc">
-    <svg class="ico" viewBox="0 0 24 24" fill="none"><path d="M12 16V6m0 0 4 4m-4-4-4 4M4 18h16" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
-    Загрузка документа
-  </a>
-</div>
+        <form target="main" action="pages/profile.html" method="get">
+          <button type="submit">Личный кабинет</button>
+        </form>
+      </td>
 
-<!-- главные разделы -->
-<main class="grid" id="documents">
-  <a class="card" href="#inbox">
-    <div class="row"><h3>Уведомления и задачи</h3><span class="badge">+12</span></div>
-    <div class="muted">Лента действий, дедлайны, поручения.</div>
-  </a>
-
-  <a class="card" href="#approvals">
-    <div class="row"><h3>Согласования</h3><span class="badge">28 ждут</span></div>
-    <div class="muted">Документы на согласовании и статусы.</div>
-  </a>
-
-  <a class="card" href="#requests">
-    <div class="row"><h3>Заявки</h3><span class="badge">3 типа</span></div>
-    <div class="muted">Заявки на автотранспорт, ЦФО и др.</div>
-  </a>
-
-  <a class="card" href="#fleet">
-    <div class="row"><h3>Заявки на автотранспорт</h3><span class="badge">новые</span></div>
-    <div class="muted">Маршруты, техника, водители, время.</div>
-  </a>
-
-  <a class="card" href="#pto">
-    <div class="row"><h3>ПТО</h3><span class="badge">АОСР • журналы</span></div>
-    <div class="muted">АОСР, ЖОР, ЖВК, ЖСР, шаблоны и автозаполнение.</div>
-  </a>
-
-  <a class="card" href="#contracts">
-    <div class="row"><h3>Договоры</h3><span class="badge">перечень</span></div>
-    <div class="muted">Поиск, статусы, сроки, контрагенты.</div>
-  </a>
-
-  <a class="card" href="#sites">
-    <div class="row"><h3>Объекты</h3><span class="badge">активные</span></div>
-    <div class="muted">Перечень объектов и переход внутрь.</div>
-  </a>
-
-  <a class="card" href="#docs">
-    <div class="row"><h3>Документы (типы)</h3><span class="badge">быстрый фильтр</span></div>
-    <div class="muted">Часто используемые типы, как в GE xpert:</div>
-    <div class="chips">
-      <a class="chip" href="#doc-serv">Служебная записка <span class="n">294</span></a>
-      <a class="chip" href="#doc-contract">Договор <span class="n">121</span></a>
-      <a class="chip" href="#doc-unknown">Не указан тип документа <span class="n">8</span></a>
-      <a class="chip" href="#doc-gph">Договор — ГПХ — казначейство <span class="n">6</span></a>
-      <a class="chip" href="#doc-add">Доп. соглашение к договору <span class="n">158</span></a>
-      <a class="chip" href="#doc-ks">КС <span class="n">42</span></a>
-      <a class="chip" href="#doc-vendorcheck">Служебная на проверку контрагента <span class="n">1</span></a>
-      <a class="chip" href="#doc-spec">Спецификация к договору <span class="n">2</span></a>
-      <a class="chip" href="#doc-order">Приказ <span class="n">3</span></a>
-      <a class="chip" href="#doc-supply">Договор поставки <span class="n">2</span></a>
-      <a class="chip" href="#doc-out">Исходящий <span class="n">7</span></a>
-      <a class="chip" href="#doc-in">Входящий <span class="n">14</span></a>
-    </div>
-  </a>
-</main>
-
-<footer class="wrap" style="opacity:.6; font-size:12px; padding-bottom:34px;">
-  © ProStroy, 2025 • Главное меню. Фото фона: Unsplash.
-</footer>
-
-<script>
-  // ===== ЛИЧНЫЙ КАБИНЕТ / ИМЯ ПОЛЬЗОВАТЕЛЯ =====
-  // 1) из URL: ?user=Имя%20Фамилия
-  const qs = new URLSearchParams(location.search);
-  const fromUrl = qs.get('user');
-
-  // 2) из localStorage: localStorage.setItem('ps_user', 'Варохин Сергей Николаевич')
-  const stored = localStorage.getItem('ps_user');
-
-  const name = fromUrl || stored || 'Варохин Сергей Николаевич';
-  document.getElementById('userName').textContent = name;
-  localStorage.setItem('ps_user', name);
-
-  // инициалы в аватар
-  function initials(s){
-    return s.split(/\s+/).map(w=>w[0]).slice(0,2).join('').toUpperCase();
-  }
-  document.getElementById('avatar').textContent = initials(name);
-
-  // выпадающее меню пользователя
-  const userBox = document.getElementById('userBox');
-  userBox.addEventListener('click', ()=> userBox.classList.toggle('open'));
-  document.addEventListener('click', (e)=>{
-    if(!userBox.contains(e.target)) userBox.classList.remove('open');
-  });
-
-  // мегаменю «Отчёты»
-  const reportsBtn = document.getElementById('reportsBtn');
-  const reportsMenu = document.getElementById('reportsMenu');
-  reportsBtn.addEventListener('click', (e)=>{
-    e.preventDefault();
-    reportsBtn.parentElement.classList.toggle('open');
-  });
-  document.addEventListener('click', (e)=>{
-    const menu = reportsBtn.parentElement;
-    if(!menu.contains(e.target)) menu.classList.remove('open');
-  });
-</script>
+      <!-- Основной контент -->
+      <td valign="top">
+        <iframe name="main" src="pages/home.html" width="100%" height="600" frameborder="0" title="Контент"></iframe>
+      </td>
+    </tr>
+  </table>
 </body>
 </html>

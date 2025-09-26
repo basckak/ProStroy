@@ -1,14 +1,306 @@
 <!doctype html>
 <html lang="ru">
 <head>
-  <meta charset="utf-8">
-  <title>Личный кабинет</title>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>ProStroy — Личный кабинет</title>
+  <meta name="color-scheme" content="dark">
+  <style>
+    :root{
+      --bg:#0b1220; --panel:#0e172a; --panel2:#0b1320;
+      --text:#eef3f9; --muted:#a9b4c7;
+      --green:#22c55e; --green-2:#1ed760;
+      --border:rgba(255,255,255,.12); --shadow:0 18px 60px rgba(0,0,0,.45);
+      --radius:18px;
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{margin:0;background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,Segoe UI,Roboto,Inter,Arial}
+    video.bg{position:fixed;inset:0;width:100%;height:100%;object-fit:cover;z-index:-2;filter:brightness(.7)}
+    /* Контейнер страницы */
+    .wrap{min-height:100%;padding:24px}
+    .grid{max-width:1200px;margin:0 auto;display:grid;grid-template-columns: 1.2fr .8fr; gap:20px}
+    .card{background:rgba(0,0,0,.55);border:1px solid var(--border);border-radius:var(--radius);
+      box-shadow:var(--shadow);backdrop-filter:blur(6px);padding:18px}
+    .card h2{margin:4px 0 12px;font-size:1.2rem}
+    .row{display:grid;gap:6px;margin-bottom:12px}
+    label{font-size:.92rem;color:#d7deea}
+    input, button, textarea, select{
+      font:inherit;color:inherit; background:rgba(255,255,255,.06); border:1px solid var(--border);
+      border-radius:12px; padding:10px 12px; outline:none;
+    }
+    input:focus{border-color:#3b4458}
+    .btn{cursor:pointer}
+    .btn-primary{background:linear-gradient(135deg,var(--green),var(--green-2)); color:#062915; font-weight:700; border:none}
+    .btn-ghost{background:transparent}
+    .muted{color:var(--muted); font-size:.92rem}
+    .kv{display:grid; grid-template-columns: 180px 1fr; gap:8px; padding:8px 0; border-top:1px dashed rgba(255,255,255,.08)}
+    .kv:first-of-type{border-top:none}
+    .inline{display:flex; gap:10px; align-items:center}
+    .list{display:grid; gap:10px}
+    .item{padding:12px;border:1px solid var(--border);border-radius:12px;background:rgba(255,255,255,.04)}
+    .badge{display:inline-block;padding:2px 8px;border-radius:999px;border:1px solid var(--border);font-size:.8rem}
+    .status-approve{border-color:rgba(34,197,94,.6); background:rgba(34,197,94,.12)}
+    .status-wait{border-color:rgba(255,255,255,.25)}
+    .status-reject{border-color:rgba(255,122,122,.6); background:rgba(255,122,122,.12)}
+    .ok{display:none;margin-top:8px;padding:10px;border-radius:12px;background:rgba(34,197,94,.12);
+      border:1px solid rgba(34,197,94,.5);color:#b6ffd0;font-size:.92rem}
+    .err{display:none;margin-top:8px;padding:10px;border-radius:12px;background:rgba(255,122,122,.12);
+      border:1px solid rgba(255,122,122,.35);color:#ffbdbd;font-size:.92rem}
+    .spinner{display:inline-block;width:16px;height:16px;border:2px solid rgba(255,255,255,.4);
+      border-top-color:#fff;border-radius:50%;vertical-align:-3px;animation:spin .8s linear infinite;margin-left:8px}
+    @keyframes spin{to{transform:rotate(360deg)}}
+    @media (max-width:980px){ .grid{grid-template-columns:1fr;}}
+  </style>
 </head>
 <body>
-  <h1>Личный кабинет</h1>
-  <p>Имя пользователя: Иван Петров</p>
-  <p>Роль: Инженер ПТО</p>
-  <p>Email: user@prostroy.ru</p>
-  <p><button>Выйти</button></p>
+  <!-- видео фон -->
+  <video class="bg" autoplay muted loop playsinline preload="auto">
+    <source src="https://assets.mixkit.co/videos/30431/30431-720.mp4" type="video/mp4">
+  </video>
+
+  <!-- общий хедер -->
+  <div id="header-mount"></div>
+
+  <!-- контент -->
+  <div class="wrap">
+    <div class="grid">
+      <!-- Левая колонка: профиль -->
+      <section class="card">
+        <h2>Профиль</h2>
+
+        <div id="profile-kv">
+          <div class="kv"><div class="muted">ФИО</div><div id="kv-name">—</div></div>
+          <div class="kv"><div class="muted">Email</div><div id="kv-email">—</div></div>
+          <div class="kv"><div class="muted">User ID</div><div id="kv-id" style="font-family:ui-monospace, SFMono-Regular, Menlo, monospace">—</div></div>
+          <div class="kv"><div class="muted">Последний вход</div><div id="kv-last">—</div></div>
+        </div>
+
+        <hr style="border:none;border-top:1px solid rgba(255,255,255,.08);margin:14px 0">
+
+      
+
+        <div class="row">
+          <label for="new_pass">Сменить пароль</label>
+          <div class="inline" style="gap:8px; flex-wrap:wrap">
+            <input id="new_pass" type="password" placeholder="Новый пароль" style="flex:1;min-width:240px">
+            <input id="new_pass2" type="password" placeholder="Повторите пароль" style="flex:1;min-width:240px">
+            <button id="btn-save-pass" class="btn btn-ghost">Обновить</button>
+          </div>
+          <div class="muted">Пароль меняется через Supabase Auth (updateUser).</div>
+          <div id="ok-pass" class="ok">Пароль обновлён.</div>
+          <div id="err-pass" class="err">Ошибка при смене пароля.</div>
+        </div>
+      </section>
+
+      <!-- Правая колонка: Заявки на согласование -->
+      <section class="card">
+        <h2>Заявки на согласование</h2>
+        <div id="approvals" class="list">
+          <div class="muted">Загружаем…</div>
+        </div>
+        <div class="muted" style="margin-top:10px">
+          Если список пуст, открой <a href="./request-new.html" style="color:#bfe7ff">«Заявки»</a>.
+        </div>
+      </section>
+    </div>
+  </div>
+
+  <!-- Скрипты -->
+  <script type="module">
+    import { loadHeader } from "./header.js";
+    import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm";
+
+    // Совпадает с index.html
+    const SUPABASE_URL  = "https://hvpbwpegxcbstmpngdyc.supabase.co";
+    const SUPABASE_ANON = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imh2cGJ3cGVneGNic3RtcG5nZHljIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTg2NDE4NjMsImV4cCI6MjA3NDIxNzg2M30.rtPrQVsaEFA-ee1RphLKKn8q3TSOXeapZnZgfe9HVws";
+    const supabase = createClient(SUPABASE_URL, SUPABASE_ANON, {
+      auth: { persistSession:true, storageKey:"prostroy.auth", autoRefreshToken:true, detectSessionInUrl:true }
+    });
+
+    // Жёсткая проверка авторизации
+    async function requireAuth() {
+      const { data:{ session } } = await supabase.auth.getSession();
+      if (!session) { location.replace("./index.html"); return null; }
+      return session.user;
+    }
+
+    // Инициализация
+    await loadHeader();
+    const user = await requireAuth();
+    if (!user) throw new Error("no auth");
+
+    // Заполняем карточку профиля
+    async function resolveDisplayName(user){
+      try{
+        const { data, error } = await supabase.from("profiles").select("full_name").eq("id", user.id).maybeSingle();
+        if (!error && data?.full_name) return data.full_name;
+      }catch(_){}
+      return user?.user_metadata?.full_name || user?.user_metadata?.name || user?.email || "Пользователь";
+    }
+
+    async function renderProfile(){
+      const name = await resolveDisplayName(user);
+      document.getElementById("kv-name").textContent = name;
+      document.getElementById("kv-email").textContent = user.email || "—";
+      document.getElementById("kv-id").textContent = user.id;
+      // Supabase не хранит last_sign_in_at в user, поэтому попробуем взять из auth.getUser()
+      const { data:{ user:full } } = await supabase.auth.getUser();
+      document.getElementById("kv-last").textContent = full?.last_sign_in_at
+        ? new Date(full.last_sign_in_at).toLocaleString()
+        : "—";
+      // Подставим в поле редактирования имя
+      const input = document.getElementById("full_name");
+      if (input && !input.value) input.value = name !== (user.email || "Пользователь") ? name : "";
+    }
+
+
+
+    // Смена пароля
+    document.getElementById("btn-save-pass").addEventListener("click", async ()=>{
+      const ok = document.getElementById("ok-pass");
+      const err = document.getElementById("err-pass");
+      ok.style.display="none"; err.style.display="none";
+
+      const p1 = document.getElementById("new_pass").value;
+      const p2 = document.getElementById("new_pass2").value;
+      if (!p1 || p1.length < 6){ err.textContent="Минимум 6 символов."; err.style.display="block"; return; }
+      if (p1 !== p2){ err.textContent="Пароли не совпадают."; err.style.display="block"; return; }
+
+      const btn = document.getElementById("btn-save-pass");
+      btn.disabled = true; const sp = document.createElement("span"); sp.className="spinner"; btn.appendChild(sp);
+
+      const { error } = await supabase.auth.updateUser({ password: p1 });
+
+      btn.disabled = false; sp.remove();
+      if (error){ err.textContent = error.message || "Ошибка при смене пароля."; err.style.display="block"; return; }
+      ok.style.display="block";
+      // по правилам Supabase в отдельных провайдерах может потребоваться reauth — в базовом пароле ок
+      document.getElementById("new_pass").value=""; document.getElementById("new_pass2").value="";
+    });
+    // Вставить или обновить мой вердикт по заявке
+    async function upsertMyDecision(requestId, decision, comment = null) {
+      const { error } = await supabase
+        .from("transport_request_approvals")
+        .upsert(
+          { request_id: requestId, approver_id: user.id, decision, comment },
+          { onConflict: "request_id,approver_id" }
+        );
+      if (error) throw error;
+    }
+
+    // Обработчики кнопок
+    async function onApprove(id){
+      await upsertMyDecision(id, "approved");
+      await loadApprovals();
+    }
+
+    async function onReject(id){
+      // можно запросить комментарий:
+      // const reason = prompt("Причина отклонения (необязательно):") || null;
+      await upsertMyDecision(id, "rejected", null);
+      await loadApprovals();
+    }
+
+    // Рендер списка адресованных мне заявок
+    async function loadApprovals(){
+      const box = document.getElementById("approvals");
+      box.innerHTML = `<div class="muted">Загружаем…</div>`;
+
+      try{
+        // показываем заявки, где я в approver_ids и статус требует реакции
+        const relevantStatuses = ["на согласовании", "на ознакомлении", "черновик"];
+        let query = supabase
+          .from("transport_requests")
+          .select("id, request_no, destination, date_from, date_to, vehicle, status, created_at, user_id")
+          .contains("approver_ids", [user.id])
+          .order("created_at", { ascending:false })
+          .limit(50);
+
+        if (relevantStatuses.length){
+          query = query.in("status", relevantStatuses);
+        }
+
+        const { data, error } = await query;
+
+        if (error) throw error;
+
+        const rows = data || [];
+        if (!rows.length){
+          box.innerHTML = `<div class="muted">Нет заявок, требующих вашего согласования.</div>`;
+          return;
+        }
+
+        // Рисуем мини-карточки
+        box.innerHTML = "";
+        for (const r of rows){
+          const d1 = r.date_from ? new Date(r.date_from).toLocaleDateString() : "—";
+          const d2 = r.date_to   ? new Date(r.date_to).toLocaleDateString()   : "—";
+          const when = r.created_at ? new Date(r.created_at).toLocaleString() : "";
+          const status = r.status || "—";
+          const statusClass = (()=>{
+            const normalized = status.toLowerCase();
+            if (normalized.includes("одобр")) return "status-approve";
+            if (normalized.includes("откл")) return "status-reject";
+            return "status-wait";
+          })();
+
+          const item = document.createElement("div");
+          item.className = "item";
+          item.innerHTML = `
+            <div class="inline" style="justify-content:space-between; gap:12px; flex-wrap:wrap">
+              <div style="display:flex; gap:10px; align-items:center">
+                <span class="badge ${statusClass}">${status}</span>
+                <div style="display:flex; flex-direction:column; gap:2px">
+                  <strong>${r.destination || "Без адреса"}</strong>
+                  <span class="muted">№ ${r.request_no || "—"}</span>
+                </div>
+              </div>
+              <div class="muted">${when}</div>
+            </div>
+            <div class="muted" style="margin-top:6px">
+              Даты: ${d1} — ${d2} · ${r.vehicle ? "Техника: " + r.vehicle : ""}
+            </div>
+            <div class="inline" style="margin-top:10px; gap:8px; flex-wrap:wrap">
+              <a class="btn btn-ghost" href="./request-view.html?id=${encodeURIComponent(r.id)}"
+                 style="text-decoration:none;border:1px solid var(--border);padding:6px 10px;border-radius:10px">
+                Открыть
+              </a>
+              <button class="btn btn-primary" data-act="approve" data-id="${r.id}">Одобрить</button>
+              <button class="btn btn-ghost" style="border:1px solid var(--border)"
+                      data-act="reject" data-id="${r.id}">Отклонить</button>
+            </div>
+          `;
+          box.appendChild(item);
+        }
+
+        // Делегирование кликов по кнопкам
+        box.addEventListener("click", async (e)=>{
+          const t = e.target.closest("button[data-act]");
+          if (!t) return;
+          const id = t.getAttribute("data-id");
+          const act = t.getAttribute("data-act");
+          try{
+            if (act === "approve") await onApprove(id);
+            if (act === "reject")  await onReject(id);
+          }catch(e){
+            box.insertAdjacentHTML("afterbegin",
+              `<div class="err">Не удалось сохранить решение: ${e.message || e}</div>`);
+          }
+        }, { once:true });
+
+      }catch(e){
+        box.innerHTML = `<div class="err">Ошибка загрузки заявок: ${e.message || e}</div>`;
+      }
+    }
+
+    await renderProfile();
+    await loadApprovals();
+
+    // На всякий случай: если истечёт сессия — уводим на логин
+    supabase.auth.onAuthStateChange((_evt, session)=>{
+      if (!session) location.replace("./index.html");
+    });
+  </script>
 </body>
 </html>

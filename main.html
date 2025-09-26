@@ -1,0 +1,212 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>ProStroy · Главная</title>
+  <style>
+    :root{
+      --bg:#0b1220; --panel:#0f1626; --panel2:#0c1424; --text:#eef3f9; --muted:#a9b4c7;
+      --green:#22c55e; --green2:#1ed760; --border:rgba(255,255,255,.10); --shadow:0 14px 40px rgba(0,0,0,.35);
+      --radius:14px;
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{margin:0;background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Arial}
+
+    /* видео фон — чуть светлее */
+    video.bg{
+      position:fixed;inset:0;width:100%;height:100%;object-fit:cover;z-index:-2;
+      filter:brightness(.75) saturate(1.05) /* было .35 */;
+    }
+    .overlay{position:fixed;inset:0;background:linear-gradient(to bottom, rgba(0,0,0,.25), rgba(0,0,0,.55));z-index:-1}
+
+    #header-mount{min-height:64px}
+
+    /* единственная колонка слева */
+    .layout{min-height:calc(100dvh - 64px);padding:16px;display:grid;grid-template-columns:minmax(260px, 760px);gap:16px}
+    .card{background:rgba(15,22,38,.78);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow)}
+    .panel{padding:14px}
+    h3{margin:0 0 6px;font-size:16px}
+
+    .section{display:flex;flex-direction:column;gap:10px}
+    .item{display:grid;grid-template-columns:1fr auto;gap:8px;align-items:center;padding:10px;border:1px solid var(--border);border-radius:12px;background:rgba(255,255,255,.03)}
+    .item b{font-weight:700}
+    .muted{color:var(--muted);font-size:12px}
+
+    .row-actions{display:flex;gap:6px}
+    .btn{padding:8px 10px;border-radius:10px;border:1px solid var(--border);background:rgba(255,255,255,.04);color:#fff;text-decoration:none;cursor:pointer}
+    .btn:hover{filter:brightness(1.05)}
+    .btn.green{background:linear-gradient(180deg, rgba(34,197,94,.16), rgba(34,197,94,.08));color:#eafff2}
+    .btn.red{background:linear-gradient(180deg, rgba(255,122,122,.18), rgba(255,122,122,.08))}
+
+    .progress{height:8px;border-radius:999px;background:rgba(255,255,255,.08);overflow:hidden;margin-top:6px}
+    .bar{height:100%;background:linear-gradient(90deg,var(--green),var(--green2));width:0%}
+  </style>
+</head>
+<body>
+  <!-- сюда header.js вставит header.html -->
+  <div id="header-mount"></div>
+
+  <!-- видео фон -->
+  <video class="bg" autoplay muted loop playsinline preload="auto">
+    <source src="https://assets.mixkit.co/videos/30431/30431-720.mp4" type="video/mp4">
+  </video>
+  <div class="overlay"></div>
+
+  <!-- левая (единственная) колонка: объекты + согласования -->
+  <div class="layout">
+    <!-- Объекты -->
+    <section class="card panel section">
+      <h3>Объекты (топ-10)</h3>
+      <div id="objectsBox">
+        <div class="muted">Загрузка…</div>
+      </div>
+    </section>
+
+    <!-- Лист согласования -->
+    <section class="card panel section">
+      <h3>На согласовании</h3>
+      <div id="approvalsBox">
+        <div class="muted">Загрузка…</div>
+      </div>
+    </section>
+  </div>
+
+  <!-- общий хедер -->
+  <script type="module" src="./header.js"></script>
+
+  <!-- Supabase + логика -->
+  <script type="module">
+    import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm";
+
+    // === CONFIG (совпадает с index.html/header.js)
+    const SUPABASE_URL = "https://hvpbwpegxcbstmpngdyc.supabase.co";
+    const SUPABASE_ANON = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imh2cGJ3cGVneGNic3RtcG5nZHljIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTg2NDE4NjMsImV4cCI6MjA3NDIxNzg2M30.rtPrQVsaEFA-ee1RphLKKn8q3TSOXeapZnZgfe9HVws";
+    const LOGIN_PAGE = "./index.html";
+
+    const supabase = createClient(SUPABASE_URL, SUPABASE_ANON, {
+      auth: {
+        persistSession: true,
+        storageKey: "prostroy.auth",
+        autoRefreshToken: true,
+        detectSessionInUrl: true
+      }
+    });
+
+    const $ = s => document.querySelector(s);
+    const el = (tag, attrs={}, children=[])=>{
+      const n = document.createElement(tag);
+      for (const [k,v] of Object.entries(attrs)){
+        if (k==="class") n.className=v;
+        else if (k==="html") n.innerHTML=v;
+        else n.setAttribute(k,v);
+      }
+      children.forEach(c=>n.appendChild(c));
+      return n;
+    };
+
+    // — редирект, если нет сессии
+    (async () => {
+      const { data:{ session } } = await supabase.auth.getSession();
+      if (!session) return location.replace(LOGIN_PAGE);
+      loadObjects();
+      loadApprovals();
+    })();
+
+    // === ОБЪЕКТЫ ===
+    async function loadObjects(){
+      const box = $("#objectsBox");
+      box.innerHTML = "<div class='muted'>Загрузка…</div>";
+      try{
+        const { data, error } = await supabase
+          .from("objects")
+          .select("id,name,address,progress,status")
+          .order("id",{ ascending:false })
+          .limit(10);
+        if (error) throw error;
+
+        if (!data?.length){
+          box.innerHTML = "<div class='muted'>Нет объектов.</div>";
+          return;
+        }
+
+        box.innerHTML = "";
+        data.forEach(o=>{
+          const pct = Math.max(0, Math.min(100, Number(o.progress ?? 0)));
+          const row = el("div",{class:"item"});
+          const left = el("div",{html:
+            `<b>${o.name||"Без названия"}</b>
+             <div class="muted">${o.address||""}${o.status?` · ${o.status}`:""}</div>
+             <div class="progress"><div class="bar" style="width:${pct}%"></div></div>`
+          });
+          const right = el("div",{class:"row-actions"},[
+            el("a",{class:"btn",href:`./object.html?id=${o.id}`},[document.createTextNode("Открыть")]),
+            el("button",{class:"btn",type:"button",onclick:`alert('Заглушка: документы по объекту #${o.id}')`},[document.createTextNode("Документы")]),
+          ]);
+          row.append(left,right);
+          box.appendChild(row);
+        });
+      }catch(e){
+        console.error(e);
+        box.innerHTML = "<div class='muted'>Не удалось загрузить объекты. Нужна таблица <code>objects</code> (id,name,address,progress,status).</div>";
+      }
+    }
+
+    // === СОГЛАСОВАНИЯ ===
+    async function loadApprovals(){
+      const box = $("#approvalsBox");
+      box.innerHTML = "<div class='muted'>Загрузка…</div>";
+      try{
+        const { data, error } = await supabase
+          .from("approvals")
+          .select("id,title,state,assignee,updated_at")
+          .order("updated_at",{ ascending:false })
+          .limit(10);
+        if (error) throw error;
+
+        if (!data?.length){
+          box.innerHTML = "<div class='muted'>Нет задач на согласование.</div>";
+          return;
+        }
+
+        box.innerHTML = "";
+        data.forEach(a=>{
+          const row = el("div",{class:"item"});
+          const left = el("div",{html:
+            `<b>${a.title || ("Задача #"+a.id)}</b>
+             <div class="muted">${(a.state||"на согласовании")} · ${a.assignee||"—"} · ${a.updated_at ? new Date(a.updated_at).toLocaleString():""}</div>`
+          });
+          const right = el("div",{class:"row-actions"});
+          const btnOk = el("button",{class:"btn green",type:"button"},[document.createTextNode("Согласовать")]);
+          const btnNo = el("button",{class:"btn red",type:"button"},[document.createTextNode("Отклонить")]);
+
+          btnOk.addEventListener("click", ()=>updateApproval(a.id, "согласовано"));
+          btnNo.addEventListener("click", ()=>updateApproval(a.id, "отклонено"));
+
+          right.append(btnOk, btnNo);
+          row.append(left,right);
+          box.appendChild(row);
+        });
+      }catch(e){
+        console.error(e);
+        box.innerHTML = "<div class='muted'>Не удалось загрузить список. Нужна таблица <code>approvals</code> (id,title,state,assignee,updated_at).</div>";
+      }
+    }
+
+    async function updateApproval(id, state){
+      try{
+        const { error } = await supabase
+          .from("approvals")
+          .update({ state, updated_at: new Date().toISOString() })
+          .eq("id", id);
+        if (error) throw error;
+        await loadApprovals();
+      }catch(e){
+        console.error(e);
+        alert("Не удалось обновить статус: "+(e?.message||e));
+      }
+    }
+  </script>
+</body>
+</html>

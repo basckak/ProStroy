@@ -1,37 +1,732 @@
 <!doctype html>
 <html lang="ru">
 <head>
-  <meta charset="utf-8">
-  <title>Заявки на автотранспорт</title>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>ProStroy — Заявка на автотранспорт</title>
+  <meta name="color-scheme" content="dark">
+  <style>
+    :root{
+      --bg:#0b1220; --panel:#0e172a; --panel2:rgba(11,19,32,.88);
+      --text:#eef3f9; --muted:#a9b4c7;
+      --green:#22c55e; --green-2:#1ed760;
+      --border:rgba(255,255,255,.12); --border-strong:rgba(255,255,255,.22);
+      --shadow:0 18px 60px rgba(0,0,0,.45);
+      --radius:18px;
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{margin:0;background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,Segoe UI,Roboto,Inter,Arial}
+    video.bg{position:fixed;inset:0;width:100%;height:100%;object-fit:cover;z-index:-2;filter:brightness(.7)}
+    .wrap{min-height:100%;padding:24px;max-width:1040px;margin:0 auto}
+    .card{background:rgba(0,0,0,.55);border:1px solid var(--border);border-radius:var(--radius);
+      box-shadow:var(--shadow);backdrop-filter:blur(6px);padding:28px}
+    h1{margin:0 0 16px;font-size:1.9rem}
+    .muted{margin:0 0 26px;font-size:.88rem;color:var(--muted)}
+
+    label{font-size:.92rem;color:#d7deea;font-weight:500}
+    input, select, .text-area, button{
+      font:inherit;color:inherit;background:rgba(255,255,255,.06);
+      border:1px solid var(--border);border-radius:12px;padding:12px 14px;outline:none;
+      transition:border-color .18s ease, box-shadow .18s ease, background-color .18s ease;
+      width:100%;min-height:48px;
+    }
+    input:focus, select:focus, .text-area:focus-visible{
+      border-color:#3b4458;box-shadow:0 0 0 3px rgba(59,68,88,.25)
+    }
+    select{
+      appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='7' viewBox='0 0 12 7'%3E%3Cpath fill='rgba(255,255,255,0.72)' d='M6 7L0 .5h12z'/%3E%3C/svg%3E");
+      background-repeat:no-repeat;background-position:right 14px center;background-size:12px;padding-right:36px
+    }
+    .text-area{
+      min-height:132px;resize:none;line-height:1.5;white-space:pre-wrap;overflow-y:auto;
+      scroll-padding:8px;display:block
+    }
+    .text-area[contenteditable="true"]:empty::before{content:attr(data-placeholder);color:var(--muted)}
+    .text-area:focus-visible{outline:none}
+
+    button{cursor:pointer}
+    .btn-primary{margin-top:12px;background:linear-gradient(135deg,var(--green),var(--green-2));color:#062915;font-weight:700;border:none}
+    .ok,.err{display:none;margin-top:16px;padding:12px;border-radius:12px;font-size:.92rem}
+    .ok{background:rgba(34,197,94,.12);border:1px solid rgba(34,197,94,.5);color:#b6ffd0}
+    .err{background:rgba(255,122,122,.12);border:1px solid rgba(255,122,122,.35);color:#ffbdbd}
+
+    details.section{background:var(--panel2);border:1px solid var(--border);border-radius:18px;padding:22px;
+      transition:border-color .18s ease, background-color .18s ease}
+    details.section:not(:last-child){margin-bottom:18px}
+    details.section[open]{border-color:var(--border-strong);background:rgba(14,25,40,.92)}
+    details.section summary{list-style:none;cursor:pointer;display:flex;align-items:center;gap:12px;
+      font-weight:600;font-size:1.04rem;color:var(--text)}
+    details.section summary::-webkit-details-marker{display:none}
+    details.section summary::after{content:"";margin-left:auto;width:12px;height:12px;border-right:2px solid rgba(238,243,249,.65);
+      border-bottom:2px solid rgba(238,243,249,.65);transform:rotate(-45deg) translateY(-2px);transition:transform .18s ease}
+    details.section[open] summary::after{transform:rotate(45deg) translateY(2px)}
+
+    .section-body{margin-top:22px;display:grid;gap:24px}
+    .field-grid{display:grid;gap:22px;grid-template-columns:repeat(auto-fit,minmax(280px,1fr))}
+    .field{display:flex;flex-direction:column;gap:8px;min-width:0}
+    .field.full{grid-column:1/-1}
+
+    .multi-select{position:relative}
+    .input-face{
+      display:flex;flex-wrap:wrap;gap:8px;align-items:center;min-height:52px;
+      background:rgba(255,255,255,.05);border:1px solid var(--border);border-radius:14px;
+      padding:12px 16px;cursor:pointer;transition:border-color .18s ease, box-shadow .18s ease;
+    }
+    .input-face:focus-visible{outline:none;border-color:#3b4458;box-shadow:0 0 0 3px rgba(59,68,88,.25)}
+    .input-face.empty{color:var(--muted)}
+    .multi-select.is-open .input-face{border-color:var(--border-strong);box-shadow:0 0 0 3px rgba(59,68,88,.25)}
+    .input-face .tag{display:flex;align-items:center;gap:6px;background:rgba(255,255,255,.12);
+      border:1px solid rgba(255,255,255,.18);border-radius:999px;padding:4px 12px;font-size:.82rem;
+      line-height:1.2;cursor:pointer;color:inherit;appearance:none;transition:all .18s ease}
+    .input-face .tag:hover{background:rgba(255,255,255,.18);border-color:rgba(255,255,255,.26)}
+    .input-face .tag:focus-visible{outline:none;box-shadow:0 0 0 2px rgba(59,68,88,.35)}
+    .input-face .tag::after{content:"✕";font-size:.75rem;opacity:.6}
+    .input-face .tag:hover::after{opacity:1}
+
+    .multi-options{
+      position:absolute;left:0;right:0;top:calc(100% + 10px);background:rgba(12,21,34,.98);
+      border:1px solid var(--border);border-radius:16px;box-shadow:var(--shadow);
+      max-height:280px;overflow:auto;padding:12px;display:none;z-index:30
+    }
+    .multi-options::-webkit-scrollbar{width:6px}
+    .multi-options::-webkit-scrollbar-thumb{background:rgba(255,255,255,.12);border-radius:999px}
+    .multi-options::-webkit-scrollbar-track{background:transparent}
+    .multi-select.is-open .multi-options{display:flex;flex-direction:column;gap:10px}
+
+    .multi-option{
+      display:flex;gap:14px;align-items:flex-start;width:100%;border-radius:12px;border:1px solid transparent;
+      padding:10px 12px;background:rgba(255,255,255,.03);color:inherit;font:inherit;text-align:left;
+      cursor:pointer;transition:border-color .18s ease, background-color .18s ease, box-shadow .18s ease;
+      position:relative
+    }
+    .multi-option:hover{background:rgba(255,255,255,.06)}
+    .multi-option:focus-visible{outline:none;border-color:var(--border-strong);box-shadow:0 0 0 3px rgba(59,68,88,.25)}
+    .multi-option.is-checked{border-color:rgba(34,197,94,.45);background:rgba(34,197,94,.13)}
+
+    .multi-check{
+      width:22px;height:22px;border-radius:8px;border:2px solid rgba(255,255,255,.25);
+      display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .18s ease;
+      margin-top:2px;position:relative
+    }
+    .multi-check::after{
+      content:"";width:8px;height:14px;border-right:2px solid rgba(255,255,255,0);
+      border-bottom:2px solid rgba(255,255,255,0);transform:rotate(45deg);transition:all .18s ease;
+    }
+    .multi-option.is-checked .multi-check{border-color:rgba(34,197,94,.85);background:rgba(34,197,94,.18)}
+    .multi-option.is-checked .multi-check::after{border-color:#4cff8b}
+
+    .multi-text{display:flex;flex-direction:column;gap:4px;align-items:flex-start;text-align:left}
+    .multi-text strong{font-size:.96rem;font-weight:600;color:var(--text)}
+    .multi-text small{color:var(--muted);font-size:.78rem}
+
+    @media (max-width:720px){
+      .wrap{padding:16px}
+      .card{padding:22px}
+      details.section{padding:18px}
+      .section-body{gap:20px}
+      .field-grid{grid-template-columns:1fr;gap:18px}
+      .text-area{min-height:120px}
+    }
+  </style>
 </head>
 <body>
-  <h1>Заявки на автотранспорт</h1>
-  <p>Пример простой формы:</p>
-  <form>
-    <p>
-      <label for="date">Дата:</label>
-      <input id="date" name="date" type="date">
-    </p>
-    <p>
-      <label for="object">Объект:</label>
-      <input id="object" name="object" type="text">
-    </p>
-    <p>
-      <label for="vehicle">Тип транспорта:</label>
-      <select id="vehicle" name="vehicle">
-        <option>Самосвал</option>
-        <option>Манипулятор</option>
-        <option>Автокран</option>
-        <option>Бетоносмеситель</option>
-      </select>
-    </p>
-    <p>
-      <label for="time">Время подачи:</label>
-      <input id="time" name="time" type="time">
-    </p>
-    <p>
-      <button type="submit">Отправить заявку</button>
-    </p>
-  </form>
+  <!-- фон-видео -->
+  <video class="bg" autoplay muted loop playsinline preload="auto">
+    <source src="https://assets.mixkit.co/videos/30431/30431-720.mp4" type="video/mp4">
+  </video>
+
+  <!-- общий header -->
+  <div id="header-mount"></div>
+
+  <!-- форма заявки -->
+  <div class="wrap">
+    <div class="card">
+      <h1>Заявка на автотранспорт</h1>
+      <p class="muted">Заполните ключевые данные о поездке и грузе, чтобы диспетчер быстро подобрал подходящую технику.</p>
+      <form id="transportForm">
+        <details class="section" open>
+          <summary>Основная информация</summary>
+          <div class="section-body">
+            <div class="field full">
+              <label for="destination">Куда едем *</label>
+              <input id="destination" name="destination" required placeholder="Адрес, объект или участок">
+            </div>
+            <div class="field-grid">
+              <div class="field">
+                <label for="date_from">Дата начала *</label>
+                <input id="date_from" type="date" required>
+              </div>
+              <div class="field">
+                <label for="date_to">Дата окончания *</label>
+                <input id="date_to" type="date" required>
+              </div>
+            </div>
+            <div class="field-grid">
+              <div class="field">
+                <label for="vehicle_type">Тип техники *</label>
+                <select id="vehicle_type" required>
+                  <option value="" disabled selected>Выберите тип</option>
+                  <option>Самосвал</option>
+                  <option>Экскаватор</option>
+                  <option>Манипулятор</option>
+                  <option>Автокран</option>
+                  <option>Бортовой грузовик</option>
+                  <option>Фура</option>
+                  <option>Бетоновоз</option>
+                  <option>Другое</option>
+                </select>
+              </div>
+              <div class="field">
+                <label for="vehicle_loading">Вид погрузки *</label>
+                <select id="vehicle_loading" required>
+                  <option value="" disabled selected>Выберите вариант</option>
+                  <option>Задняя</option>
+                  <option>Боковая</option>
+                  <option>Верхняя</option>
+                  <option>Кран-манипулятор</option>
+                  <option>Самозаряд</option>
+                  <option>Не требуется</option>
+                </select>
+              </div>
+            </div>
+            <div class="field full">
+              <label for="vehicle_details">Детали по технике</label>
+              <input id="vehicle_details" placeholder="Требуемая грузоподъёмность, марка, количество единиц">
+            </div>
+          </div>
+        </details>
+
+        <details class="section" open>
+          <summary>Информация о грузе</summary>
+          <div class="section-body">
+            <div class="field full">
+              <label for="cargo_name">Что перевозим *</label>
+              <input id="cargo_name" placeholder="Наименование груза" required>
+            </div>
+            <div class="field-grid">
+              <div class="field">
+                <label for="cargo_type">Тип груза *</label>
+                <select id="cargo_type" required>
+                  <option value="" disabled selected>Выберите тип</option>
+                  <option>Сыпучий</option>
+                  <option>Наливной</option>
+                  <option>Сборный</option>
+                  <option>Негабаритный</option>
+                  <option>Оборудование</option>
+                  <option>Стройматериалы</option>
+                  <option>Опасный</option>
+                  <option>Другое</option>
+                </select>
+              </div>
+              <div class="field">
+                <label for="cargo_hazard">Класс опасности</label>
+                <select id="cargo_hazard">
+                  <option value="">Не опасный</option>
+                  <option>Класс 1 — Взрывчатые</option>
+                  <option>Класс 2 — Газы</option>
+                  <option>Класс 3 — Легковоспламеняющиеся жидкости</option>
+                  <option>Класс 4 — Легковоспламеняющиеся твёрдые вещества</option>
+                  <option>Класс 5 — Окислители и пероксиды</option>
+                  <option>Класс 6 — Токсичные вещества</option>
+                  <option>Класс 7 — Радиоактивные</option>
+                  <option>Класс 8 — Коррозионные</option>
+                  <option>Класс 9 — Прочие опасные</option>
+                </select>
+              </div>
+            </div>
+            <div class="field-grid">
+              <div class="field">
+                <label for="cargo_weight">Вес, т *</label>
+                <input id="cargo_weight" type="number" min="0" step="0.01" placeholder="Например: 18" required>
+              </div>
+              <div class="field">
+                <label for="cargo_volume">Объём, м³</label>
+                <input id="cargo_volume" type="number" min="0" step="0.01" placeholder="Например: 36">
+              </div>
+              <div class="field">
+                <label for="cargo_packaging">Тип упаковки</label>
+                <select id="cargo_packaging">
+                  <option value="">Без упаковки</option>
+                  <option>Биг-бэги</option>
+                  <option>Паллеты</option>
+                  <option>Контейнеры</option>
+                  <option>Ящики</option>
+                  <option>Рулоны</option>
+                  <option>Штучно</option>
+                </select>
+              </div>
+            </div>
+            <div class="field full">
+              <label for="cargo_notes">Особые условия по грузу</label>
+              <div id="cargo_notes" class="text-area" contenteditable="true" data-placeholder="Температурный режим, закрепление, приоритеты доставки"></div>
+            </div>
+          </div>
+        </details>
+
+        <details class="section">
+          <summary>Маршрут и условия</summary>
+          <div class="section-body">
+            <div class="field full">
+              <label for="route">Маршрут</label>
+              <div id="route" class="text-area" contenteditable="true" data-placeholder="Ключевые точки маршрута, время в пути"></div>
+            </div>
+            <div class="field-grid">
+              <div class="field">
+                <label for="loading_conditions">Условия подачи</label>
+                <select id="loading_conditions">
+                  <option value="">Стандартные</option>
+                  <option>Требуется пропуск</option>
+                  <option>Только дневная работа</option>
+                  <option>Ночной выезд</option>
+                  <option>Разрешение на спецтехнику</option>
+                  <option>Согласование охраны</option>
+                </select>
+              </div>
+              <div class="field">
+                <label for="priority">Приоритет</label>
+                <select id="priority">
+                  <option value="Средний" selected>Средний</option>
+                  <option>Высокий</option>
+                  <option>Низкий</option>
+                  <option>Срочно сегодня</option>
+                </select>
+              </div>
+            </div>
+            <div class="field full">
+              <label for="requirements">Требования</label>
+              <div id="requirements" class="text-area" contenteditable="true" data-placeholder="Сменные графики, экипировка водителя, страховка"></div>
+            </div>
+            <div class="field full">
+              <label for="safety">Безопасность</label>
+              <div id="safety" class="text-area" contenteditable="true" data-placeholder="Требования по охране труда/БДД"></div>
+            </div>
+          </div>
+        </details>
+
+        <details class="section">
+          <summary>Финансы и вложения</summary>
+          <div class="section-body">
+            <div class="field-grid">
+              <div class="field">
+                <label for="finance">Ориентировочная стоимость, ₽</label>
+                <input id="finance" type="number" min="0" step="0.01" placeholder="Например: 85000">
+              </div>
+              <div class="field">
+                <label for="billing_type">Тип расчёта</label>
+                <select id="billing_type">
+                  <option value="">Не выбран</option>
+                  <option>Фиксированная ставка</option>
+                  <option>Почасовая</option>
+                  <option>Посуточная</option>
+                  <option>За рейс</option>
+                </select>
+              </div>
+            </div>
+            <div class="field full">
+              <label for="attachments">Вложения</label>
+              <div id="attachments" class="text-area" contenteditable="true" data-placeholder="Ссылки на чертежи, спецификации, маршрутные листы"></div>
+            </div>
+          </div>
+        </details>
+
+        <details class="section">
+          <summary>Согласование</summary>
+          <div class="section-body">
+            <div class="field full">
+              <label for="approversDisplay">Согласующие</label>
+              <div id="approversSelect" class="multi-select">
+                <div id="approversDisplay" class="input-face empty" role="button" tabindex="0" aria-haspopup="listbox" aria-expanded="false">Загрузка списка…</div>
+                <div id="approversOptions" class="multi-options" role="listbox" aria-multiselectable="true" aria-hidden="true"></div>
+              </div>
+              <div class="muted" id="approversHelp">Загружаем сотрудников…</div>
+            </div>
+          </div>
+        </details>
+
+        <button type="submit" class="btn-primary">Сохранить заявку</button>
+        <div id="ok" class="ok">Заявка сохранена.</div>
+        <div id="err" class="err">Ошибка при сохранении.</div>
+      </form>
+    </div>
+  </div>
+
+  <!-- скрипты -->
+  <script type="module">
+    import { loadHeader } from "./header.js";
+    import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm";
+
+    const SUPABASE_URL  = "https://hvpbwpegxcbstmpngdyc.supabase.co";
+    const SUPABASE_ANON = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imh2cGJ3cGVneGNic3RtcG5nZHljIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTg2NDE4NjMsImV4cCI6MjA3NDIxNzg2M30.rtPrQVsaEFA-ee1RphLKKn8q3TSOXeapZnZgfe9HVws";
+    const supabase = createClient(SUPABASE_URL, SUPABASE_ANON, {
+      auth:{ persistSession:true, storageKey:"prostroy.auth", autoRefreshToken:true, detectSessionInUrl:true }
+    });
+
+    const byId = (id) => document.getElementById(id);
+    const readText = (id) => {
+      const el = byId(id);
+      return el ? el.innerText.trim() : "";
+    };
+    const setText = (id, value) => {
+      const el = byId(id);
+      if (el) el.innerText = value || "";
+    };
+
+    const ROLE_LABELS = {
+      admin: "Администратор",
+      approver: "Согласующий",
+      user: "Сотрудник"
+    };
+
+    const approverState = {
+      list: [],
+      map: new Map(),
+      selected: new Set(),
+      loading: true,
+      error: null,
+      outsideBound: false
+    };
+
+    await loadHeader();
+    const { data:{ session } } = await supabase.auth.getSession();
+    if (!session) location.replace("./index.html");
+    const user = session.user;
+
+    bindApproverDropdown();
+    loadApproverDirectory().catch((e)=>{
+      console.error(e);
+    });
+
+    const parseNumber = (value) => {
+      const num = parseFloat(value);
+      return Number.isFinite(num) ? num : null;
+    };
+
+    function getSelectedApproverNames(){
+      return Array.from(approverState.selected).map((id)=>{
+        const info = approverState.map.get(id);
+        return info?.displayName || "Неизвестно";
+      });
+    }
+
+    function applyOptionState(option, isSelected){
+      if (!option) return;
+      option.classList.toggle("is-checked", isSelected);
+      option.setAttribute("aria-checked", isSelected ? "true" : "false");
+    }
+
+    function findApproverOption(id){
+      const box = byId("approversOptions");
+      if (!box) return null;
+      const safeId = (window.CSS && typeof CSS.escape === "function") ? CSS.escape(id) : id;
+      return box.querySelector(`[data-user-id="${safeId}"]`);
+    }
+
+    function buildApproverOption(user){
+      const option = document.createElement("button");
+      option.type = "button";
+      option.className = "multi-option";
+      option.dataset.userId = user.id;
+      option.setAttribute("role", "checkbox");
+
+      const check = document.createElement("span");
+      check.className = "multi-check";
+      check.setAttribute("aria-hidden", "true");
+
+      const textWrap = document.createElement("span");
+      textWrap.className = "multi-text";
+      const name = document.createElement("strong");
+      name.textContent = user.displayName;
+      textWrap.appendChild(name);
+      if (user.meta){
+        const meta = document.createElement("small");
+        meta.textContent = user.meta;
+        textWrap.appendChild(meta);
+      }
+
+      option.append(check, textWrap);
+      applyOptionState(option, approverState.selected.has(user.id));
+
+      option.addEventListener("click", ()=>{
+        if (approverState.selected.has(user.id)) approverState.selected.delete(user.id);
+        else approverState.selected.add(user.id);
+        applyOptionState(option, approverState.selected.has(user.id));
+        updateApproverDisplay();
+        updateApproverHint();
+      });
+
+      return option;
+    }
+
+    function updateApproverDisplay(){
+      const display = byId("approversDisplay");
+      if (!display) return;
+      display.innerHTML = "";
+      display.classList.add("empty");
+      if (approverState.loading){
+        display.textContent = "Загрузка списка…";
+        return;
+      }
+      if (approverState.error){
+        display.textContent = "Не удалось загрузить пользователей";
+        return;
+      }
+      if (!approverState.selected.size){
+        display.textContent = "Выберите сотрудников";
+        return;
+      }
+      display.classList.remove("empty");
+      approverState.selected.forEach((id)=>{
+        const info = approverState.map.get(id);
+        const tag = document.createElement("button");
+        tag.type = "button";
+        tag.className = "tag";
+        tag.dataset.userId = id;
+        tag.textContent = info?.displayName || "Сотрудник";
+        tag.title = "Убрать из согласования";
+        tag.addEventListener("click", (evt)=>{
+          evt.stopPropagation();
+          evt.preventDefault();
+          if (approverState.selected.delete(id)){
+            const option = findApproverOption(id);
+            if (option) applyOptionState(option, false);
+            updateApproverDisplay();
+            updateApproverHint();
+          }
+        });
+        display.appendChild(tag);
+      });
+    }
+
+    function updateApproverHint(){
+      const hint = byId("approversHelp");
+      if (!hint) return;
+      if (approverState.loading){
+        hint.textContent = "Загружаем сотрудников…";
+        return;
+      }
+      if (approverState.error){
+        hint.textContent = "Не удалось получить список. Попробуйте обновить страницу.";
+        return;
+      }
+      const count = approverState.selected.size;
+      hint.textContent = count
+        ? `Выбрано согласующих: ${count}`
+        : "Можно выбрать нескольких сотрудников для согласования.";
+    }
+
+    function renderApproverOptions(){
+      const box = byId("approversOptions");
+      if (!box) return;
+      box.innerHTML = "";
+      if (!approverState.list.length){
+        const empty = document.createElement("div");
+        empty.className = "muted";
+        empty.textContent = "Пользователи не найдены.";
+        box.appendChild(empty);
+        approverState.selected.clear();
+        updateApproverDisplay();
+        updateApproverHint();
+        return;
+      }
+      approverState.list.forEach((user)=>{
+        const option = buildApproverOption(user);
+        box.appendChild(option);
+      });
+      updateApproverDisplay();
+      updateApproverHint();
+    }
+
+    function toggleApproverDropdown(force){
+      const wrapper = byId("approversSelect");
+      if (!wrapper) return;
+      const open = typeof force === "boolean" ? force : !wrapper.classList.contains("is-open");
+      wrapper.classList.toggle("is-open", open);
+      const display = byId("approversDisplay");
+      if (display) display.setAttribute("aria-expanded", open ? "true" : "false");
+      const listbox = byId("approversOptions");
+      if (listbox) listbox.setAttribute("aria-hidden", open ? "false" : "true");
+    }
+
+    function bindApproverDropdown(){
+      const wrapper = byId("approversSelect");
+      const display = byId("approversDisplay");
+      if (!wrapper || !display) return;
+
+      display.addEventListener("click", ()=>{
+        if (approverState.error) return;
+        toggleApproverDropdown();
+      });
+      display.addEventListener("keydown", (evt)=>{
+        if (evt.key === "Enter" || evt.key === " "){
+          evt.preventDefault();
+          if (approverState.error) return;
+          toggleApproverDropdown();
+        }
+        if (evt.key === "Escape"){
+          toggleApproverDropdown(false);
+          display.blur();
+        }
+      });
+
+      if (!approverState.outsideBound){
+        document.addEventListener("click", (evt)=>{
+          const container = byId("approversSelect");
+          if (!container) return;
+          if (!container.contains(evt.target)) toggleApproverDropdown(false);
+        });
+        approverState.outsideBound = true;
+      }
+    }
+
+    async function loadApproverDirectory(){
+      const box = byId("approversOptions");
+      approverState.loading = true;
+      approverState.error = null;
+      if (box){
+        box.innerHTML = "";
+        const loading = document.createElement("div");
+        loading.className = "muted";
+        loading.textContent = "Загрузка…";
+        box.appendChild(loading);
+      }
+      updateApproverDisplay();
+      updateApproverHint();
+
+      try{
+        const { data, error } = await supabase
+          .from("profiles")
+          .select("id, full_name, login, role")
+          .order("full_name",{ ascending:true });
+        if (error) throw error;
+
+        const list = (data || []).map((row)=>{
+          const displayName = (row.full_name && row.full_name.trim())
+            || (row.login && row.login.trim())
+            || "Без имени";
+          const login = row.login && row.login.trim() ? row.login.trim() : "";
+          const roleTitle = row.role ? (ROLE_LABELS[row.role] || row.role) : "";
+          const metaParts = [];
+          if (roleTitle) metaParts.push(roleTitle);
+          if (login) metaParts.push(`@${login}`);
+          return {
+            id: row.id,
+            displayName,
+            login,
+            role: row.role,
+            meta: metaParts.join(" · ")
+          };
+        });
+
+        approverState.list = list;
+        approverState.map.clear();
+        list.forEach((item)=>{
+          approverState.map.set(item.id, item);
+        });
+
+        const validIds = new Set(list.map((item)=>item.id));
+        const nextSelected = new Set();
+        approverState.selected.forEach((id)=>{
+          if (validIds.has(id)) nextSelected.add(id);
+        });
+        approverState.selected = nextSelected;
+
+        approverState.loading = false;
+        renderApproverOptions();
+      }catch(e){
+        console.error(e);
+        approverState.loading = false;
+        approverState.error = e?.message || "Не удалось загрузить пользователей";
+        if (box){
+          box.innerHTML = "";
+          const fail = document.createElement("div");
+          fail.className = "muted";
+          fail.textContent = "Не удалось загрузить пользователей.";
+          box.appendChild(fail);
+        }
+        updateApproverDisplay();
+        updateApproverHint();
+      }
+    }
+
+    function resetApprovers(){
+      approverState.selected.clear();
+      const box = byId("approversOptions");
+      if (box){
+        box.querySelectorAll('.multi-option').forEach((option)=>{
+          applyOptionState(option, false);
+        });
+      }
+      updateApproverDisplay();
+      updateApproverHint();
+    }
+
+    const resetRichFields = () => {
+      ["cargo_notes", "route", "requirements", "safety", "attachments"].forEach((id)=>setText(id, ""));
+      resetApprovers();
+    };
+
+    document.getElementById("transportForm").addEventListener("submit", async (e)=>{
+      e.preventDefault();
+      const ok = byId("ok");
+      const err = byId("err");
+      ok.style.display="none";
+      err.style.display="none";
+
+      const payload = {
+        user_id: user.id,
+        destination: byId("destination").value.trim(),
+        date_from: byId("date_from").value,
+        date_to: byId("date_to").value,
+        vehicle: [byId("vehicle_type").value, byId("vehicle_details").value.trim()].filter(Boolean).join(" — "),
+        vehicle_meta: {
+          type: byId("vehicle_type").value,
+          loading: byId("vehicle_loading").value,
+          details: byId("vehicle_details").value.trim() || null
+        },
+        cargo: {
+          name: byId("cargo_name").value.trim(),
+          type: byId("cargo_type").value,
+          hazard_class: byId("cargo_hazard").value || null,
+          weight_tonnes: parseNumber(byId("cargo_weight").value),
+          volume_m3: parseNumber(byId("cargo_volume").value),
+          packaging: byId("cargo_packaging").value || null,
+          notes: readText("cargo_notes") || null
+        },
+        loading_conditions: byId("loading_conditions").value || null,
+        priority: byId("priority").value || null,
+        requirements: readText("requirements"),
+        route: readText("route"),
+        safety: readText("safety"),
+        finance: byId("finance").value ? parseNumber(byId("finance").value) : null,
+        billing_type: byId("billing_type").value || null,
+        attachments: readText("attachments") ? { text: readText("attachments") } : null,
+        approver_ids: Array.from(approverState.selected),
+        approval: approverState.selected.size ? {
+          approver_ids: Array.from(approverState.selected),
+          approver_names: getSelectedApproverNames()
+        } : null,
+        status: "черновик"
+      };
+
+      try{
+       const { data, error } = await supabase
+  .from("transport_requests")
+  .insert(payload)
+  .select("id, request_no");   // ← вернёт номер
+
+if (error) throw error;
+
+const req = Array.isArray(data) ? data[0] : data;
+document.getElementById("ok").textContent =
+  `Заявка ${req?.request_no || ""} сохранена.`;
+document.getElementById("ok").style.display = "block";
+      }catch(e){
+        console.error(e);
+        err.textContent = e.message || "Ошибка при сохранении.";
+        err.style.display="block";
+      }
+    });
+  </script>
 </body>
 </html>

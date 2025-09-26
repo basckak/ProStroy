@@ -1,0 +1,52 @@
+<!-- ProStroy · Header -->
+<style>
+  .ps-header-wrap{
+    position:fixed;inset:0 0 auto 0;z-index:50;
+    background:rgba(6,10,18,.55);backdrop-filter:blur(8px);
+    border-bottom:1px solid rgba(255,255,255,.08);
+  }
+  .ps-header{
+    display:flex;align-items:center;justify-content:space-between;
+    padding:10px 16px;gap:16px;color:#eef3f9;
+    font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Arial;
+  }
+  .ps-left{display:flex;align-items:center;gap:14px}
+  .ps-logo{display:flex;align-items:center;gap:10px;color:inherit;text-decoration:none}
+  .ps-dot{width:34px;height:34px;border-radius:50%;display:grid;place-items:center;
+    background:linear-gradient(135deg,#22c55e,#1ed760);color:#062915;font-weight:800;font-size:.95rem}
+  .ps-brand{font-weight:800;letter-spacing:.3px}
+  nav.ps-nav{display:flex;gap:10px;flex-wrap:wrap}
+  .ps-link{padding:8px 10px;border-radius:10px;text-decoration:none;color:#eef3f9;border:1px solid transparent}
+  .ps-link:hover{background:rgba(255,255,255,.06)}
+  .ps-link.is-active{border-color:rgba(255,255,255,.14);background:rgba(255,255,255,.06)}
+  .ps-right{display:flex;align-items:center;gap:10px;color:#cfe5d7}
+  #ps-user-name{max-width:240px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  #ps-logout{padding:8px 12px;border-radius:10px;border:1px solid rgba(255,255,255,.16);
+    background:linear-gradient(135deg,#22c55e22,#1ed76014);color:#eafff2;cursor:pointer}
+  #ps-logout:hover{filter:brightness(1.05)}
+  #ps-header-spacer{height:64px}
+  @media (max-width:640px){.ps-brand{display:none}nav.ps-nav{gap:6px}.ps-link{padding:6px 8px}#ps-user-name{max-width:150px}}
+</style>
+
+<div class="ps-header-wrap">
+  <div class="ps-header">
+    <div class="ps-left">
+      <a class="ps-logo" href="./main.html" aria-label="На главную">
+        <div class="ps-dot">PS</div><div class="ps-brand">ProStroy</div>
+      </a>
+      <nav class="ps-nav" aria-label="Навигация">
+        <a class="ps-link" href="./main.html">Главная</a>
+        <a class="ps-link" href="./request-new.html">Заявки</a>
+        <a class="ps-link" href="./objects.html">Объекты</a>
+        <a class="ps-link" href="./pto.html">ПТО</a>
+        <a class="ps-link" href="./transport.html">Автотранспорт</a>
+        <a class="ps-link" href="./profile.html">Личный кабинет</a>
+      </nav>
+    </div>
+    <div class="ps-right">
+      <span id="ps-user-name" title="Текущий пользователь">Загрузка…</span>
+      <button id="ps-logout" type="button">Выйти</button>
+    </div>
+  </div>
+</div>
+<div id="ps-header-spacer" aria-hidden="true"></div>

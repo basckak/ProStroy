@@ -1,56 +1,235 @@
 <!doctype html>
 <html lang="ru">
 <head>
-  <meta charset="utf-8">
-  <title>ProStroy · Панель</title>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>ProStroy — Вход</title>
+  <meta name="color-scheme" content="dark">
+  <style>
+    :root{
+      --bg:#0b1220; --surface:rgba(0,0,0,.55); --border:rgba(255,255,255,.15);
+      --text:#eef3f9; --muted:#a9b4c7; --green:#22c55e; --green-2:#1ed760;
+      --radius:18px; --shadow:0 18px 60px rgba(0,0,0,.45);
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{margin:0;background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,Segoe UI,Roboto,Inter,Arial}
+    video.bg{position:fixed;inset:0;width:100%;height:100%;object-fit:cover;z-index:-1;filter:brightness(.75)}
+    .wrap{min-height:100%;display:grid;place-items:center;padding:24px}
+    .card{width:min(92vw, 820px);padding:28px 32px;border-radius:var(--radius);
+      background:var(--surface);border:1px solid var(--border);box-shadow:var(--shadow);backdrop-filter:blur(6px)}
+    .logo {display: flex;align-items: center;gap: 10px;justify-content: center;}
+    .dot {display: flex;align-items: center;justify-content: center;width: 40px;height: 40px;border-radius: 50%;background: linear-gradient(135deg, #22c55e, #1ed760);color: #062915;font-weight: 800;font-size: 1rem;}
+    .brand {font-weight: 800;letter-spacing: .3px;font-size: 1.2rem;}
+    h1{margin:0 0 6px;text-align:center;font-weight:700;letter-spacing:.2px}
+    .subtitle{margin:0 0 20px;text-align:center;color:var(--muted);font-size:.95rem}
+    form{display:grid;gap:14px}
+    label{font-size:.9rem;color:#d7deea}
+    .row{display:grid;gap:6px}
+    .field{display:flex;align-items:center;gap:8px;background:rgba(255,255,255,.07);border:1px solid var(--border);
+      border-radius:14px;padding:10px 12px}
+    .field input{flex:1;min-width:0;border:0;background:transparent;color:var(--text);font-size:1rem;outline:none}
+    .eye {cursor: pointer;user-select: none;color: #a9b4c7; /* серенький */display: flex;align-items: center;}
+    .eye:hover {color: #fff; /* подсветка при наведении */}
+    .remember{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:2px}
+    .remember .left{display:flex;align-items:center;gap:8px;color:#d7deea;font-size:.92rem}
+    .remember input[type="checkbox"]{accent-color:var(--green)}
+    button[type="submit"]{margin-top:2px;border:0;border-radius:14px;padding:12px 16px;
+      background:linear-gradient(135deg,var(--green),var(--green-2));color:#062915;font-weight:700;
+      cursor:pointer;transition:transform .06s ease, filter .2s}
+    button[disabled]{opacity:.7;cursor:not-allowed;filter:saturate(.6)}
+    button:hover{filter:brightness(1.05)}
+    .hint{font-size:.9rem;color:var(--muted);text-align:center;margin-top:8px}
+    .err{display:none;margin-top:6px;padding:10px;border-radius:12px;background:rgba(255,122,122,.12);
+      border:1px solid rgba(255,122,122,.35);color:#ffbdbd;font-size:.92rem}
+    .ok{display:none;margin-top:6px;padding:10px;border-radius:12px;background:rgba(34,197,94,.12);
+      border:1px solid rgba(34,197,94,.5);color:#b6ffd0;font-size:.92rem}
+    .spinner{display:inline-block;width:16px;height:16px;border:2px solid rgba(255,255,255,.4);
+      border-top-color:#fff;border-radius:50%;vertical-align:-3px;animation:spin .8s linear infinite;margin-left:8px}
+    @keyframes spin{to{transform:rotate(360deg)}}
+    .foot{margin-top:14px;text-align:center;color:#cfe5d7;font-size:.9rem}
+    .foot b{color:#c3ffd9}
+  </style>
 </head>
 <body>
-  <!-- Статичный топ-бар -->
-  <table width="100%" border="1" cellspacing="0" cellpadding="8">
-    <tr>
-      <td>
-        <b>ProStroy — Панель управления</b> | Тема: строительная
-      </td>
-    </tr>
-  </table>
+  <!-- Фон-видео стройки -->
+  <video class="bg" autoplay muted loop playsinline preload="auto">
+    <source src="https://assets.mixkit.co/videos/30431/30431-720.mp4" type="video/mp4">
+  </video>
 
-  <!-- Макет: слева меню, справа контент во фрейме -->
-  <table width="100%" border="1" cellspacing="0" cellpadding="8">
-    <tr>
-      <!-- Левое меню -->
-      <td width="220" valign="top">
-        <p><b>Навигация</b></p>
+  <div class="wrap">
+    <div class="card">
+      <div class="logo">
+        <div class="dot">PS</div>
+        <div class="brand">ProStroy</div>
+      </div>
+      <h1>Вход в систему</h1>
 
-        <form target="main" action="home.html" method="get">
-          <button type="submit">Главная</button>
-        </form>
+      <form id="loginForm" autocomplete="on">
+        <div class="row">
+          <label for="login">Логин</label>
+          <div class="field">
+            <input id="login" name="login" type="text" placeholder="user@prostroy.ru" autocomplete="username" required>
+          </div>
+        </div>
 
-        <form target="main" action="contracts.html" method="get">
-          <button type="submit">Договоры</button>
-        </form>
+        <div class="row">
+          <label for="password">Пароль</label>
+          <div class="field">
+            <input id="password" name="password" type="password" placeholder="•••••" autocomplete="current-password" required >
+            <span class="eye" id="togglePass" title="Показать/скрыть пароль">
+                <!-- SVG иконка глаза -->
+                <svg id="icon-eye" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="20" height="20" fill="currentColor">
+                    <path d="M12 4.5c-7 0-11 7.5-11 7.5s4 7.5 11 7.5 11-7.5 11-7.5-4-7.5-11-7.5zm0 12a4.5 4.5 0 1 1 0-9 4.5 4.5 0 0 1 0 9z"/>
+                </svg>
+            </span>
+          </div>
+        </div>
 
-        <form target="main" action="transport.html" method="get">
-          <button type="submit">Заявки на автотранспорт</button>
-        </form>
+        <div class="remember">
+          <label class="left"><input id="remember" type="checkbox" checked> Запомнить меня</label>
+          <a href="#" id="resetLink" style="color:#bfe7ff;text-decoration:none">Забыли пароль?</a>
+        </div>
 
-        <form target="main" action="pto.html" method="get">
-          <button type="submit">ПТО / Журналы</button>
-        </form>
+        <button id="submitBtn" type="submit">Войти</button>
 
-        <form target="main" action="reports.html" method="get">
-          <button type="submit">Отчёты</button>
-        </form>
+        <div id="ok" class="ok">Успешный вход. Перенаправляю…</div>
+        <div id="err" class="err">Ошибка входа.</div>
+        <div class="hint">Нет аккаунта? Обратитесь к администратору ProStroy.</div>
+      </form>
 
-        <form target="main" action="profile.html" method="get">
-          <button type="submit">Личный кабинет</button>
-        </form>
-      </td>
+      <div class="foot">© <b>ProStroy</b> · безопасность по RLS Supabase</div>
+    </div>
+  </div>
 
-      <!-- Основной контент -->
-      <td valign="top">
-        <iframe name="main" src="home.html" width="100%" height="600" frameborder="0" title="Контент"></iframe>
-      </td>
-    </tr>
-  </table>
+  <!-- Supabase JS v2 -->
+  <script type="module">
+    import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm";
+
+    // === Конфиг (из твоих данных) ===
+    const SUPABASE_URL = "https://hvpbwpegxcbstmpngdyc.supabase.co";
+    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imh2cGJ3cGVneGNic3RtcG5nZHljIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTg2NDE4NjMsImV4cCI6MjA3NDIxNzg2M30.rtPrQVsaEFA-ee1RphLKKn8q3TSOXeapZnZgfe9HVws";
+    const MAIN_PAGE = "main.html"; // после успешного входа
+
+    const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+      auth: {
+        persistSession: true,          // хранить сессию в localStorage
+        storageKey: "prostroy.auth",   // свой ключ
+        autoRefreshToken: true,
+        detectSessionInUrl: true
+      }
+    });
+
+    // Если уже вошли — сразу на главную
+    (async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session?.user) {
+        location.replace(MAIN_PAGE);
+      }
+    })();
+
+    // UI элементы
+    const form = document.getElementById("loginForm");
+    const btn = document.getElementById("submitBtn");
+    const ok = document.getElementById("ok");
+    const err = document.getElementById("err");
+    const loginInput = document.getElementById("login");
+    const passInput = document.getElementById("password");
+    const toggle = document.getElementById("togglePass");
+    const resetLink = document.getElementById("resetLink");
+    const remember = document.getElementById("remember");
+
+    toggle.addEventListener("click", () => {
+    if (passInput.type === "password") {
+    passInput.type = "text";
+    // иконка «глаз открыт»
+    toggle.innerHTML = `
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="20" height="20" fill="currentColor">
+        <path d="M12 4.5c-7 0-11 7.5-11 7.5s4 7.5 11 7.5 11-7.5 11-7.5-4-7.5-11-7.5zm0 12a4.5 4.5 0 1 1 0-9 4.5 4.5 0 0 1 0 9z"/>
+      </svg>`;
+    } else {
+    passInput.type = "password";
+    // иконка «глаз зачёркнутый»
+    toggle.innerHTML = `
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="20" height="20" fill="currentColor">
+        <path d="M2 4.27 3.28 3 21 20.72 19.73 22l-2.3-2.29A12.2 12.2 0 0 1 12 20c-7 0-11-7.5-11-7.5a20.2 20.2 0 0 1 4.41-5.1L2 4.27zm7.11 7.11a4.5 4.5 0 0 0 6.22 6.22l-6.22-6.22zM12 6a6 6 0 0 1 6 6c0 .9-.2 1.75-.56 2.5l-8-8c.75-.36 1.6-.56 2.56-.56z"/>
+      </svg>`;
+    }
+    });
+
+    resetLink.addEventListener("click", async (e) => {
+      e.preventDefault();
+      const login = loginInput.value.trim();
+      if (!login || !login.includes("@")) {
+        showErr("Для восстановления укажите email в поле логина.");
+        return;
+      }
+      const { error } = await supabase.auth.resetPasswordForEmail(login, {
+        redirectTo: location.origin + "/reset.html"
+      });
+      if (error) return showErr(error.message);
+      showOk("Письмо для сброса пароля отправлено.");
+    });
+
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      setLoading(true);
+
+      const login = loginInput.value.trim();
+      const password = passInput.value;
+
+      if (!login || !password) {
+        setLoading(false);
+        return showErr("Заполните логин и пароль.");
+      }
+
+      // Детект: email vs телефон
+      const isEmail = login.includes("@");
+      let result;
+
+      try {
+        if (isEmail) {
+          result = await supabase.auth.signInWithPassword({ email: login, password });
+        } else {
+          // Телефон в формате +79991234567
+          result = await supabase.auth.signInWithPassword({ phone: login, password });
+        }
+      } catch (e) {
+        setLoading(false);
+        return showErr("Сетевая ошибка. Проверьте подключение.");
+      }
+
+      const { data, error } = result || {};
+      if (error || !data?.user) {
+        setLoading(false);
+        return showErr(error?.message || "Неверный логин или пароль.");
+      }
+
+      // Контроль «Запомнить меня»: при снятом чекбоксе делаем сессию «в памяти вкладки»
+      if (!remember.checked) {
+        // локальный хак: продублируем access токен в sessionStorage для твоей логики (по желанию)
+        sessionStorage.setItem("prostroy.access_token", data.session?.access_token || "");
+      }
+
+      showOk("Успешный вход. Перенаправляю…");
+      // Небольшая задержка для UX
+      setTimeout(() => location.replace(MAIN_PAGE), 400);
+    });
+
+    function setLoading(v){
+      btn.disabled = v;
+      if(v && !btn.querySelector(".spinner")){
+        const sp = document.createElement("span"); sp.className="spinner";
+        btn.appendChild(sp);
+      }
+      if(!v){
+        const sp = btn.querySelector(".spinner"); if(sp) sp.remove();
+      }
+      clearMsg();
+    }
+    function clearMsg(){ ok.style.display="none"; err.style.display="none"; }
+    function showErr(msg){ err.textContent = msg; err.style.display="block"; ok.style.display="none"; }
+    function showOk(msg){ ok.textContent = msg; ok.style.display="block"; err.style.display="none"; }
+  </script>
 </body>
 </html>

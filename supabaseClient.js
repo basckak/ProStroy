@@ -2,7 +2,7 @@ const STORAGE_KEY = 'prostroy.auth';
 
 function ensureClient(){
   if (window.sb) return window.sb;
-  throw new Error('[supabaseClient] Supabase client не инициализирован. Убедитесь, что подключён /js/supabaseClient.js и window.ENV содержит ключи.');
+  throw new Error('[supabaseClient] Supabase client не инициализирован. Убедитесь, что подключён скрипт js/supabaseClient.js и window.ENV содержит ключи.');
 }
 
 export function getSupabaseClient(){

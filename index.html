@@ -1,0 +1,399 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>ProStroy — Вход</title>
+  <meta name="color-scheme" content="dark">
+  <link rel="stylesheet" href="assets/styles/base.css">
+  <style>
+    body {
+      display: grid;
+      place-items: center;
+      min-height: 100dvh;
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font-sans);
+      --bg-video-filter: brightness(0.75);
+    }
+
+    .wrap {
+      width: 100%;
+      min-height: 100%;
+      padding: 24px;
+      display: grid;
+      place-items: center;
+    }
+
+    .card {
+      width: min(92vw, 820px);
+      padding: 28px 32px;
+      border-radius: var(--radius-lg);
+      background: var(--surface);
+      border: 1px solid var(--border);
+      box-shadow: var(--shadow-lg);
+      backdrop-filter: blur(6px);
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      margin-bottom: 6px;
+    }
+
+    .dot {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--green), var(--green-2));
+      color: #062915;
+      font-weight: 800;
+      font-size: 1rem;
+    }
+
+    .brand {
+      font-weight: 800;
+      letter-spacing: 0.3px;
+      font-size: 1.2rem;
+    }
+
+    h1 {
+      margin: 0 0 6px;
+      text-align: center;
+      font-weight: 700;
+      letter-spacing: 0.2px;
+    }
+
+    .subtitle {
+      margin: 0 0 20px;
+      text-align: center;
+      color: var(--muted);
+      font-size: 0.95rem;
+    }
+
+    form {
+      display: grid;
+      gap: 14px;
+    }
+
+    .row {
+      display: grid;
+      gap: 6px;
+    }
+
+    label {
+      font-size: 0.9rem;
+      color: #d7deea;
+    }
+
+    .field {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(255, 255, 255, 0.07);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 10px 12px;
+    }
+
+    .field input {
+      flex: 1;
+      min-width: 0;
+      border: 0;
+      background: transparent;
+      color: var(--text);
+      font-size: 1rem;
+      outline: none;
+    }
+
+    .eye {
+      display: flex;
+      align-items: center;
+      cursor: pointer;
+      user-select: none;
+      color: var(--muted);
+      transition: color 0.2s ease;
+    }
+
+    .eye:hover {
+      color: #fff;
+    }
+
+    .remember {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      margin-top: 2px;
+    }
+
+    .remember .left {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: #d7deea;
+      font-size: 0.92rem;
+    }
+
+    .remember input[type="checkbox"] {
+      accent-color: var(--green);
+    }
+
+    button[type="submit"] {
+      margin-top: 2px;
+      border: 0;
+      border-radius: 14px;
+      padding: 12px 16px;
+      background: linear-gradient(135deg, var(--green), var(--green-2));
+      color: #062915;
+      font-weight: 700;
+      cursor: pointer;
+      transition: transform 0.06s ease, filter 0.2s ease;
+    }
+
+    button[disabled] {
+      opacity: 0.7;
+      cursor: not-allowed;
+      filter: saturate(0.6);
+    }
+
+    button:hover:not([disabled]) {
+      filter: brightness(1.05);
+    }
+
+    .hint {
+      font-size: 0.9rem;
+      color: var(--muted);
+      text-align: center;
+      margin-top: 8px;
+    }
+
+    .err,
+    .ok {
+      display: none;
+      margin-top: 6px;
+      padding: 10px;
+      border-radius: 12px;
+      font-size: 0.92rem;
+    }
+
+    .err {
+      background: rgba(255, 122, 122, 0.12);
+      border: 1px solid rgba(255, 122, 122, 0.35);
+      color: #ffbdbd;
+    }
+
+    .ok {
+      background: rgba(34, 197, 94, 0.12);
+      border: 1px solid rgba(34, 197, 94, 0.5);
+      color: #b6ffd0;
+    }
+
+    .spinner {
+      display: inline-block;
+      width: 16px;
+      height: 16px;
+      border: 2px solid rgba(255, 255, 255, 0.4);
+      border-top-color: #fff;
+      border-radius: 50%;
+      vertical-align: -3px;
+      animation: spin 0.8s linear infinite;
+      margin-left: 8px;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    .foot {
+      margin-top: 14px;
+      text-align: center;
+      color: #cfe5d7;
+      font-size: 0.9rem;
+    }
+
+    .foot b {
+      color: #c3ffd9;
+    }
+  </style>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js" defer></script>
+  <script src="/js/supabaseClient.js" defer></script>
+  <script src="/header.js" defer></script>
+</head>
+<body>
+  <!-- Фон-видео стройки -->
+  <video class="bg" autoplay muted loop playsinline preload="auto">
+    <source src="https://assets.mixkit.co/videos/30431/30431-720.mp4" type="video/mp4">
+  </video>
+
+  <div class="wrap">
+    <div class="card">
+      <div class="logo">
+        <div class="dot">PS</div>
+        <div class="brand">ProStroy</div>
+      </div>
+      <h1>Вход в систему</h1>
+
+      <form id="loginForm" autocomplete="on">
+        <div class="row">
+          <label for="login">Логин</label>
+          <div class="field">
+            <input id="login" name="login" type="text" placeholder="user@prostroy.ru" autocomplete="username" required>
+          </div>
+        </div>
+
+        <div class="row">
+          <label for="password">Пароль</label>
+          <div class="field">
+            <input id="password" name="password" type="password" placeholder="•••••" autocomplete="current-password" required >
+            <span class="eye" id="togglePass" title="Показать/скрыть пароль">
+                <!-- SVG иконка глаза -->
+                <svg id="icon-eye" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="20" height="20" fill="currentColor">
+                    <path d="M12 4.5c-7 0-11 7.5-11 7.5s4 7.5 11 7.5 11-7.5 11-7.5-4-7.5-11-7.5zm0 12a4.5 4.5 0 1 1 0-9 4.5 4.5 0 0 1 0 9z"/>
+                </svg>
+            </span>
+          </div>
+        </div>
+
+        <div class="remember">
+          <label class="left"><input id="remember" type="checkbox" checked> Запомнить меня</label>
+          <a href="#" id="resetLink" class="link-accent">Забыли пароль?</a>
+        </div>
+
+        <button id="submitBtn" type="submit">Войти</button>
+
+        <div id="ok" class="ok">Успешный вход. Перенаправляю…</div>
+        <div id="err" class="err">Ошибка входа.</div>
+        <div class="hint">Нет аккаунта? Обратитесь к администратору ProStroy.</div>
+      </form>
+
+      <div class="foot">© <b>ProStroy</b> · безопасность по RLS Supabase</div>
+    </div>
+  </div>
+
+  <!-- Supabase JS v2 -->
+  <script type="module">
+    import supabase from "./supabaseClient.js";
+
+    // === Конфиг (из твоих данных) ===
+    const MAIN_PAGE = "main.html"; // после успешного входа
+
+    // Если уже вошли — сразу на главную
+    (async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session?.user) {
+        location.replace(MAIN_PAGE);
+      }
+    })();
+
+    // UI элементы
+    const form = document.getElementById("loginForm");
+    const btn = document.getElementById("submitBtn");
+    const ok = document.getElementById("ok");
+    const err = document.getElementById("err");
+    const loginInput = document.getElementById("login");
+    const passInput = document.getElementById("password");
+    const toggle = document.getElementById("togglePass");
+    const resetLink = document.getElementById("resetLink");
+    const remember = document.getElementById("remember");
+
+    toggle.addEventListener("click", () => {
+    if (passInput.type === "password") {
+    passInput.type = "text";
+    // иконка «глаз открыт»
+    toggle.innerHTML = `
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="20" height="20" fill="currentColor">
+        <path d="M12 4.5c-7 0-11 7.5-11 7.5s4 7.5 11 7.5 11-7.5 11-7.5-4-7.5-11-7.5zm0 12a4.5 4.5 0 1 1 0-9 4.5 4.5 0 0 1 0 9z"/>
+      </svg>`;
+    } else {
+    passInput.type = "password";
+    // иконка «глаз зачёркнутый»
+    toggle.innerHTML = `
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="20" height="20" fill="currentColor">
+        <path d="M2 4.27 3.28 3 21 20.72 19.73 22l-2.3-2.29A12.2 12.2 0 0 1 12 20c-7 0-11-7.5-11-7.5a20.2 20.2 0 0 1 4.41-5.1L2 4.27zm7.11 7.11a4.5 4.5 0 0 0 6.22 6.22l-6.22-6.22zM12 6a6 6 0 0 1 6 6c0 .9-.2 1.75-.56 2.5l-8-8c.75-.36 1.6-.56 2.56-.56z"/>
+      </svg>`;
+    }
+    });
+
+    resetLink.addEventListener("click", async (e) => {
+      e.preventDefault();
+      const login = loginInput.value.trim();
+      if (!login || !login.includes("@")) {
+        showErr("Для восстановления укажите email в поле логина.");
+        return;
+      }
+      const { error } = await supabase.auth.resetPasswordForEmail(login, {
+        redirectTo: location.origin + "/reset.html"
+      });
+      if (error) return showErr(error.message);
+      showOk("Письмо для сброса пароля отправлено.");
+    });
+
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      setLoading(true);
+
+      const login = loginInput.value.trim();
+      const password = passInput.value;
+
+      if (!login || !password) {
+        setLoading(false);
+        return showErr("Заполните логин и пароль.");
+      }
+
+      // Детект: email vs телефон
+      const isEmail = login.includes("@");
+      let result;
+
+      try {
+        if (isEmail) {
+          result = await supabase.auth.signInWithPassword({ email: login, password });
+        } else {
+          // Телефон в формате +79991234567
+          result = await supabase.auth.signInWithPassword({ phone: login, password });
+        }
+      } catch (e) {
+        setLoading(false);
+        return showErr("Сетевая ошибка. Проверьте подключение.");
+      }
+
+      const { data, error } = result || {};
+      if (error || !data?.user) {
+        setLoading(false);
+        return showErr(error?.message || "Неверный логин или пароль.");
+      }
+
+      // Контроль «Запомнить меня»: при снятом чекбоксе делаем сессию «в памяти вкладки»
+      if (!remember.checked) {
+        // локальный хак: продублируем access токен в sessionStorage для твоей логики (по желанию)
+        sessionStorage.setItem("prostroy.access_token", data.session?.access_token || "");
+      }
+
+      showOk("Успешный вход. Перенаправляю…");
+      // Небольшая задержка для UX
+      setTimeout(() => location.replace(MAIN_PAGE), 400);
+    });
+
+    function setLoading(v){
+      btn.disabled = v;
+      if(v && !btn.querySelector(".spinner")){
+        const sp = document.createElement("span"); sp.className="spinner";
+        btn.appendChild(sp);
+      }
+      if(!v){
+        const sp = btn.querySelector(".spinner"); if(sp) sp.remove();
+      }
+      clearMsg();
+    }
+    function clearMsg(){ ok.style.display="none"; err.style.display="none"; }
+    function showErr(msg){ err.textContent = msg; err.style.display="block"; ok.style.display="none"; }
+    function showOk(msg){ ok.textContent = msg; ok.style.display="block"; err.style.display="none"; }
+  </script>
+</body>
+</html>

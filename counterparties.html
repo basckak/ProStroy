@@ -1,0 +1,568 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>ProStroy — Контрагенты</title>
+  <meta name="color-scheme" content="dark">
+  <link rel="stylesheet" href="assets/styles/base.css">
+  <link rel="stylesheet" href="assets/styles/header.css">
+  <style>
+    :root{
+      --bg:#0b1220; --panel:#0e172a; --panel2:#0b1320;
+      --text:#eef3f9; --muted:#a9b4c7; --accent:#22c55e;
+      --border:rgba(255,255,255,.12); --shadow:0 18px 60px rgba(0,0,0,.45);
+      --radius:18px;
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{margin:0;background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,Segoe UI,Roboto,Inter,Arial}
+    video.bg{position:fixed;inset:0;width:100%;height:100%;object-fit:cover;z-index:-2;filter:brightness(.7)}
+    .wrap{min-height:100%;padding:24px}
+    .page{max-width:1100px;margin:0 auto;display:grid;gap:20px}
+    .card{background:rgba(0,0,0,.55);border:1px solid var(--border);border-radius:var(--radius);
+      box-shadow:var(--shadow);backdrop-filter:blur(6px);padding:22px}
+    h1,h2{margin:0 0 12px}
+    p{margin:0 0 12px;color:var(--muted)}
+    .grid-2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+    .row{display:grid;gap:6px;margin-bottom:14px}
+    label{font-size:.92rem;color:#d7deea}
+    input, textarea, select, button{
+      font:inherit;color:inherit;background:rgba(255,255,255,.06);
+      border:1px solid var(--border);border-radius:12px;padding:10px 12px;outline:none
+    }
+    input:focus, textarea:focus, select:focus{border-color:#3b4458}
+    textarea{min-height:90px;resize:vertical}
+    .muted{color:var(--muted)}
+    .btn{cursor:pointer}
+    .btn-primary{background:linear-gradient(135deg,var(--accent),#1ed760);color:#062915;font-weight:700;border:none}
+    .ok,.err{display:none;margin-top:12px;padding:12px;border-radius:12px;font-size:.92rem}
+    .ok{background:rgba(34,197,94,.12);border:1px solid rgba(34,197,94,.5);color:#b6ffd0}
+    .err{background:rgba(255,122,122,.12);border:1px solid rgba(255,122,122,.35);color:#ffbdbd}
+    .inline{display:flex;gap:12px;flex-wrap:wrap;align-items:center}
+    .badge{display:inline-flex;align-items:center;gap:6px;padding:4px 10px;border-radius:999px;border:1px solid rgba(255,255,255,.14);font-size:.82rem}
+    .section{border-top:1px dashed rgba(255,255,255,.08);padding-top:12px;margin-top:12px}
+    @media (max-width:980px){ .grid-2{grid-template-columns:1fr} }
+  </style>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js" defer></script>
+  <script src="/js/supabaseClient.js" defer></script>
+  <script src="/header.js" defer></script>
+</head>
+<body>
+  <video class="bg" autoplay muted loop playsinline preload="auto">
+    <source src="https://assets.mixkit.co/videos/30431/30431-720.mp4" type="video/mp4">
+  </video>
+
+  <div id="header"></div>
+
+  <div class="wrap">
+    <div class="page">
+      <section class="card">
+        <h1>Контрагенты</h1>
+        <p>Заведите нового партнёра. Выберите тип — данные формы и правила валидации подстроятся автоматически.</p>
+
+        <form id="counterpartyForm" autocomplete="on">
+          <div class="row">
+            <label for="cp_type">Тип контрагента *</label>
+            <div class="inline">
+              <label class="badge"><input type="radio" name="cp_type" value="individual" checked> Физ лицо / ИП</label>
+              <label class="badge"><input type="radio" name="cp_type" value="legal"> Юр лицо</label>
+            </div>
+          </div>
+
+          <div class="row">
+            <label for="cp_name">Полное наименование / ФИО *</label>
+            <input id="cp_name" required placeholder="ООО «СтройСервис» или Иванов Иван Иванович">
+          </div>
+
+          <div class="row">
+            <label for="cp_role">Тип контрагента *</label>
+            <select id="cp_role">
+              <option value="supplier" selected>Поставщик</option>
+              <option value="contractor">Подрядчик</option>
+              <option value="customer">Заказчик</option>
+              <option value="subcontractor">Субподрядчик</option>
+              <option value="leasing">Лизингодатель</option>
+              <option value="other">Другое</option>
+            </select>
+          </div>
+
+          <div class="grid-2">
+            <div class="row">
+              <label for="cp_status">Статус *</label>
+              <select id="cp_status">
+                <option value="active" selected>Активен</option>
+                <option value="pending">На проверке</option>
+                <option value="blocked">Заблокирован</option>
+              </select>
+            </div>
+            <div class="row">
+              <label for="cp_manager">Ответственный менеджер / куратор</label>
+              <input id="cp_manager" placeholder="ФИО или подразделение">
+            </div>
+          </div>
+
+          <div id="legalFields" class="section" hidden>
+            <div class="grid-2">
+              <div class="row">
+                <label for="legal_inn">ИНН *</label>
+                <input id="legal_inn" maxlength="10" placeholder="10 цифр">
+              </div>
+              <div class="row">
+                <label for="legal_kpp">КПП</label>
+                <input id="legal_kpp" maxlength="9" placeholder="9 цифр">
+              </div>
+            </div>
+            <div class="grid-2">
+              <div class="row">
+                <label for="legal_ogrn">ОГРН *</label>
+                <input id="legal_ogrn" maxlength="13" placeholder="13 цифр">
+              </div>
+              <div class="row">
+                <label for="legal_ogrnip">ОГРНИП</label>
+                <input id="legal_ogrnip" maxlength="15" placeholder="Для ИП">
+              </div>
+            </div>
+            <div class="row">
+              <label for="legal_legal_address">Юридический адрес *</label>
+              <textarea id="legal_legal_address" placeholder="Как в учредительных документах"></textarea>
+            </div>
+            <div class="row">
+              <label for="legal_post_address">Почтовый адрес</label>
+              <textarea id="legal_post_address" placeholder="Если отличается от юридического"></textarea>
+            </div>
+            <div class="grid-2">
+              <div class="row">
+                <label for="legal_phone">Телефон *</label>
+                <input id="legal_phone" placeholder="+7 (___) ___-__-__">
+              </div>
+              <div class="row">
+                <label for="legal_email">Email *</label>
+                <input id="legal_email" type="email" placeholder="info@company.ru">
+              </div>
+            </div>
+            <div class="row">
+              <label for="legal_site">Сайт / каталог</label>
+              <input id="legal_site" placeholder="https://company.ru">
+            </div>
+            <div class="grid-2">
+              <div class="row">
+                <label for="legal_director_name">ФИО руководителя *</label>
+                <input id="legal_director_name" placeholder="Генеральный директор Иванов И.И.">
+              </div>
+              <div class="row">
+                <label for="legal_director_position">Должность руководителя *</label>
+                <input id="legal_director_position" placeholder="Генеральный директор">
+              </div>
+            </div>
+            <div class="row">
+              <label for="legal_power_basis">Основание полномочий *</label>
+              <input id="legal_power_basis" placeholder="Действует на основании Устава / по доверенности">
+            </div>
+            <div class="row">
+              <label for="legal_power_file">Ссылка на доверенность</label>
+              <input id="legal_power_file" placeholder="URL или путь к файлу">
+            </div>
+            <div class="grid-2">
+              <div class="row">
+                <label for="legal_bank_name">Банк *</label>
+                <input id="legal_bank_name" placeholder="АО «Банк»">
+              </div>
+              <div class="row">
+                <label for="legal_currency">Валюта расчётов *</label>
+                <select id="legal_currency">
+                  <option value="RUB" selected>RUB — рубли</option>
+                  <option value="USD">USD — доллары</option>
+                  <option value="EUR">EUR — евро</option>
+                </select>
+              </div>
+            </div>
+            <div class="grid-2">
+              <div class="row">
+                <label for="legal_bank_bik">БИК банка *</label>
+                <input id="legal_bank_bik" placeholder="9 цифр" maxlength="9">
+              </div>
+              <div class="row">
+                <label for="legal_bank_account">Расчётный счёт *</label>
+                <input id="legal_bank_account" placeholder="20 цифр" maxlength="20">
+              </div>
+            </div>
+            <div class="row">
+              <label for="legal_bank_corr">Корреспондентский счёт</label>
+              <input id="legal_bank_corr" placeholder="20 цифр" maxlength="20">
+            </div>
+            <div class="row">
+              <label for="legal_bank_extra">Дополнительные реквизиты</label>
+              <textarea id="legal_bank_extra" placeholder="SWIFT, особые условия"></textarea>
+            </div>
+            <div class="row">
+              <label for="legal_charter_file">Ссылка на учредительные документы</label>
+              <input id="legal_charter_file" placeholder="Ссылка на устав, выписку ЕГРЮЛ и т.д.">
+            </div>
+            <div class="row">
+              <label for="legal_nda_file">Ссылка на NDA / рамочный договор</label>
+              <input id="legal_nda_file" placeholder="https://...">
+            </div>
+            <div class="row">
+              <label for="legal_last_check">Дата последней проверки</label>
+              <input id="legal_last_check" type="date">
+            </div>
+          </div>
+
+          <div id="individualFields" class="section">
+            <div class="grid-2">
+              <div class="row">
+                <label for="ind_inn">ИНН <span class="muted">(если есть)</span></label>
+                <input id="ind_inn" maxlength="12" placeholder="12 цифр">
+              </div>
+              <div class="row">
+                <label for="ind_snils">СНИЛС *</label>
+                <input id="ind_snils" placeholder="000-000-000 00">
+              </div>
+            </div>
+            <div class="grid-2">
+              <div class="row">
+                <label for="ind_tax_status">Статус налогоплательщика *</label>
+                <select id="ind_tax_status">
+                  <option value="resident" selected>Резидент РФ</option>
+                  <option value="nonresident">Нерезидент РФ</option>
+                </select>
+              </div>
+              <div class="row">
+                <label for="ind_self_status">Статус деятельности</label>
+                <select id="ind_self_status">
+                  <option value="none" selected>Нет</option>
+                  <option value="self_employed">Самозанятый</option>
+                  <option value="sole_proprietor">Индивидуальный предприниматель</option>
+                </select>
+              </div>
+            </div>
+            <div class="grid-2">
+              <div class="row">
+                <label for="ind_passport_series">Паспорт — серия *</label>
+                <input id="ind_passport_series" placeholder="0000" maxlength="4">
+              </div>
+              <div class="row">
+                <label for="ind_passport_number">Паспорт — номер *</label>
+                <input id="ind_passport_number" placeholder="000000" maxlength="6">
+              </div>
+            </div>
+            <div class="row">
+              <label for="ind_passport_issued">Кем и когда выдан *</label>
+              <input id="ind_passport_issued" placeholder="ГУ МВД…, 01.01.2020">
+            </div>
+            <div class="row">
+              <label for="ind_registration_address">Адрес регистрации *</label>
+              <textarea id="ind_registration_address" placeholder="Город, улица, дом, квартира"></textarea>
+            </div>
+            <div class="grid-2">
+              <div class="row">
+                <label for="ind_phone">Телефон *</label>
+                <input id="ind_phone" placeholder="+7 (___) ___-__-__">
+              </div>
+              <div class="row">
+                <label for="ind_email">Email *</label>
+                <input id="ind_email" type="email" placeholder="example@mail.ru">
+              </div>
+            </div>
+            <div class="grid-2">
+              <div class="row">
+                <label for="ind_bank_bik">БИК банка *</label>
+                <input id="ind_bank_bik" placeholder="9 цифр" maxlength="9">
+              </div>
+              <div class="row">
+                <label for="ind_bank_account">Расчётный счёт *</label>
+                <input id="ind_bank_account" placeholder="20 цифр" maxlength="20">
+              </div>
+            </div>
+          </div>
+
+          <div class="row">
+            <label for="cp_tags">Теги / категории</label>
+            <input id="cp_tags" placeholder="например: надежный, новый, просрочка">
+          </div>
+
+          <div class="row">
+            <label for="cp_objects">Привязанные объекты / примечания по объектам</label>
+            <textarea id="cp_objects" placeholder="На каких объектах работает контрагент"></textarea>
+          </div>
+
+          <div class="row">
+            <label for="cp_notes">Примечания</label>
+            <textarea id="cp_notes" placeholder="Особые условия, комментарии"></textarea>
+          </div>
+
+          <button class="btn btn-primary" type="submit">Создать контрагента</button>
+          <div id="ok" class="ok"></div>
+          <div id="err" class="err"></div>
+        </form>
+      </section>
+    </div>
+  </div>
+
+  <script type="module">
+        import supabase, { requireSession } from "./supabaseClient.js";
+        const headerReady = window.headerReady || Promise.resolve();
+
+    const byId = (id)=>document.getElementById(id);
+    const setRequired = (id, state)=>{
+      const el = byId(id);
+      if (el) el.required = !!state;
+    };
+    const getType = ()=> document.querySelector('input[name="cp_type"]:checked')?.value || "individual";
+
+    await headerReady;
+    const { data:{ session } } = await supabase.auth.getSession();
+    if (!session){ location.replace("./index.html"); throw new Error("no auth"); }
+    const user = session.user;
+
+    const form = document.getElementById("counterpartyForm");
+    const okBox = byId("ok");
+    const errBox = byId("err");
+
+    const legalFields = byId("legalFields");
+    const individualFields = byId("individualFields");
+
+    const updateFieldVisibility = ()=>{
+      const type = getType();
+      const isLegal = type === "legal";
+      legalFields.hidden = !isLegal;
+      individualFields.hidden = isLegal;
+
+      setRequired("legal_inn", isLegal);
+      setRequired("legal_ogrn", isLegal);
+      setRequired("legal_legal_address", isLegal);
+      setRequired("legal_phone", isLegal);
+      setRequired("legal_email", isLegal);
+      setRequired("legal_director_name", isLegal);
+      setRequired("legal_director_position", isLegal);
+      setRequired("legal_power_basis", isLegal);
+      setRequired("legal_bank_name", isLegal);
+      setRequired("legal_bank_bik", isLegal);
+      setRequired("legal_bank_account", isLegal);
+      setRequired("legal_currency", isLegal);
+
+      setRequired("ind_snils", !isLegal);
+      setRequired("ind_passport_series", !isLegal);
+      setRequired("ind_passport_number", !isLegal);
+      setRequired("ind_passport_issued", !isLegal);
+      setRequired("ind_registration_address", !isLegal);
+      setRequired("ind_bank_bik", !isLegal);
+      setRequired("ind_bank_account", !isLegal);
+    };
+    updateFieldVisibility();
+    form.addEventListener("change", (evt)=>{
+      if (evt.target && evt.target.name === "cp_type") updateFieldVisibility();
+    });
+
+    function normalizeDigits(value){
+      return (value || "").replace(/\s+/g, "").replace(/[^0-9]/g, "");
+    }
+
+    const getValue = (id)=> (byId(id)?.value || "").trim();
+    const getDateValue = (id)=> byId(id)?.value || null;
+
+    form.addEventListener("submit", async (evt)=>{
+      evt.preventDefault();
+      okBox.style.display = "none"; okBox.textContent = "";
+      errBox.style.display = "none"; errBox.textContent = "";
+
+      const showError = (message)=>{
+        errBox.textContent = message;
+        errBox.style.display = "block";
+      };
+
+      const type = getType();
+      const isLegal = type === "legal";
+      const name = getValue("cp_name");
+      const role = byId("cp_role")?.value || "supplier";
+      const status = byId("cp_status")?.value || "active";
+      const manager = getValue("cp_manager") || null;
+      const tags = getValue("cp_tags") || null;
+      const linkedObjects = getValue("cp_objects") || null;
+      const notes = getValue("cp_notes") || null;
+
+      if (!name){
+        showError("Укажите наименование контрагента.");
+        return;
+      }
+
+      const payload = {
+        user_id: user.id,
+        type,
+        role,
+        status,
+        name,
+        title: name,
+        manager,
+        tags,
+        linked_objects: linkedObjects,
+        notes,
+        created_via: "web",
+        created_at: new Date().toISOString()
+      };
+
+      if (isLegal){
+        const inn = normalizeDigits(getValue("legal_inn"));
+        if (inn.length !== 10){
+          showError("ИНН организации должен содержать 10 цифр.");
+          return;
+        }
+        const ogrn = normalizeDigits(getValue("legal_ogrn"));
+        if (ogrn.length !== 13){
+          showError("ОГРН должен содержать 13 цифр.");
+          return;
+        }
+        const phone = getValue("legal_phone");
+        const email = getValue("legal_email");
+        if (!phone || !email){
+          showError("Укажите телефон и email организации.");
+          return;
+        }
+        const legalAddress = getValue("legal_legal_address");
+        if (!legalAddress){
+          showError("Заполните юридический адрес.");
+          return;
+        }
+        const directorName = getValue("legal_director_name");
+        const directorPosition = getValue("legal_director_position");
+        if (!directorName || !directorPosition){
+          showError("Укажите ФИО и должность руководителя.");
+          return;
+        }
+        const powerBasis = getValue("legal_power_basis");
+        if (!powerBasis){
+          showError("Укажите основание полномочий руководителя.");
+          return;
+        }
+        const bankName = getValue("legal_bank_name");
+        if (!bankName){
+          showError("Укажите наименование банка.");
+          return;
+        }
+        const bankBik = normalizeDigits(getValue("legal_bank_bik"));
+        const bankAccount = normalizeDigits(getValue("legal_bank_account"));
+        if (bankBik.length !== 9){
+          showError("БИК должен содержать 9 цифр.");
+          return;
+        }
+        if (bankAccount.length !== 20){
+          showError("Расчётный счёт должен содержать 20 цифр.");
+          return;
+        }
+        const bankCorr = normalizeDigits(getValue("legal_bank_corr"));
+
+        payload.inn = inn;
+        payload.kpp = normalizeDigits(getValue("legal_kpp")) || null;
+        payload.ogrn = ogrn;
+        payload.ogrnip = normalizeDigits(getValue("legal_ogrnip")) || null;
+        payload.legal_address = legalAddress;
+        payload.post_address = getValue("legal_post_address") || null;
+        payload.phone = phone;
+        payload.email = email;
+        payload.site = getValue("legal_site") || null;
+        payload.director = directorName;
+        payload.director_name = directorName;
+        payload.director_position = directorPosition;
+        payload.power_basis = powerBasis;
+        payload.power_file = getValue("legal_power_file") || null;
+        payload.bank_name = bankName;
+        payload.bank_bik = bankBik;
+        payload.bank_account = bankAccount;
+        payload.bank_corr = bankCorr ? bankCorr : null;
+        payload.bank_details = getValue("legal_bank_extra") || null;
+        payload.currency = byId("legal_currency")?.value || "RUB";
+        payload.charter_file = getValue("legal_charter_file") || null;
+        payload.nda_file = getValue("legal_nda_file") || null;
+        payload.last_check_date = getDateValue("legal_last_check");
+      } else {
+        const inn = normalizeDigits(getValue("ind_inn"));
+        if (!inn){
+          showError("Укажите ИНН (12 цифр) или введите 000000000000 при отсутствии.");
+          return;
+        }
+        if (!(inn.length === 12 || inn.length === 10)){
+          showError("ИНН должен содержать 10 или 12 цифр.");
+          return;
+        }
+        const snils = normalizeDigits(getValue("ind_snils"));
+        if (snils.length !== 11){
+          showError("СНИЛС должен содержать 11 цифр.");
+          return;
+        }
+        const passportSeries = normalizeDigits(getValue("ind_passport_series"));
+        const passportNumber = normalizeDigits(getValue("ind_passport_number"));
+        if (passportSeries.length !== 4 || passportNumber.length !== 6){
+          showError("Паспорт: серия 4 цифры и номер 6 цифр.");
+          return;
+        }
+        const passportIssued = getValue("ind_passport_issued");
+        if (!passportIssued){
+          showError("Укажите, кем и когда выдан паспорт.");
+          return;
+        }
+        const registrationAddress = getValue("ind_registration_address");
+        if (!registrationAddress){
+          showError("Заполните адрес регистрации.");
+          return;
+        }
+        const bankBik = normalizeDigits(getValue("ind_bank_bik"));
+        const bankAccount = normalizeDigits(getValue("ind_bank_account"));
+        if (bankBik.length !== 9){
+          showError("БИК должен содержать 9 цифр.");
+          return;
+        }
+        if (bankAccount.length !== 20){
+          showError("Расчётный счёт должен содержать 20 цифр.");
+          return;
+        }
+
+        payload.inn = inn;
+        payload.snils = snils;
+        payload.tax_status = byId("ind_tax_status")?.value || "resident";
+        payload.self_status = byId("ind_self_status")?.value || "none";
+        payload.passport_series = passportSeries;
+        payload.passport_number = passportNumber;
+        payload.passport = `${passportSeries} ${passportNumber}`;
+        payload.passport_issued = passportIssued;
+        payload.registration_address = registrationAddress;
+        payload.bank_bik = bankBik;
+        payload.bank_account = bankAccount;
+        payload.bank_corr = null;
+        payload.bank_details = null;
+        payload.phone = null;
+        payload.email = null;
+      }
+
+      const contactParts = [];
+      if (payload.phone) contactParts.push(payload.phone);
+      if (payload.email) contactParts.push(payload.email);
+      if (!contactParts.length){
+        if (isLegal){
+          contactParts.push(payload.legal_address);
+        } else {
+          contactParts.push(payload.registration_address);
+        }
+      }
+      payload.contact = contactParts.filter(Boolean).join(" / ") || name;
+
+      try{
+        const { data, error } = await supabase
+          .from("counterparties")
+          .insert(payload)
+          .select("id, name")
+          .single();
+        if (error) throw error;
+        okBox.textContent = `Контрагент «${data?.name || name}» создан.`;
+        okBox.style.display = "block";
+        form.reset();
+        updateFieldVisibility();
+      }catch(ex){
+        console.error(ex);
+        errBox.textContent = ex.message || "Не удалось создать контрагента.";
+        errBox.style.display = "block";
+      }
+    });
+  </script>
+</body>
+</html>

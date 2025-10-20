@@ -1,0 +1,146 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>ProStroy — Общая заявка</title>
+  <meta name="color-scheme" content="dark">
+  <link rel="stylesheet" href="assets/styles/base.css">
+  <link rel="stylesheet" href="assets/styles/header.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js" defer></script>
+  <script src="/js/supabaseClient.js" defer></script>
+  <script src="/header.js" defer></script>
+</head>
+<body style="--bg-video-filter: brightness(0.7);">
+  <video class="bg" autoplay muted loop playsinline preload="auto">
+    <source src="https://assets.mixkit.co/videos/30431/30431-720.mp4" type="video/mp4">
+  </video>
+
+  <div id="header"></div>
+
+  <div class="wrap">
+    <div class="page">
+      <section class="card">
+        <h1>Общая заявка</h1>
+        <p>Используйте эту форму, если тип документа ещё не определён. Заполните ключевые реквизиты, опишите контекст и ожидаемые действия — система сформирует структуру черновика.</p>
+
+        <form id="genericForm">
+          <div class="grid-2">
+            <div class="row">
+              <label for="docNumber">Номер</label>
+              <input id="docNumber" placeholder="AUTO/2024-001">
+            </div>
+            <div class="row">
+              <label for="docDate">Дата *</label>
+              <input id="docDate" type="date" required>
+            </div>
+          </div>
+
+          <div class="row">
+            <label for="author">Инициатор *</label>
+            <input id="author" required placeholder="ФИО, подразделение">
+          </div>
+
+          <div class="row">
+            <label for="addressees">Адресаты</label>
+            <input id="addressees" placeholder="Кому направляется документ (перечень через запятую)">
+          </div>
+
+          <div class="row">
+            <label for="topic">Тема / предмет *</label>
+            <input id="topic" required placeholder="Краткий заголовок документа">
+          </div>
+
+          <div class="row">
+            <label for="context">Контекст и обоснование *</label>
+            <textarea id="context" required placeholder="Опишите ситуацию, нормативы, цели документа"></textarea>
+          </div>
+
+          <div class="row">
+            <label for="actions">Ожидаемые действия / решения</label>
+            <textarea id="actions" placeholder="Что требуется от адресатов, сроки"></textarea>
+          </div>
+
+          <div class="row">
+            <label for="attachments">Приложения</label>
+            <textarea id="attachments" placeholder="Перечислите приложенные материалы или ссылки"></textarea>
+          </div>
+
+          <div class="actions">
+            <button class="btn btn-primary" type="submit">Сформировать текст</button>
+            <button class="btn btn-ghost" type="button" id="copyBtn">Скопировать</button>
+            <button class="btn btn-ghost" type="button" id="downloadBtn">Скачать TXT</button>
+          </div>
+        </form>
+      </section>
+
+      <section class="card">
+        <h2>Предпросмотр</h2>
+        <div id="preview" class="preview">Укажите данные заявки, чтобы получить черновик документа.</div>
+      </section>
+    </div>
+  </div>
+
+  <script type="module">
+    const headerReady = window.headerReady || Promise.resolve();
+    
+    await headerReady;
+
+    const byId = (id)=>document.getElementById(id);
+    const preview = byId("preview");
+
+    function formatPreview(){
+      const number = byId("docNumber").value.trim();
+      const date = byId("docDate").value ? new Date(byId("docDate").value).toLocaleDateString() : "[дата]";
+      const author = byId("author").value.trim() || "[инициатор]";
+      const addressees = byId("addressees").value.trim();
+      const topic = byId("topic").value.trim() || "[тема]";
+      const context = byId("context").value.trim() || "[контекст]";
+      const actions = byId("actions").value.trim();
+      const attachments = byId("attachments").value.trim();
+
+      let text = `Документ ${number ? `№ ${number}` : ""}\nот ${date}\n\nИнициатор: ${author}\n`;
+      if (addressees){ text += `Адресаты: ${addressees}\n`; }
+      text += `\nТема: ${topic}\n\nВводная информация:\n${context}\n`;
+
+      if (actions){
+        text += `\nПредлагаемые действия:\n${actions}\n`;
+      }
+
+      if (attachments){
+        text += `\nПриложения:\n${attachments}\n`;
+      }
+
+      text += "\nПодпись _____________________________\n";
+
+      preview.textContent = text;
+      return text;
+    }
+
+    byId("genericForm").addEventListener("submit", (evt)=>{
+      evt.preventDefault();
+      formatPreview();
+      preview.scrollIntoView({ behavior:"smooth", block:"start" });
+    });
+
+    function copyPreview(){
+      const text = formatPreview();
+      navigator.clipboard?.writeText(text).then(()=> window.alert("Текст скопирован."))
+        .catch(()=> window.alert("Не удалось скопировать текст."));
+    }
+
+    function downloadPreview(){
+      const text = formatPreview();
+      const blob = new Blob([text], { type:"text/plain;charset=utf-8" });
+      const link = document.createElement("a");
+      link.href = URL.createObjectURL(blob);
+      link.download = `zayavka-${byId("docNumber").value || "draft"}.txt`;
+      link.click();
+      URL.revokeObjectURL(link.href);
+    }
+
+    byId("copyBtn").addEventListener("click", copyPreview);
+    byId("downloadBtn").addEventListener("click", downloadPreview);
+  </script>
+</body>
+</html>

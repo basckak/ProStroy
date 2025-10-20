@@ -1,0 +1,137 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>ProStroy — Платёжное поручение</title>
+  <meta name="color-scheme" content="dark">
+  <link rel="stylesheet" href="assets/styles/base.css">
+  <link rel="stylesheet" href="assets/styles/header.css">
+  <link rel="stylesheet" href="assets/styles/contract-form.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js" defer></script>
+  <script src="/js/supabaseClient.js" defer></script>
+  <script src="/header.js" defer></script>
+</head>
+<body style="--bg-video-filter: brightness(0.7);">
+  <video class="bg" autoplay muted loop playsinline preload="auto">
+    <source src="https://assets.mixkit.co/videos/30431/30431-720.mp4" type="video/mp4">
+  </video>
+
+  <div id="header"></div>
+
+  <div class="wrap">
+    <div class="page">
+      <section class="card">
+        <h1>Платёжное поручение</h1>
+        <p>Заполните реквизиты платёжного поручения и приложите файл. Запись будет сохранена и привязана к выбранному контрагенту и объекту.</p>
+
+        <div id="ok" class="status-pane status-ok">Платёжное поручение сохранено.</div>
+        <div id="err" class="status-pane status-err">Не удалось сохранить платёжное поручение.</div>
+
+        <form id="paymentForm">
+          <div class="grid-2">
+            <div class="row">
+              <label for="orderNumber">Номер поручения *</label>
+              <input id="orderNumber" required placeholder="ПП-452/2024">
+            </div>
+            <div class="row">
+              <label for="orderDate">Дата поручения *</label>
+              <input id="orderDate" type="date" required>
+            </div>
+          </div>
+
+          <div class="grid-2">
+            <div class="row">
+              <label for="counterpartyId">Получатель *</label>
+              <select id="counterpartyId" required>
+                <option value="" selected disabled>Выберите получателя</option>
+              </select>
+              <div class="muted text-note" id="counterpartyHint">Загрузка получателей…</div>
+            </div>
+            <div class="row">
+              <label for="amount">Сумма *</label>
+              <input id="amount" required inputmode="decimal" placeholder="125 000">
+              <div class="muted text-note">Укажите сумму без валюты, разделитель — точка или запятая.</div>
+            </div>
+          </div>
+
+          <div class="grid-2">
+            <div class="row">
+              <label for="paymentType">Тип платежа *</label>
+              <select id="paymentType" required>
+                <option value="" selected disabled>Выберите тип платежа</option>
+                <option value="supplier">Оплата поставщику</option>
+                <option value="advance">Авансовый платёж</option>
+                <option value="tax">Налоговый платёж</option>
+                <option value="salary">Зарплата / выплаты</option>
+              </select>
+            </div>
+            <div class="row">
+              <label for="objectId">Объект</label>
+              <select id="objectId">
+                <option value="" selected>Не выбран</option>
+              </select>
+              <div class="muted text-note" id="objectsHint">Загрузка объектов…</div>
+            </div>
+          </div>
+
+          <div class="row">
+            <label for="purpose">Назначение платежа *</label>
+            <textarea id="purpose" required placeholder="Кратко опишите, за что производится платёж"></textarea>
+          </div>
+
+          <div class="row">
+            <label for="notes">Комментарии</label>
+            <textarea id="notes" placeholder="Дополнительные пометки для бухгалтерии"></textarea>
+          </div>
+
+          <div class="row">
+            <label for="fileInput">Платёжное поручение (файл) *</label>
+            <div class="file-box">
+              <input id="fileInput" type="file" accept=".pdf,.doc,.docx,.xls,.xlsx" required>
+              <span class="file-hint">Загрузите скан или выгрузку из банка (до 20 МБ).</span>
+              <span id="fileName" class="file-name" hidden></span>
+            </div>
+          </div>
+
+          <div class="row">
+            <label for="approversDisplay">Согласующие</label>
+            <div id="approversSelect" class="approver-search">
+              <div id="approversDisplay" class="approver-selected empty" aria-live="polite">Загружаем сотрудников…</div>
+              <div class="approver-search__field">
+                <input id="approversSearch" type="search" placeholder="Начните вводить фамилию, должность или email" autocomplete="off" spellcheck="false">
+              </div>
+              <div id="approversOptions" class="approver-options" role="listbox" aria-multiselectable="true"></div>
+            </div>
+            <div class="muted text-note" id="approversHelp">Загружаем сотрудников…</div>
+          </div>
+
+          <div class="actions">
+            <button id="submitBtn" class="btn btn-primary" type="submit">Сохранить</button>
+            <button class="btn btn-ghost" type="button" id="resetBtn">Очистить форму</button>
+          </div>
+        </form>
+      </section>
+    </div>
+  </div>
+
+  <script type="module">
+    const params = new URLSearchParams(location.search);
+    const type = params.get("type")?.toLowerCase() || "";
+    if (type === "gph"){
+      const href = "assets/styles/request-gph-payment.css";
+      if (!document.querySelector(`link[href="${href}"]`)){
+        const link = document.createElement("link");
+        link.rel = "stylesheet";
+        link.href = href;
+        document.head.appendChild(link);
+      }
+      const module = await import("./js/request-payment-gph.js");
+      module.init?.();
+    } else {
+      const module = await import("./js/request-payment-order-default.js");
+      module.init?.();
+    }
+  </script>
+</body>
+</html>

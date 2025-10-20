@@ -1,0 +1,254 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>ProStroy — Договор аренды техники</title>
+  <meta name="color-scheme" content="dark">
+  <link rel="stylesheet" href="assets/styles/base.css">
+  <link rel="stylesheet" href="assets/styles/header.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js" defer></script>
+  <script src="/js/supabaseClient.js" defer></script>
+  <script src="/header.js" defer></script>
+</head>
+<body style="--bg-video-filter: brightness(0.7);">
+  <video class="bg" autoplay muted loop playsinline preload="auto">
+    <source src="https://assets.mixkit.co/videos/30431/30431-720.mp4" type="video/mp4">
+  </video>
+
+  <div id="header"></div>
+
+  <div class="wrap">
+    <div class="page">
+      <section class="card">
+        <h1>Договор аренды техники</h1>
+        <p>Документ учитывает специфику аренды строительной и спецтехники: машинистов, обслуживание, топливо, ответственность. Заполните данные по технике и условиям эксплуатации.</p>
+
+        <form id="equipmentForm">
+          <div class="grid-2">
+            <div class="row">
+              <label for="date">Дата заключения *</label>
+              <input id="date" type="date" required>
+            </div>
+            <div class="row">
+              <label for="number">Номер</label>
+              <input id="number" placeholder="АТ-2024/07">
+            </div>
+          </div>
+
+          <div class="grid-2">
+            <div class="row">
+              <label for="lessor">Арендодатель *</label>
+              <textarea id="lessor" required placeholder="Компания-владелец техники, реквизиты, представитель"></textarea>
+            </div>
+            <div class="row">
+              <label for="lessee">Арендатор *</label>
+              <textarea id="lessee" required placeholder="ООО «Прострой», реквизиты, представитель"></textarea>
+            </div>
+          </div>
+
+          <div class="row">
+            <label>Парк техники</label>
+            <div class="muted">Добавьте единицы техники с характеристиками, тарифами и условиями передачи.</div>
+            <div id="fleetList" class="list"></div>
+            <button type="button" class="btn btn-ghost" id="addUnit">+ Добавить технику</button>
+          </div>
+
+          <div class="grid-2">
+            <div class="row">
+              <label for="term">Период аренды *</label>
+              <input id="term" required placeholder="с 10.06.2024 по 30.09.2024">
+            </div>
+            <div class="row">
+              <label for="rates">Тарифы и расчёты *</label>
+              <textarea id="rates" required placeholder="Аренда по 1500 руб/час, минимум 8 часов, оплата каждые 5 дней"></textarea>
+            </div>
+          </div>
+
+          <div class="grid-2">
+            <div class="row">
+              <label for="operators">Машинисты / операторы</label>
+              <textarea id="operators" placeholder="Предоставляются арендодателем, список ФИО, квалификация"></textarea>
+            </div>
+            <div class="row">
+              <label for="fuel">ГСМ и обслуживание</label>
+              <textarea id="fuel" placeholder="Топливо за счёт арендатора, ТО — арендодатель"></textarea>
+            </div>
+          </div>
+
+          <div class="grid-2">
+            <div class="row">
+              <label for="safety">Требования по безопасности</label>
+              <textarea id="safety" placeholder="Соблюдение ПБ, допуски, предрейсовый осмотр"></textarea>
+            </div>
+            <div class="row">
+              <label for="responsibility">Ответственность и штрафы</label>
+              <textarea id="responsibility" placeholder="Штраф за простои, ответственность за повреждения"></textarea>
+            </div>
+          </div>
+
+          <div class="row">
+            <label for="site">Место работы</label>
+            <textarea id="site" placeholder="Строительная площадка, адрес, контакты диспетчера"></textarea>
+          </div>
+
+          <div class="row">
+            <label for="termination">Расторжение, замена техники</label>
+            <textarea id="termination" placeholder="Условия возврата, замены неисправной техники, уведомление"></textarea>
+          </div>
+
+          <div class="row">
+            <label for="appendices">Приложения</label>
+            <textarea id="appendices" placeholder="Акт приёма-передачи, график работы, инструктаж"></textarea>
+          </div>
+
+          <div class="actions">
+            <button class="btn btn-primary" type="submit">Сформировать текст</button>
+            <button class="btn btn-ghost" type="button" id="copyBtn">Скопировать</button>
+            <button class="btn btn-ghost" type="button" id="downloadBtn">Скачать TXT</button>
+          </div>
+        </form>
+      </section>
+
+      <section class="card">
+        <h2>Предпросмотр</h2>
+        <div id="preview" class="preview">Укажите условия аренды спецтехники, чтобы сформировать текст договора.</div>
+      </section>
+    </div>
+  </div>
+
+  <script type="module">
+    const headerReady = window.headerReady || Promise.resolve();
+    
+    await headerReady;
+
+    const byId = (id)=>document.getElementById(id);
+    const fleet = [];
+    const fleetList = byId("fleetList");
+    const preview = byId("preview");
+
+    function renderFleet(){
+      fleetList.innerHTML = "";
+      if (!fleet.length){
+        const empty = document.createElement("div");
+        empty.className = "muted";
+        empty.textContent = "Единицы техники не добавлены.";
+        fleetList.appendChild(empty);
+      }
+      fleet.forEach((item, idx)=>{
+        const row = document.createElement("div");
+        row.className = "item";
+        row.innerHTML = `<div><strong>${item.name || "Техника"}</strong><div class=\"muted\">${item.params || ""}</div></div>`;
+        const btn = document.createElement("button");
+        btn.className = "btn btn-ghost";
+        btn.type = "button";
+        btn.textContent = "Удалить";
+        btn.addEventListener("click", ()=>{ fleet.splice(idx,1); renderFleet(); });
+        row.appendChild(btn);
+        fleetList.appendChild(row);
+      });
+    }
+
+    renderFleet();
+
+    function promptUnit(){
+      const name = window.prompt("Наименование техники (марка, модель):");
+      if (name == null) return null;
+      const params = window.prompt("Основные параметры (инвентарный номер, производительность, тариф):");
+      if (params == null) return null;
+      return { name: name.trim(), params: params.trim() };
+    }
+
+    byId("addUnit").addEventListener("click", ()=>{
+      const unit = promptUnit();
+      if (unit){
+        fleet.push(unit);
+        renderFleet();
+      }
+    });
+
+    function formatPreview(){
+      const date = byId("date").value ? new Date(byId("date").value).toLocaleDateString() : "[дата]";
+      const number = byId("number").value.trim();
+      const lessor = byId("lessor").value.trim() || "[Арендодатель]";
+      const lessee = byId("lessee").value.trim() || "[Арендатор]";
+      const term = byId("term").value.trim() || "[Период аренды]";
+      const rates = byId("rates").value.trim() || "[Тарифы]";
+      const operators = byId("operators").value.trim();
+      const fuel = byId("fuel").value.trim();
+      const safety = byId("safety").value.trim();
+      const responsibility = byId("responsibility").value.trim();
+      const site = byId("site").value.trim();
+      const termination = byId("termination").value.trim();
+      const appendices = byId("appendices").value.trim();
+
+      let text = `ДОГОВОР АРЕНДЫ ТЕХНИКИ ${number ? `№ ${number}` : ""}\n\nг. ____________ ${date}\n\n${lessor}, именуемое в дальнейшем "Арендодатель", и ${lessee}, именуемое в дальнейшем "Арендатор", совместно именуемые "Стороны", заключили настоящий договор о нижеследующем.\n\n`;
+
+      text += `1. Предмет договора\n1.1. Арендодатель передаёт Арендатору во временное владение и пользование следующую технику:\n`;
+      if (fleet.length){
+        fleet.forEach((unit, idx)=>{
+          text += ` - ${idx+1}) ${unit.name || "техника"} (${unit.params || "характеристики"}).\n`;
+        });
+      }else{
+        text += " - [Укажите перечень техники].\n";
+      }
+      if (site){
+        text += `1.2. Место использования техники: ${site}.\n`;
+      }
+
+      text += `\n2. Срок аренды\n2.1. Период аренды: ${term}.\n`;
+
+      text += `\n3. Стоимость и порядок расчётов\n3.1. ${rates}.\n`;
+
+      if (operators){
+        text += `\n4. Обеспечение персоналом\n${operators}\n`;
+      }
+      if (fuel){
+        text += `\n5. Обеспечение ГСМ и техническое обслуживание\n${fuel}\n`;
+      }
+      if (safety){
+        text += `\n6. Требования по безопасности\n${safety}\n`;
+      }
+      if (responsibility){
+        text += `\n7. Ответственность сторон\n${responsibility}\n`;
+      }
+      if (termination){
+        text += `\n8. Расторжение и замена техники\n${termination}\n`;
+      }
+      if (appendices){
+        text += `\n9. Приложения\n${appendices}\n`;
+      }
+
+      text += "\nНастоящий договор составлен в двух экземплярах, имеющих равную юридическую силу.\n\nАрендодатель _______________________\nАрендатор _________________________\n";
+
+      preview.textContent = text;
+      return text;
+    }
+
+    byId("equipmentForm").addEventListener("submit", (evt)=>{
+      evt.preventDefault();
+      formatPreview();
+      preview.scrollIntoView({ behavior:"smooth", block:"start" });
+    });
+
+    function copyPreview(){
+      const text = formatPreview();
+      navigator.clipboard?.writeText(text).then(()=> window.alert("Текст договора скопирован."))
+        .catch(()=> window.alert("Не удалось скопировать текст."));
+    }
+
+    function downloadPreview(){
+      const text = formatPreview();
+      const blob = new Blob([text], { type:"text/plain;charset=utf-8" });
+      const link = document.createElement("a");
+      link.href = URL.createObjectURL(blob);
+      link.download = `dogovor-arendy-tehniki-${byId("number").value || "draft"}.txt`;
+      link.click();
+      URL.revokeObjectURL(link.href);
+    }
+
+    byId("copyBtn").addEventListener("click", copyPreview);
+    byId("downloadBtn").addEventListener("click", downloadPreview);
+  </script>
+</body>
+</html>

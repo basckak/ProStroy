@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>ProStroy — Договор субсидирования</title>
+  <meta name="color-scheme" content="dark">
+  <link rel="stylesheet" href="assets/styles/base.css">
+  <link rel="stylesheet" href="assets/styles/header.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js" defer></script>
+  <script src="/js/supabaseClient.js" defer></script>
+  <script src="/header.js" defer></script>
+</head>
+<body style="--bg-video-filter: brightness(0.7);">
+  <video class="bg" autoplay muted loop playsinline preload="auto">
+    <source src="https://assets.mixkit.co/videos/30431/30431-720.mp4" type="video/mp4">
+  </video>
+  <div id="header"></div>
+  <div class="wrap">
+    <div class="page">
+      <section class="card">
+        <h1>Договор субсидирования</h1>
+        <p>Шаблон для оформления соглашений о предоставлении субсидий, грантов и господдержки. Укажите программу, показатели эффективности и график финансирования.</p>
+        <form id="subsidyForm">
+          <div class="grid-2">
+            <div class="row">
+              <label for="date">Дата заключения *</label>
+              <input id="date" type="date" required>
+            </div>
+            <div class="row">
+              <label for="number">Номер</label>
+              <input id="number" placeholder="СУБ-2024/10">
+            </div>
+          </div>
+          <div class="grid-2">
+            <div class="row">
+              <label for="provider">Предоставляющая сторона *</label>
+              <textarea id="provider" required placeholder="Орган власти, фонд, реквизиты"></textarea>
+            </div>
+            <div class="row">
+              <label for="recipient">Получатель *</label>
+              <textarea id="recipient" required placeholder="ООО «Прострой», проект"></textarea>
+            </div>
+          </div>
+          <div class="row">
+            <label for="program">Основание / программа *</label>
+            <textarea id="program" required placeholder="Госпрограмма поддержки инноваций, постановление ..."></textarea>
+          </div>
+          <div class="row">
+            <label for="goals">Цели и показатели *</label>
+            <textarea id="goals" required placeholder="Описание проекта, KPI, целевые показатели"></textarea>
+          </div>
+          <div class="row">
+            <label for="financing">График финансирования *</label>
+            <textarea id="financing" required placeholder="Транши по кварталам, условия перечисления"></textarea>
+          </div>
+          <div class="row">
+            <label for="reporting">Отчётность *</label>
+            <textarea id="reporting" required placeholder="Формы отчётов, сроки предоставления, ответственные"></textarea>
+          </div>
+          <div class="row">
+            <label for="liability">Ответственность и возврат средств</label>
+            <textarea id="liability" placeholder="Неустойка за нарушение условий, возврат субсидии"></textarea>
+          </div>
+          <div class="row">
+            <label for="notes">Дополнительные условия</label>
+            <textarea id="notes" placeholder="Конфиденциальность, аудит, страхование"></textarea>
+          </div>
+          <div class="actions">
+            <button class="btn btn-primary" type="submit">Сформировать текст</button>
+            <button class="btn btn-ghost" type="button" id="copyBtn">Скопировать</button>
+            <button class="btn btn-ghost" type="button" id="downloadBtn">Скачать TXT</button>
+          </div>
+        </form>
+      </section>
+      <section class="card">
+        <h2>Предпросмотр</h2>
+        <div id="preview" class="preview">Заполните сведения о субсидии — получим черновик договора.</div>
+      </section>
+    </div>
+  </div>
+  <script type="module">
+    const headerReady = window.headerReady || Promise.resolve();
+        await headerReady;
+    const byId = (id)=>document.getElementById(id);
+    const preview = byId("preview");
+    function formatPreview(){
+      const date = byId("date").value ? new Date(byId("date").value).toLocaleDateString() : "[дата]";
+      const number = byId("number").value.trim();
+      const provider = byId("provider").value.trim() || "[Предоставляющая сторона]";
+      const recipient = byId("recipient").value.trim() || "[Получатель]";
+      const program = byId("program").value.trim() || "[Программа]";
+      const goals = byId("goals").value.trim() || "[Цели и показатели]";
+      const financing = byId("financing").value.trim() || "[График финансирования]";
+      const reporting = byId("reporting").value.trim() || "[Отчетность]";
+      const liability = byId("liability").value.trim();
+      const notes = byId("notes").value.trim();
+      let text = `ДОГОВОР О СУБСИДИРОВАНИИ ${number ? `№ ${number}` : ""}\n\nг. ____________ ${date}\n\n${provider}, именуемое "Предоставляющая сторона", и ${recipient}, именуемое "Получатель", заключили настоящий договор.\n\n1. Основание предоставления субсидии\n1.1. ${program}.\n\n2. Цели и показатели\n2.1. ${goals}.\n\n3. Финансирование\n3.1. ${financing}.\n\n4. Отчётность\n4.1. ${reporting}.\n`;
+      if (liability){ text += `\n5. Ответственность\n${liability}\n`; }
+      if (notes){ text += `\n6. Дополнительные условия\n${notes}\n`; }
+      text += "\nНастоящий договор вступает в силу с момента подписания.\n\nПредоставляющая сторона ____________________\nПолучатель ________________________________\n";
+      preview.textContent = text;
+      return text;
+    }
+    byId("subsidyForm").addEventListener("submit", (evt)=>{evt.preventDefault();formatPreview();preview.scrollIntoView({behavior:"smooth",block:"start"});});
+    const copyPreview = ()=>{const text=formatPreview();navigator.clipboard?.writeText(text).then(()=>window.alert("Текст договора скопирован.")) .catch(()=>window.alert("Не удалось скопировать текст."));};
+    const downloadPreview = ()=>{const text=formatPreview();const blob=new Blob([text],{type:"text/plain;charset=utf-8"});const link=document.createElement("a");link.href=URL.createObjectURL(blob);link.download=`subsidy-${byId("number").value || "draft"}.txt`;link.click();URL.revokeObjectURL(link.href);};
+    byId("copyBtn").addEventListener("click", copyPreview);
+    byId("downloadBtn").addEventListener("click", downloadPreview);
+  </script>
+</body>
+</html>

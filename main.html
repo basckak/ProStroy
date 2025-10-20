@@ -1,0 +1,227 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta name="color-scheme" content="dark">
+  <title>ProStroy · Главная</title>
+  <link rel="stylesheet" href="assets/styles/base.css">
+  <link rel="stylesheet" href="assets/styles/header.css">
+  <link rel="stylesheet" href="assets/styles/main.css">
+  <link rel="stylesheet" href="assets/styles/assistant-chat.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js" defer></script>
+  <script src="/js/supabaseClient.js" defer></script>
+  <script src="/header.js" defer></script>
+  <script src="/assistant-chat.js" defer></script>
+</head>
+<body class="dashboard">
+  <!-- сюда header.js вставит header.html -->
+  <div id="header"></div>
+
+  <!-- видео фон -->
+  <video class="bg" autoplay muted loop playsinline preload="auto">
+    <source src="https://assets.mixkit.co/videos/30431/30431-720.mp4" type="video/mp4">
+  </video>
+  <div class="overlay"></div>
+
+  <!-- левая (единственная) колонка: объекты + согласования -->
+  <div class="layout">
+    <!-- Объекты -->
+    <section class="card panel section">
+      <div class="section-head">
+        <div>
+          <h3>Объекты</h3>
+          <div class="approvals-hint">Последние объекты и их статус.</div>
+        </div>
+        <div class="row-actions">
+          <a class="btn btn-ghost" href="./objects-list.html">Открыть список</a>
+          <a class="btn btn-action" href="./objects.html#new">Добавить объект</a>
+        </div>
+      </div>
+      <div id="objectsBox" class="objects-list">
+        <div class="muted">Загрузка…</div>
+      </div>
+    </section>
+
+  </div>
+
+  <!-- плавающий чат -->
+  <div class="assistant-chat widget-closed" id="assistantChat" aria-live="polite">
+    <button class="assistant-chat__trigger" type="button" aria-controls="assistantChatPanel" aria-expanded="false">
+      <img src="assets/icons/assistant-chat-icon.svg" class="assistant-chat__icon-img" alt="" aria-hidden="true">
+      <span class="visually-hidden">Открыть чат ProStroy</span>
+    </button>
+    <section class="assistant-chat__panel" id="assistantChatPanel" aria-hidden="true">
+      <header class="assistant-chat__header">
+        <div class="assistant-chat__title">
+          <div class="assistant-chat__badge">Удмуртик</div>
+          <div class="assistant-chat__name">ProStroy</div>
+        </div>
+        <div class="assistant-chat__actions">
+          <button class="assistant-chat__fullscreen-toggle assistant-chat__header-btn" type="button" aria-label="Развернуть чат на весь экран">
+            <svg class="assistant-chat__fullscreen-icon assistant-chat__fullscreen-icon--enter" viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M8 5H5v3M5 5l6 6M19 8V5h-3M19 5l-6 6M8 19H5v-3M5 19l6-6M19 16v3h-3M19 19l-6-6" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" />
+            </svg>
+            <svg class="assistant-chat__fullscreen-icon assistant-chat__fullscreen-icon--exit" viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M11 5h3v3M18 5h-3M19 6v3M13 13l6 6M13 19h3M19 19v-3M11 19H8v-3M5 19h3M5 18v-3M11 11l-6-6M5 5h3M8 5v3" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" />
+            </svg>
+          </button>
+          <button class="assistant-chat__close assistant-chat__header-btn" type="button" aria-label="Свернуть чат">
+            <span aria-hidden="true">×</span>
+          </button>
+        </div>
+      </header>
+      <div class="assistant-chat__body">
+        <div class="assistant-chat__message assistant-chat__message--assistant">
+          <div class="assistant-chat__avatar">AI</div>
+          <div class="assistant-chat__bubble">
+            Привет, я Удмуртик! Я помогу вам разобраться с документами и процессами ProStroy.
+          </div>
+        </div>
+        <div class="assistant-chat__placeholder">
+          Задайте вопрос — ответы появятся здесь.
+        </div>
+      </div>
+      <form class="assistant-chat__form" autocomplete="off">
+        <label class="assistant-chat__input">
+          <span class="visually-hidden">Ваш вопрос Ассистенту ProStroy</span>
+          <input type="text" name="chatInput" id="assistantChatInput" placeholder="Напишите вопрос..." required />
+        </label>
+        <button class="assistant-chat__submit" type="submit" disabled aria-label="Отправить сообщение">
+          <svg class="assistant-chat__submit-icon" viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M3.2 20.3c-.6.23-1.2-.32-1.04-.92l1.79-6.35a1 1 0 0 1 .74-.7l6.15-1.53c.2-.05.2-.33 0-.38L4.7 8.29a1 1 0 0 1-.7-.7L2.28 2.75c-.17-.6.44-1.13 1-.9l18 7.54a1 1 0 0 1 0 1.86l-18.08 7.05Z" />
+          </svg>
+        </button>
+      </form>
+    </section>
+  </div>
+
+  <!-- общий хедер -->
+  
+  <!-- Supabase + логика -->
+  <script type="module">
+    import supabase, { requireSession } from "./supabaseClient.js";
+    import { cachedFetch } from "./cache.js";
+
+    // === CONFIG (совпадает с index.html/header.js)
+    const LOGIN_PAGE = "./index.html";
+
+    const normalizeStatus = (status)=> (status || "").toString().trim().toLowerCase();
+    const formatDate = (value)=> value ? new Date(value).toLocaleDateString() : "—";
+    const formatDateTime = (value)=> value ? new Date(value).toLocaleString() : "";
+    const formatMoney = (value)=> (value==null || value==="") ? "—" : `${Number(value).toLocaleString('ru-RU')} ₽`;
+
+    const objectStatusClass = (status)=>{
+      const normalized = normalizeStatus(status);
+      if (normalized === "активен") return "status-active";
+      if (normalized === "план") return "status-plan";
+      if (normalized === "заморожен") return "status-frozen";
+      if (normalized === "закрыт") return "status-closed";
+      return "status-other";
+    };
+
+    // — редирект, если нет сессии
+    (async () => {
+      try {
+        await requireSession({ redirectTo: LOGIN_PAGE });
+        loadObjects();
+      } catch (_) {
+        // requireSession уже инициирует редирект, просто прекращаем инициализацию
+      }
+    })();
+
+    // === ОБЪЕКТЫ ===
+    async function loadObjects(){
+      const box = document.getElementById("objectsBox");
+      if (!box) return;
+      box.innerHTML = "<div class='muted'>Загрузка…</div>";
+
+      try{
+        const rows = await cachedFetch("objects:recent5", async ()=>{
+          const { data, error } = await supabase
+            .from("objects")
+            .select("id, title, address, status, code, start_date, end_date, customer, contractor, manager_name, budget, created_at")
+            .order("created_at", { ascending:false })
+            .limit(5);
+          if (error) throw error;
+          return Array.isArray(data) ? data : [];
+        }, { ttlMs: 120000 });
+
+        if (!rows.length){
+          box.innerHTML = "<div class='muted'>Нет объектов.</div>";
+          return;
+        }
+
+        box.innerHTML = "";
+        const frag = document.createDocumentFragment();
+        rows.forEach(obj => {
+          const card = document.createElement("article");
+          card.className = "object-card";
+
+          const top = document.createElement("div");
+          top.className = "object-meta";
+
+          const badges = document.createElement("div");
+          badges.className = "object-badges";
+          if (obj.code){
+            const codeBadge = document.createElement("span");
+            codeBadge.className = "badge";
+            codeBadge.textContent = obj.code;
+            badges.appendChild(codeBadge);
+          }
+          const statusBadge = document.createElement("span");
+          statusBadge.className = `badge ${objectStatusClass(obj.status)}`;
+          statusBadge.textContent = obj.status || "—";
+          badges.appendChild(statusBadge);
+
+          top.appendChild(badges);
+
+          const created = document.createElement("div");
+          created.textContent = obj.created_at ? new Date(obj.created_at).toLocaleString() : "";
+          top.appendChild(created);
+
+          card.appendChild(top);
+
+          const title = document.createElement("h4");
+          title.textContent = obj.title || "Без названия";
+          card.appendChild(title);
+
+          if (obj.address){
+            const addr = document.createElement("div");
+            addr.className = "object-address";
+            addr.textContent = obj.address;
+            card.appendChild(addr);
+          }
+
+          const kv = document.createElement("div");
+          kv.className = "object-kv";
+          const rowsKv = [
+            { label: "Дата начала", value: formatDate(obj.start_date) },
+            { label: "Дата окончания", value: formatDate(obj.end_date) },
+            { label: "Заказчик", value: obj.customer || "—" },
+            { label: "Подрядчик", value: obj.contractor || "—" },
+            { label: "Ответственный", value: obj.manager_name || "—" },
+            { label: "Бюджет", value: formatMoney(obj.budget) }
+          ];
+          rowsKv.forEach(row => {
+            const label = document.createElement("div");
+            label.className = "label";
+            label.textContent = row.label;
+            const value = document.createElement("div");
+            value.textContent = row.value;
+            kv.append(label, value);
+          });
+          card.appendChild(kv);
+
+          frag.appendChild(card);
+        });
+        box.appendChild(frag);
+      }catch(e){
+        console.error(e);
+        box.innerHTML = `<div class='muted'>Не удалось загрузить объекты: ${e.message || e}</div>`;
+      }
+    }
+
+  </script>
+</body>
+</html>

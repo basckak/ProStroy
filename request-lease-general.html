@@ -1,0 +1,207 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>ProStroy — Договор аренды имущества</title>
+  <meta name="color-scheme" content="dark">
+  <link rel="stylesheet" href="assets/styles/base.css">
+  <link rel="stylesheet" href="assets/styles/header.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js" defer></script>
+  <script src="/js/supabaseClient.js" defer></script>
+  <script src="/header.js" defer></script>
+</head>
+<body style="--bg-video-filter: brightness(0.7);">
+  <video class="bg" autoplay muted loop playsinline preload="auto">
+    <source src="https://assets.mixkit.co/videos/30431/30431-720.mp4" type="video/mp4">
+  </video>
+
+  <div id="header"></div>
+
+  <div class="wrap">
+    <div class="page">
+      <section class="card">
+        <h1>Договор аренды имущества</h1>
+        <p>Форма подходит для аренды офисов, складов, земельных участков и прочего имущества (кроме спецтехники). Укажите характеристики объекта, условия эксплуатации и расчётов — результат будет оформлен в виде текстового шаблона.</p>
+
+        <form id="leaseForm">
+          <div class="grid-2">
+            <div class="row">
+              <label for="leaseDate">Дата заключения *</label>
+              <input id="leaseDate" type="date" required>
+            </div>
+            <div class="row">
+              <label for="leaseNumber">Номер договора</label>
+              <input id="leaseNumber" placeholder="АР-2024/15">
+            </div>
+          </div>
+
+          <div class="grid-2">
+            <div class="row">
+              <label for="lessor">Арендодатель *</label>
+              <textarea id="lessor" required placeholder="ООО «Собственник», реквизиты, представитель"></textarea>
+            </div>
+            <div class="row">
+              <label for="lessee">Арендатор *</label>
+              <textarea id="lessee" required placeholder="ООО «Прострой», реквизиты, представитель"></textarea>
+            </div>
+          </div>
+
+          <div class="row">
+            <label for="object">Описание объекта аренды *</label>
+            <textarea id="object" required placeholder="Адрес, помещения, площадь, кадастровый номер"></textarea>
+          </div>
+
+          <div class="grid-3">
+            <div class="row">
+              <label for="term">Срок аренды *</label>
+              <input id="term" required placeholder="с 01.07.2024 по 30.06.2025 (12 месяцев)">
+            </div>
+            <div class="row">
+              <label for="rent">Арендная плата *</label>
+              <input id="rent" required placeholder="150 000 руб./месяц, без НДС">
+            </div>
+            <div class="row">
+              <label for="deposit">Обеспечение / депозит</label>
+              <input id="deposit" placeholder="2 месяца аренды, возврат при освобождении">
+            </div>
+          </div>
+
+          <div class="row">
+            <label for="purpose">Цель использования</label>
+            <textarea id="purpose" placeholder="Размещение офиса, склад материалов"></textarea>
+          </div>
+
+          <div class="grid-2">
+            <div class="row">
+              <label for="maintenance">Расходы и эксплуатация</label>
+              <textarea id="maintenance" placeholder="Коммунальные платежи, обслуживание инженерных систем, страхование"></textarea>
+            </div>
+            <div class="row">
+              <label for="restrictions">Ограничения и требования</label>
+              <textarea id="restrictions" placeholder="Запрет перепланировок, соблюдение режима объекта"></textarea>
+            </div>
+          </div>
+
+          <div class="row">
+            <label for="responsibility">Ответственность сторон</label>
+            <textarea id="responsibility" placeholder="Штрафы за просрочку оплаты, ответственность за повреждение"></textarea>
+          </div>
+
+          <div class="grid-2">
+            <div class="row">
+              <label for="termination">Расторжение и продление</label>
+              <textarea id="termination" placeholder="Основания для досрочного расторжения, уведомление за 30 дней"></textarea>
+            </div>
+            <div class="row">
+              <label for="appendices">Приложения</label>
+              <textarea id="appendices" placeholder="План помещения, опись имущества, акт приёма-передачи"></textarea>
+            </div>
+          </div>
+
+          <div class="actions">
+            <button class="btn btn-primary" type="submit">Сформировать текст</button>
+            <button class="btn btn-ghost" type="button" id="copyBtn">Скопировать</button>
+            <button class="btn btn-ghost" type="button" id="downloadBtn">Скачать TXT</button>
+          </div>
+        </form>
+      </section>
+
+      <section class="card">
+        <h2>Предпросмотр</h2>
+        <div id="preview" class="preview">Введите параметры договора аренды, чтобы сгенерировать текст.</div>
+      </section>
+    </div>
+  </div>
+
+  <script type="module">
+    const headerReady = window.headerReady || Promise.resolve();
+    
+    await headerReady;
+
+    const byId = (id)=>document.getElementById(id);
+    const preview = byId("preview");
+
+    function formatPreview(){
+      const date = byId("leaseDate").value ? new Date(byId("leaseDate").value).toLocaleDateString() : "[дата]";
+      const number = byId("leaseNumber").value.trim();
+      const lessor = byId("lessor").value.trim() || "[Арендодатель]";
+      const lessee = byId("lessee").value.trim() || "[Арендатор]";
+      const object = byId("object").value.trim() || "[Объект аренды]";
+      const term = byId("term").value.trim() || "[Срок]";
+      const rent = byId("rent").value.trim() || "[Арендная плата]";
+      const deposit = byId("deposit").value.trim();
+      const purpose = byId("purpose").value.trim();
+      const maintenance = byId("maintenance").value.trim();
+      const restrictions = byId("restrictions").value.trim();
+      const responsibility = byId("responsibility").value.trim();
+      const termination = byId("termination").value.trim();
+      const appendices = byId("appendices").value.trim();
+
+      let text = `ДОГОВОР АРЕНДЫ ИМУЩЕСТВА ${number ? `№ ${number}` : ""}\n\nг. ____________  ${date}\n\n${lessor}, именуемое в дальнейшем "Арендодатель", и ${lessee}, именуемое в дальнейшем "Арендатор", совместно именуемые "Стороны", заключили настоящий договор о нижеследующем.\n\n`;
+
+      text += `1. Предмет договора\n1.1. Арендодатель передаёт Арендатору во временное владение и пользование следующее имущество: ${object}.\n`;
+      if (purpose){
+        text += `1.2. Объект используется для: ${purpose}.\n`;
+      }
+
+      text += `\n2. Срок аренды\n2.1. Срок аренды устанавливается: ${term}.\n`;
+
+      text += `\n3. Арендная плата и расчёты\n3.1. Размер арендной платы: ${rent}.\n`;
+      if (deposit){
+        text += `3.2. Обеспечение исполнения обязательств: ${deposit}.\n`;
+      }
+
+      if (maintenance){
+        text += `\n4. Расходы и эксплуатация\n${maintenance}\n`;
+      }
+
+      if (restrictions){
+        text += `\n5. Ограничения и требования к использованию\n${restrictions}\n`;
+      }
+
+      if (responsibility){
+        text += `\n6. Ответственность сторон\n${responsibility}\n`;
+      }
+
+      if (termination){
+        text += `\n7. Расторжение и продление\n${termination}\n`;
+      }
+
+      if (appendices){
+        text += `\n8. Приложения\n${appendices}\n`;
+      }
+
+      text += "\nНастоящий договор составлен в двух экземплярах, имеющих равную юридическую силу, по одному для каждой стороны.\n\nАрендодатель _______________________\nАрендатор _________________________\n";
+
+      preview.textContent = text;
+      return text;
+    }
+
+    byId("leaseForm").addEventListener("submit", (evt)=>{
+      evt.preventDefault();
+      formatPreview();
+      preview.scrollIntoView({ behavior:"smooth", block:"start" });
+    });
+
+    function copyPreview(){
+      const text = formatPreview();
+      navigator.clipboard?.writeText(text).then(()=> window.alert("Текст договора скопирован."))
+        .catch(()=> window.alert("Не удалось скопировать текст."));
+    }
+
+    function downloadPreview(){
+      const text = formatPreview();
+      const blob = new Blob([text], { type:"text/plain;charset=utf-8" });
+      const link = document.createElement("a");
+      link.href = URL.createObjectURL(blob);
+      link.download = `dogovor-arendy-${byId("leaseNumber").value || "draft"}.txt`;
+      link.click();
+      URL.revokeObjectURL(link.href);
+    }
+
+    byId("copyBtn").addEventListener("click", copyPreview);
+    byId("downloadBtn").addEventListener("click", downloadPreview);
+  </script>
+</body>
+</html>

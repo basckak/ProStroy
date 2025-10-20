@@ -1,0 +1,15 @@
+{
+	"folders": [
+		{
+			"name": "VBS",
+			"path": "."
+		},
+		{
+			"name": "transport-request",
+			"path": "../transport-request"
+		}
+	],
+	"settings": {
+		"liveServer.settings.multiRootWorkspaceName": "VBS"
+	}
+}

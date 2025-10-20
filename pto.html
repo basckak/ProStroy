@@ -1,0 +1,1289 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>ProStroy · ПТО</title>
+  <meta name="color-scheme" content="dark" />
+  <link rel="stylesheet" href="assets/styles/base.css">
+  <link rel="stylesheet" href="assets/styles/header.css">
+  <style>
+    :root{
+      --bg:#0b1220; --glass:rgba(6,10,18,.55); --border:rgba(255,255,255,.08);
+      --text:#eef3f9; --muted:#a9b4c7; --green:#22c55e; --green-2:#1ed760;
+      --radius:20px; --shadow:0 8px 28px rgba(0,0,0,.35);
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{margin:0;background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,Segoe UI,Roboto,Inter,Arial}
+
+    video.bg{position:fixed;inset:0;width:100%;height:100%;object-fit:cover;z-index:-2;filter:brightness(.75) saturate(1.05)}
+    .overlay{position:fixed;inset:0;z-index:-1;background:linear-gradient(180deg,rgba(5,8,13,.12),rgba(5,8,13,.62))}
+
+    #header{min-height:64px}
+
+    main{min-height:calc(100dvh - 64px)}
+    .main-shell{min-height:calc(100dvh - 120px);display:grid;align-content:start;padding-top:clamp(36px, 18vh, 132px);padding-inline:24px}
+
+    .content{display:grid;gap:28px;justify-items:center;text-align:center;width:100%}
+    .section-heading{display:grid;gap:8px;max-width:680px}
+    .section-heading h1{margin:0;font-size:clamp(1.8rem, 1.9rem + 0.6vw, 2.4rem);font-weight:700;letter-spacing:.01em}
+    .section-heading p{margin:0;color:var(--muted);font-size:.98rem}
+
+    .card-grid{display:grid;grid-template-columns:repeat(2, minmax(300px, 420px));gap:24px;justify-content:center;width:100%;max-width:880px}
+
+    .card-button{position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;width:100%;min-height:200px;padding:32px 28px;border-radius:var(--radius);
+      border:1px solid var(--border);background:var(--glass);color:inherit;cursor:pointer;box-shadow:var(--shadow);
+      backdrop-filter:blur(8px);transition:transform .18s ease,box-shadow .3s ease,border-color .3s ease,background .3s ease}
+    .card-button:hover{transform:translateY(-2px);border-color:rgba(255,255,255,.16);box-shadow:0 14px 36px rgba(0,0,0,.42)}
+    .card-button:focus-visible{outline:3px solid rgba(34,197,94,.42);outline-offset:4px;transform:translateY(-2px);border-color:rgba(255,255,255,.2);box-shadow:0 16px 40px rgba(0,0,0,.46)}
+    .card-button:active{transform:translateY(0);box-shadow:0 8px 28px rgba(0,0,0,.38)}
+
+    .card-badge{display:inline-flex;align-items:center;justify-content:center;padding:6px 16px;border-radius:999px;border:1px solid rgba(34,197,94,.45);
+      background:linear-gradient(135deg,rgba(34,197,94,.14),rgba(30,215,96,.08));font-size:.86rem;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:#d8ffe8}
+    .card-title{margin:0;font-size:1.12rem;font-weight:600;line-height:1.36;letter-spacing:.015em}
+
+    .modal{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;padding:24px;opacity:0;pointer-events:none;transition:opacity .24s ease;z-index:10}
+    .modal.is-open{opacity:1;pointer-events:auto}
+    .modal-overlay{position:absolute;inset:0;background:rgba(2,4,8,.74);backdrop-filter:blur(4px)}
+    .modal-dialog{position:relative;z-index:1;display:grid;gap:24px;padding:36px 40px 42px;border-radius:20px;background:var(--glass);
+      border:1px solid rgba(255,255,255,.12);box-shadow:0 22px 60px rgba(0,0,0,.5);min-width:min(720px, 96vw);max-width:min(860px, 98vw);text-align:center}
+    .modal-subtitle{color:var(--green);font-weight:600;letter-spacing:.08em;text-transform:uppercase;font-size:.92rem}
+    .modal-title{margin:0;font-size:1.34rem;font-weight:700}
+    .modal-actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+    .modal-action{border:1px solid rgba(255,255,255,.16);border-radius:14px;padding:14px 18px;font-size:1rem;font-weight:600;
+      background:rgba(255,255,255,.06);color:inherit;cursor:pointer;transition:filter .2s ease,transform .1s ease,border-color .2s ease}
+    .modal-action:hover{filter:brightness(1.05);border-color:rgba(255,255,255,.28)}
+    .modal-action:focus-visible{outline:3px solid rgba(34,197,94,.4);outline-offset:3px}
+    .modal-action:active{transform:translateY(1px)}
+    .modal-close{position:absolute;top:12px;right:12px;width:36px;height:36px;display:inline-flex;align-items:center;justify-content:center;
+      border-radius:12px;border:1px solid rgba(255,255,255,.14);background:rgba(255,255,255,.04);color:var(--text);cursor:pointer;font-size:1.1rem}
+    .modal-close:hover{filter:brightness(1.08)}
+    .modal-close:focus-visible{outline:3px solid rgba(34,197,94,.4);outline-offset:2px}
+
+    #aosr-form-slot{max-height:min(70vh, 780px);overflow:auto;padding-right:6px}
+    .form-loading{padding:20px;color:var(--muted);text-align:center}
+    .aosr-form{display:grid;gap:18px;text-align:left}
+    .form-row{display:grid;gap:18px;grid-template-columns:repeat(auto-fit,minmax(180px,1fr))}
+    .form-field{display:flex;flex-direction:column;gap:6px;padding:6px 0}
+    .form-field label{font-weight:600;font-size:.95rem}
+    .aosr-form input,
+    .aosr-form textarea,
+    .aosr-form select{width:100%;border-radius:12px;border:1px solid rgba(255,255,255,.18);background:rgba(255,255,255,.08);color:var(--text);
+      padding:10px 12px;font-size:.95rem;font-family:inherit}
+    .aosr-form textarea{min-height:90px;resize:vertical}
+    .hint{margin:0;font-size:.82rem;color:var(--muted);font-style:italic}
+    .form-field.invalid label{color:#ffbdbd}
+    .form-field.invalid input,
+    .form-field.invalid textarea,
+    .form-field.invalid select{border-color:rgba(255,122,122,.65);background:rgba(255,122,122,.12)}
+    .modal-footer{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px}
+    .btn{display:inline-flex;align-items:center;justify-content:center;padding:12px 18px;border-radius:14px;border:1px solid rgba(255,255,255,.16);
+      background:rgba(255,255,255,.06);color:inherit;font-weight:600;font-size:1rem;cursor:pointer;
+      transition:filter .2s ease,transform .1s ease,border-color .2s ease}
+    .btn:hover{filter:brightness(1.05);border-color:rgba(255,255,255,.28)}
+    .btn:focus-visible{outline:3px solid rgba(34,197,94,.4);outline-offset:3px}
+    .btn:active{transform:translateY(1px)}
+    .btn.sm{padding:6px 12px;font-size:14px;border-radius:12px}
+    .btn.ghost{background:transparent;border:1px solid rgba(255,255,255,.22)}
+    .btn.action{background:#22c55e;border:0;color:#0b1b14;box-shadow:0 8px 22px rgba(34,197,94,.18)}
+    .btn.action:hover{filter:brightness(1.08)}
+
+    .toast{position:fixed;bottom:28px;right:28px;min-width:200px;padding:12px 18px;border-radius:14px;background:rgba(9,15,26,.88);
+      color:var(--text);box-shadow:0 18px 40px rgba(0,0,0,.45);opacity:0;transform:translateY(16px);transition:opacity .25s ease,transform .25s ease;
+      pointer-events:none;z-index:20;font-size:.94rem}
+    .toast.show{opacity:1;transform:translateY(0)}
+
+    .registry-controls{display:grid;gap:16px}
+    .registry-tabs{display:flex;gap:10px;flex-wrap:wrap}
+    .registry-tab{padding:8px 16px;border-radius:999px;border:1px solid rgba(255,255,255,.22);background:transparent;
+      color:inherit;font-weight:600;font-size:.92rem;cursor:pointer;transition:filter .2s ease,border-color .2s ease}
+    .registry-tab.active{border-color:rgba(34,197,94,.45);background:rgba(34,197,94,.18);color:#e6ffee}
+    .registry-tab:hover{filter:brightness(1.06)}
+    .registry-search{display:flex;gap:12px;flex-wrap:wrap;align-items:center}
+    #aosr-search{flex:1;min-width:220px;border-radius:14px;border:1px solid rgba(255,255,255,.18);background:rgba(255,255,255,.08);
+      color:inherit;padding:10px 14px;font-size:.95rem;font-family:inherit}
+    #aosr-search::placeholder{color:rgba(238,243,249,.58)}
+    .aosr-list{display:flex;flex-direction:column;gap:12px;max-height:50vh;overflow:auto;padding-right:4px;text-align:left}
+    .aosr-item{display:flex;flex-direction:column;gap:10px;padding:16px 18px;border-radius:18px;background:rgba(8,12,16,.6);border:1px solid rgba(255,255,255,.06)}
+    .aosr-item.is-draft{box-shadow:0 0 0 1px rgba(251,146,60,.45),0 0 28px rgba(251,146,60,.18)}
+    .aosr-item.is-final{box-shadow:0 0 0 1px rgba(34,197,94,.38),0 0 28px rgba(34,197,94,.16)}
+    .aosr-row-head{display:flex;gap:10px;align-items:center;flex-wrap:wrap;font-size:.94rem}
+    .aosr-row-meta{display:flex;gap:10px;align-items:center;flex-wrap:wrap;color:var(--muted);font-size:.9rem}
+    .aosr-row-title{font-size:1rem;font-weight:600}
+    .aosr-row-name{color:var(--text);font-size:.96rem;font-weight:600}
+    .aosr-row-period{color:var(--muted);font-size:.9rem}
+    .aosr-row-footer{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;font-size:.9rem;color:var(--muted)}
+    .aosr-row-meta-audit{flex:1 1 220px}
+    .aosr-row-actions{display:flex;gap:8px;flex-wrap:wrap}
+    .badge{padding:4px 10px;border-radius:999px;font-size:12px;line-height:1;border:1px solid transparent;letter-spacing:.2px}
+    .badge.badge--draft{background:rgba(251,146,60,.16);color:#fdba74;border-color:rgba(251,146,60,.38)}
+    .badge.badge--final{background:rgba(34,197,94,.16);color:#86efac;border-color:rgba(34,197,94,.38)}
+    .registry-empty{padding:20px;color:var(--muted);text-align:center}
+    .registry-error{padding:20px;color:#ffbdbd;text-align:center;background:rgba(255,122,122,.12);border-radius:14px}
+
+    @media (max-width:920px){
+      .card-grid{grid-template-columns:minmax(280px, 1fr);max-width:420px}
+      .modal-dialog{min-width:min(360px, 94vw);padding:32px 28px 36px}
+      .modal-actions{grid-template-columns:1fr}
+      .modal-footer{grid-template-columns:1fr}
+    }
+
+    @media (max-width:600px){
+      .card-button{min-height:190px;padding:28px 22px}
+      .modal-dialog{padding:26px 22px 32px}
+    }
+  </style>
+  <script src="https://cdn.jsdelivr.net/npm/pizzip@3.1.7/dist/pizzip.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/docxtemplater@3.44.0/build/docxtemplater.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/file-saver@2.0.5/dist/FileSaver.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/dayjs@1.11.11/dayjs.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/dayjs@1.11.11/locale/ru.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js" defer></script>
+  <script src="/js/supabaseClient.js" defer></script>
+  <script src="/header.js" defer></script>
+</head>
+<body>
+  <div id="header"></div>
+
+  <video class="bg" autoplay muted loop playsinline preload="auto">
+    <!-- заменить путь при необходимости -->
+    <source src="https://assets.mixkit.co/videos/30431/30431-720.mp4" type="video/mp4">
+  </video>
+  <div class="overlay"></div>
+
+  <main>
+    <div class="main-shell">
+      <section class="content" aria-labelledby="ptoTitle">
+        <div class="section-heading">
+          <h1 id="ptoTitle">ПТО</h1>
+          <p>Выберите раздел ПТО</p>
+        </div>
+
+        <div class="card-grid" role="list">
+          <button id="card-asko" class="card-button" type="button" aria-label="Акт освидетельствования скрытых работ" data-modal-target="modal-asko" role="listitem">
+            <span class="card-badge" aria-hidden="true">АОСР</span>
+            <strong class="card-title">Акт освидетельствования скрытых работ</strong>
+          </button>
+          <button id="card-jor" class="card-button" type="button" aria-label="Журнал общих работ" data-modal-target="modal-jor" role="listitem">
+            <span class="card-badge" aria-hidden="true">ЖОР</span>
+            <strong class="card-title">Журнал общих работ</strong>
+          </button>
+          <button id="card-jsr" class="card-button" type="button" aria-label="Журнал сварочных работ" data-modal-target="modal-jsr" role="listitem">
+            <span class="card-badge" aria-hidden="true">ЖСР</span>
+            <strong class="card-title">Журнал сварочных работ</strong>
+          </button>
+          <button id="card-jvkm" class="card-button" type="button" aria-label="Журнал входного контроля материалов" data-modal-target="modal-jvkm" role="listitem">
+            <span class="card-badge" aria-hidden="true">ЖВК</span>
+            <strong class="card-title">Журнал входного контроля и контроля качества получаемых деталей, материалов, изделий конструкций и оборудования</strong>
+          </button>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <div id="modal-asko" class="modal" aria-hidden="true">
+    <div class="modal-overlay" data-modal-dismiss></div>
+    <div class="modal-dialog" role="dialog" aria-modal="true" aria-labelledby="modal-asko-title" aria-describedby="modal-asko-subtitle">
+      <button type="button" class="modal-close" aria-label="Закрыть" data-modal-dismiss>&times;</button>
+      <div class="modal-subtitle" id="modal-asko-subtitle">АОСР</div>
+      <h2 class="modal-title" id="modal-asko-title">Акт освидетельствования скрытых работ</h2>
+      <div class="modal-actions">
+        <button id="btn-card-asko-create" class="modal-action btn action" type="button" data-action="create" data-card="card-asko">Создать новый</button>
+        <button id="btn-card-asko-open" class="modal-action btn ghost" type="button" data-action="open" data-card="card-asko">Открыть существующие</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="modal-jor" class="modal" aria-hidden="true">
+    <div class="modal-overlay" data-modal-dismiss></div>
+    <div class="modal-dialog" role="dialog" aria-modal="true" aria-labelledby="modal-jor-title" aria-describedby="modal-jor-subtitle">
+      <button type="button" class="modal-close" aria-label="Закрыть" data-modal-dismiss>&times;</button>
+      <div class="modal-subtitle" id="modal-jor-subtitle">ЖОР</div>
+      <h2 class="modal-title" id="modal-jor-title">Журнал общих работ</h2>
+      <div class="modal-actions">
+        <button id="btn-card-jor-create" class="modal-action" type="button" data-action="create" data-card="card-jor">Создать новый</button>
+        <button id="btn-card-jor-open" class="modal-action" type="button" data-action="open" data-card="card-jor">Открыть существующие</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="modal-jsr" class="modal" aria-hidden="true">
+    <div class="modal-overlay" data-modal-dismiss></div>
+    <div class="modal-dialog" role="dialog" aria-modal="true" aria-labelledby="modal-jsr-title" aria-describedby="modal-jsr-subtitle">
+      <button type="button" class="modal-close" aria-label="Закрыть" data-modal-dismiss>&times;</button>
+      <div class="modal-subtitle" id="modal-jsr-subtitle">ЖСР</div>
+      <h2 class="modal-title" id="modal-jsr-title">Журнал сварочных работ</h2>
+      <div class="modal-actions">
+        <button id="btn-card-jsr-create" class="modal-action" type="button" data-action="create" data-card="card-jsr">Создать новый</button>
+        <button id="btn-card-jsr-open" class="modal-action" type="button" data-action="open" data-card="card-jsr">Открыть существующие</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="modal-jvkm" class="modal" aria-hidden="true">
+    <div class="modal-overlay" data-modal-dismiss></div>
+    <div class="modal-dialog" role="dialog" aria-modal="true" aria-labelledby="modal-jvkm-title" aria-describedby="modal-jvkm-subtitle">
+      <button type="button" class="modal-close" aria-label="Закрыть" data-modal-dismiss>&times;</button>
+      <div class="modal-subtitle" id="modal-jvkm-subtitle">ЖВКМ</div>
+      <h2 class="modal-title" id="modal-jvkm-title">Журнал входного контроля материалов</h2>
+      <div class="modal-actions">
+        <button id="btn-card-jvkm-create" class="modal-action" type="button" data-action="create" data-card="card-jvkm">Создать новый</button>
+        <button id="btn-card-jvkm-open" class="modal-action" type="button" data-action="open" data-card="card-jvkm">Открыть существующие</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="modal-aosr-form" class="modal" aria-hidden="true" data-aosr-id="">
+    <div class="modal-overlay" data-modal-dismiss></div>
+    <div class="modal-dialog modal__panel" role="dialog" aria-modal="true" aria-labelledby="modal-aosr-form-title" aria-describedby="aosr-form-meta">
+      <button type="button" class="modal-close" aria-label="Закрыть" data-modal-dismiss>&times;</button>
+      <div class="modal__hdr">
+        <span class="badge" aria-hidden="true">АОСР</span>
+        <h2 class="modal__title" id="modal-aosr-form-title">Новый акт освидетельствования скрытых работ</h2>
+        <div id="aosr-form-meta" class="modal__meta"></div>
+      </div>
+      <div id="aosr-form-slot" class="modal-scroll">
+        <div class="form-loading">Загрузка формы…</div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" id="aosr-cancel" class="btn ghost" data-modal-dismiss>Отмена</button>
+        <button type="button" id="aosr-save-draft" class="btn ghost">Сохранить черновик</button>
+        <button type="button" id="aosr-generate" class="btn action">Сформировать DOCX</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="modal-aosr-list" class="modal" aria-hidden="true">
+    <div class="modal-overlay" data-modal-dismiss></div>
+    <div class="modal-dialog" role="dialog" aria-modal="true" aria-labelledby="modal-aosr-list-title">
+      <button type="button" class="modal-close" aria-label="Закрыть" data-modal-dismiss>&times;</button>
+      <div class="modal-subtitle">АОСР</div>
+      <h2 class="modal-title" id="modal-aosr-list-title">АОСР — реестр</h2>
+      <div class="registry-controls">
+        <div class="registry-tabs" role="tablist">
+          <button type="button" class="registry-tab btn ghost sm active" data-filter="all">Все</button>
+          <button type="button" class="registry-tab btn ghost sm" data-filter="draft">Черновики</button>
+          <button type="button" class="registry-tab btn ghost sm" data-filter="final">Сформированные</button>
+        </div>
+        <div class="registry-search">
+          <input id="aosr-search" type="search" placeholder="Поиск по номеру/объекту" autocomplete="off" />
+          <button type="button" id="aosr-new-draft" class="btn action">Новый черновик</button>
+        </div>
+      </div>
+      <div id="aosr-list" class="aosr-list">
+        <div class="form-loading">Загрузка…</div>
+      </div>
+    </div>
+  </div>
+
+    <script type="module">
+    import supabase, { requireSession } from "./supabaseClient.js";
+
+    dayjs.locale("ru");
+
+    const modalState = { active: null, lastFocus: null };
+    const MONTHS_GENITIVE = [
+      "января","февраля","марта","апреля","мая","июня",
+      "июля","августа","сентября","октября","ноября","декабря"
+    ];
+    const AOSR_DOCS_BUCKET = "pto";
+    const AOSR_TEMPLATE_BUCKET = "pto-templates";
+    const AOSR_TEMPLATE_PATH = "aosr_template_v2.docx";
+    let currentSession = null;
+    let currentUser = null;
+
+    const aosrModalId = "modal-aosr-form";
+    const aosrFormModal = document.getElementById(aosrModalId);
+    const aosrSlot = document.getElementById("aosr-form-slot");
+    const generateBtn = document.getElementById("aosr-generate");
+    const saveDraftBtn = document.getElementById("aosr-save-draft");
+    const aosrListModal = document.getElementById("modal-aosr-list");
+    const aosrListContainer = document.getElementById("aosr-list");
+    const aosrFilterButtons = Array.from(document.querySelectorAll("#modal-aosr-list .registry-tab"));
+    const aosrSearchInput = document.getElementById("aosr-search");
+    const aosrNewDraftBtn = document.getElementById("aosr-new-draft");
+    const defaultGenerateLabel = generateBtn ? generateBtn.textContent : "";
+    let generateBusy = false;
+    let aosrFormLoaded = false;
+    const draftStorageKey = "prostroy.aosr.draft";
+    let aosrListState = { filter: "all", search: "" };
+    let aosrListCache = [];
+    let aosrSearchTimer = null;
+    let __currentUserLabel = null;
+
+    try {
+      currentSession = await requireSession({ redirectTo: "./index.html" });
+      currentUser = currentSession?.user ?? null;
+    } catch (sessionError) {
+      console.error('Не удалось получить сессию пользователя', sessionError);
+      throw sessionError;
+    }
+
+    const onKeyDown = (event) => {
+      if (event.key === "Escape" && modalState.active) {
+        closeModal(modalState.active.id);
+      }
+    };
+
+    function openModal(id){
+      const modal = document.getElementById(id);
+      if (!modal) return;
+      if (modalState.active && modalState.active.id !== id) {
+        closeModal(modalState.active.id);
+      }
+      modalState.lastFocus = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+      modal.classList.add("is-open");
+      modal.setAttribute("aria-hidden", "false");
+      modalState.active = modal;
+      document.addEventListener("keydown", onKeyDown);
+      const primaryAction = modal.querySelector(".modal-action[data-action]");
+      if (primaryAction) primaryAction.focus();
+    }
+
+    function closeModal(id){
+      const modal = typeof id === "string" ? document.getElementById(id) : id;
+      if (!modal) return;
+      modal.classList.remove("is-open");
+      modal.setAttribute("aria-hidden", "true");
+      if (modalState.active && modalState.active.id === modal.id) {
+        modalState.active = null;
+        document.removeEventListener("keydown", onKeyDown);
+      }
+      const focusTarget = modalState.lastFocus;
+      modalState.lastFocus = null;
+      if (focusTarget && typeof focusTarget.focus === "function") {
+        focusTarget.focus();
+      }
+    }
+
+    document.querySelectorAll(".card-button").forEach((card)=>{
+      card.addEventListener("click", ()=>{
+        const target = card.getAttribute("data-modal-target");
+        if (target) {
+          openModal(target);
+        }
+      });
+    });
+
+    document.querySelectorAll("[data-modal-dismiss]").forEach((el)=>{
+      el.addEventListener("click", ()=>{
+        const modal = el.closest(".modal");
+        if (modal) closeModal(modal.id);
+      });
+    });
+
+    document.querySelectorAll(".modal-action[data-action]").forEach((btn)=>{
+      const btnId = btn.id;
+      if (btnId === "btn-card-asko-create") {
+        btn.addEventListener("click", handleAosrCreate);
+        return;
+      }
+      if (btnId === "btn-card-asko-open") {
+        btn.addEventListener("click", handleAosrOpenList);
+        return;
+      }
+      btn.addEventListener("click", ()=>{
+        const action = btn.getAttribute("data-action");
+        const card = btn.getAttribute("data-card");
+        console.log(action, card);
+        const modal = btn.closest(".modal");
+        if (modal) closeModal(modal.id);
+      });
+    });
+
+    if (generateBtn) {
+      generateBtn.addEventListener("click", handleGenerateDocx);
+    }
+    if (saveDraftBtn) {
+      saveDraftBtn.addEventListener("click", handleSaveDraft);
+    }
+    if (aosrNewDraftBtn) {
+      aosrNewDraftBtn.addEventListener("click", handleNewAosrDraft);
+    }
+
+    if (aosrFilterButtons.length) {
+      aosrFilterButtons.forEach((btn)=>{
+        btn.addEventListener("click", ()=>{
+          const filter = btn.dataset.filter || "all";
+          if (aosrListState.filter === filter) return;
+          renderAOSRList({ filter });
+        });
+      });
+    }
+
+    if (aosrSearchInput) {
+      aosrSearchInput.addEventListener("input", (event)=>{
+        const value = event.target.value.trim();
+        if (aosrSearchTimer) clearTimeout(aosrSearchTimer);
+        aosrSearchTimer = setTimeout(()=>{
+          renderAOSRList({ search: value });
+        }, 300);
+      });
+    }
+
+    if (aosrListContainer) {
+      aosrListContainer.addEventListener("click", async (event)=>{
+        const deleteBtn = event.target.closest('[data-action="delete-aosr"]');
+        if (deleteBtn) {
+          const id = deleteBtn.getAttribute("data-id");
+          if (!id) return;
+          const row = aosrListCache.find(item => item.id === id);
+          if (!row) {
+            console.warn('Не найдена запись АОСР для удаления', id);
+            return;
+          }
+          await deleteAOSRRow(row, deleteBtn);
+          return;
+        }
+        const openBtn = event.target.closest('[data-action="open-aosr"]');
+        if (!openBtn) return;
+        const id = openBtn.getAttribute("data-id");
+        if (!id) return;
+        const row = aosrListCache.find(item => item.id === id);
+        if (!row) {
+          console.warn('Не найдена запись АОСР', id);
+          return;
+        }
+        await openAOSRRow(row);
+      });
+    }
+
+    async function handleAosrCreate(){
+      console.log("AOSR form opened");
+      closeModal("modal-asko");
+      openModal(aosrModalId);
+      await ensureAosrFormLoaded();
+      clearAosrForm();
+      if (aosrFormModal) {
+        aosrFormModal.dataset.aosrId = "";
+        aosrFormModal.dataset.mode = "create";
+      }
+      updateAosrFormTitle();
+      await fillAOSRFormMeta('create');
+      focusFirstField();
+    }
+
+    async function ensureAosrFormLoaded(){
+      if (!aosrSlot) return;
+      if (aosrFormLoaded) return;
+      aosrSlot.innerHTML = '<div class="form-loading">Загрузка формы…</div>';
+      try {
+        const response = await fetch("./forms/aosr_form_from_excel.html", { cache: "no-store" });
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}`);
+        }
+        const html = await response.text();
+        aosrSlot.innerHTML = html;
+        aosrFormLoaded = true;
+        attachFormListeners();
+      } catch (error) {
+        console.error("Не удалось загрузить форму АОСР", error);
+        aosrSlot.innerHTML = '<div class="form-loading">Не удалось загрузить форму. Попробуйте позже.</div>';
+      }
+    }
+
+    function attachFormListeners(){
+      const form = getAosrForm();
+      if (!form) return;
+      form.addEventListener("input", (event)=>{
+        const target = event.target;
+        if (!(target instanceof HTMLInputElement || target instanceof HTMLTextAreaElement || target instanceof HTMLSelectElement)) return;
+        const wrapper = target.closest(".form-field");
+        if (wrapper && wrapper.classList.contains("invalid") && target.value.trim()) {
+          wrapper.classList.remove("invalid");
+        }
+        resetGenerateButton();
+      });
+    }
+
+    function focusFirstField(){
+      const form = getAosrForm();
+      if (!form) return;
+      const firstField = form.querySelector("input, textarea, select");
+      if (firstField && typeof firstField.focus === "function") {
+        requestAnimationFrame(()=> firstField.focus());
+      }
+    }
+
+    function getAosrForm(){
+      return aosrSlot ? aosrSlot.querySelector("form") : null;
+    }
+
+    async function fillAOSRFormMeta(mode = 'create'){
+      const meta = document.getElementById('aosr-form-meta');
+      if (!meta) return;
+      try {
+        const name = await getCurrentUserLabel();
+        const action = mode === 'edit' ? 'Редактирует' : 'Создаёт';
+        meta.textContent = `${action}: ${name} • ${dayjs().format('DD.MM.YYYY HH:mm')}`;
+      } catch (error) {
+        console.warn('Не удалось получить пользователя для меты формы', error);
+        meta.textContent = `${mode === 'edit' ? 'Редактирует' : 'Создаёт'}: Пользователь • ${dayjs().format('DD.MM.YYYY HH:mm')}`;
+      }
+    }
+
+    function updateAosrFormTitle(){
+      const title = document.getElementById('aosr-form-title');
+      if (!title) return;
+      const mode = aosrFormModal?.dataset?.mode === 'edit' ? 'edit' : 'create';
+      title.textContent = mode === 'edit' ? 'Редактирование АОСР' : 'Новый акт освидетельствования скрытых работ';
+    }
+
+    async function getCurrentUserLabel(){
+      if (__currentUserLabel) return __currentUserLabel;
+      try {
+        let user = currentUser;
+        if (!user) {
+          const { data } = await supabase.auth.getUser();
+          user = data?.user || null;
+          if (user) currentUser = user;
+        }
+        if (!user) {
+          __currentUserLabel = 'Гость';
+          return __currentUserLabel;
+        }
+
+        try {
+          const { data: prof } = await supabase
+            .from('profiles')
+            .select('full_name, display_name')
+            .eq('id', user.id)
+            .single();
+          if (prof?.display_name) {
+            __currentUserLabel = prof.display_name;
+            return __currentUserLabel;
+          }
+          if (prof?.full_name) {
+            __currentUserLabel = prof.full_name;
+            return __currentUserLabel;
+          }
+        } catch (_) {
+          // таблицы может не быть — игнорируем
+        }
+
+        __currentUserLabel = user.user_metadata?.full_name || user.email || 'Пользователь';
+        return __currentUserLabel;
+      } catch (error) {
+        console.warn('Не удалось получить имя пользователя', error);
+        __currentUserLabel = 'Пользователь';
+        return __currentUserLabel;
+      }
+    }
+
+    // В шаблоне ВСЕ теги должны быть в формате [[FIELD]] (квадратные скобки).
+    // Имена FIELD строго совпадают с name полей формы.
+    // В шаблоне встречается поле FIO_CONSRUCTOR (без T) — используйте ровно такое имя,
+    // либо переименуйте одновременно в шаблоне и форме.
+
+    async function handleGenerateDocx(){
+      const form = getAosrForm();
+      if (!form || generateBusy) {
+        return;
+      }
+      console.log('PizZip in window?', !!window.PizZip);
+      console.log('docxtemplater in window?', !!window.docxtemplater, window.docxtemplater);
+
+      const { data, success } = collectAOSRData();
+      if (!success) {
+        flashInvalidButton();
+        return;
+      }
+
+      let aosrId = aosrFormModal?.dataset?.aosrId || null;
+      try {
+        setGenerateState(true);
+        aosrId = await saveAOSRDraftBeforeGenerate(data);
+        if (aosrId && aosrFormModal) {
+          aosrFormModal.dataset.aosrId = aosrId;
+          aosrFormModal.dataset.mode = 'edit';
+        }
+        updateAosrFormTitle();
+        await fillAOSRFormMeta('edit');
+      } catch (error) {
+        console.error('Не удалось сохранить черновик перед генерацией', error);
+        setGenerateState(false);
+        const errorMessage = error?.message || error?.error_description || error?.hint || "";
+        alert(`Не удалось сохранить черновик перед генерацией.${errorMessage ? `\n${errorMessage}` : ""}`);
+        return;
+      }
+
+      applyIsoConversions(data);
+      console.log("Данные формы для АОСР:", data);
+      console.log('Данные формы (ключи):', Object.keys(data));
+
+      let blob = null;
+      try {
+        const templateBuffer = await fetchAOSRTemplateArrayBuffer();
+        if (!templateBuffer) {
+          setGenerateState(false);
+          return;
+        }
+        let zip = new PizZip(templateBuffer);
+        const { changed } = normalizeCurlyToSquare(zip);
+        if (changed) {
+          console.warn('Template normalized: converted {{...}} → [[...]] in XML files');
+        }
+        const DocxCtor = getDocxtemplaterCtor();
+        if (!DocxCtor) {
+          console.error('Docxtemplater global not found:', {
+            w_docxtemplater: window.docxtemplater,
+            w_Docxtemplater: window.Docxtemplater
+          });
+          alert('Не удалось сформировать документ: Docxtemplater не найден. Проверьте теги <script> и их порядок.');
+          return;
+        }
+        const doc = new DocxCtor(zip, { paragraphLoop: true, linebreaks: true, delimiters: { start: '[[', end: ']]' } });
+
+        try {
+          doc.setData(data);
+          doc.render();
+        } catch (e) {
+          const errs = e.properties?.errors || [];
+          console.error('DOCX render error', e, errs);
+          alert('Ошибка рендера DOCX. Проверь плейсхолдеры. См. консоль.');
+          return;
+        }
+
+        blob = doc.getZip().generate({
+          type: "blob",
+          mimeType: "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+        });
+      } catch (error) {
+        handleDocxError(error);
+        setGenerateState(false);
+        return;
+      } finally {
+      }
+
+      if (!blob) {
+        setGenerateState(false);
+        return;
+      }
+
+      let docPath = null;
+      try {
+        if (supabase?.storage && aosrId) {
+          const uploadPath = `${aosrId}.docx`;
+          const { error: upErr } = await supabase.storage
+            .from(AOSR_DOCS_BUCKET)
+            .upload(uploadPath, blob, { upsert: true, contentType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' });
+          if (!upErr) docPath = uploadPath;
+          else console.warn('Upload DOCX warning', upErr);
+        }
+      } catch (uploadError) {
+        console.warn('Не удалось загрузить документ в хранилище', uploadError);
+      }
+
+      try {
+        if (aosrId) {
+          const updatePayload = {
+            status: 'final',
+            number: data.AOSR_NUMBER || null,
+            object_name: data.OBJECT_NAME || data.NAME_AOSR || null,
+          };
+          if (docPath) updatePayload.doc_path = docPath;
+          const { error: finalErr } = await supabase
+            .from('aosr')
+            .update(updatePayload)
+            .eq('id', aosrId);
+          if (finalErr) console.error('Finalize error', finalErr);
+        }
+      } catch (finalizeError) {
+        console.error('Finalize step failed', finalizeError);
+      }
+
+      try {
+        const filename = buildFileName(data);
+        saveAs(blob, filename);
+        showToast('АОСР сформирован');
+      } finally {
+        setGenerateState(false);
+        if (aosrListModal?.classList.contains('is-open')) {
+          await renderAOSRList();
+        }
+      }
+    }
+
+    function collectFormData(form, { strict = true } = {}){
+      const controls = Array.from(form.querySelectorAll("input[name], textarea[name], select[name]"));
+      const data = {};
+      let isValid = true;
+      const missing = [];
+
+      controls.forEach((control)=>{
+        const name = control.name;
+        if (!name) return;
+        const value = control.value.trim();
+        data[name] = value;
+        const wrapper = control.closest(".form-field");
+        if (wrapper) wrapper.classList.remove("invalid");
+        if (strict && control.required && !value) {
+          isValid = false;
+          if (wrapper) wrapper.classList.add("invalid");
+          missing.push(name);
+        }
+      });
+
+      return { data, isValid, missing };
+    }
+
+    function collectAOSRData(){
+      const form = getAosrForm();
+      if (!form) return { data: null, success: false, missing: [] };
+      const { data, isValid, missing } = collectFormData(form, { strict: true });
+      if (!isValid) {
+        const missingLabels = missing.map((name) => {
+          const field = form.querySelector(`[name="${CSS.escape(name)}"]`);
+          const label = field ? field.closest('.form-field')?.querySelector('label') : null;
+          return (label ? label.textContent : name || '').toString().trim() || name;
+        });
+        alert('Заполните обязательные поля:\n' + missingLabels.join('\n'));
+        return { data: null, success: false, missing: missingLabels };
+      }
+      return { data, success: true, missing: [] };
+    }
+
+    function collectAOSRFormData(){
+      const form = getAosrForm();
+      if (!form) return null;
+      const controls = Array.from(form.querySelectorAll("input[name], textarea[name], select[name]"));
+      const data = {};
+      controls.forEach((control)=>{
+        const name = control.name;
+        if (!name) return;
+        const isTextArea = control instanceof HTMLTextAreaElement;
+        const value = isTextArea ? control.value : control.value.trim();
+        data[name] = value;
+      });
+      return data;
+    }
+
+    function clearAosrForm(){
+      const form = getAosrForm();
+      if (!form) return;
+      form.querySelectorAll("input[name], textarea[name], select[name]").forEach((control)=>{
+        control.value = "";
+        const wrapper = control.closest(".form-field");
+        if (wrapper) wrapper.classList.remove("invalid");
+      });
+    }
+
+    function fillAosrForm(payload){
+      const form = getAosrForm();
+      if (!form || !payload || typeof payload !== "object") return;
+      form.querySelectorAll("input[name], textarea[name], select[name]").forEach((control)=>{
+        const name = control.name;
+        if (!name) return;
+        if (Object.prototype.hasOwnProperty.call(payload, name)) {
+          const value = payload[name];
+          control.value = value === undefined || value === null ? "" : String(value);
+        }
+      });
+    }
+
+    async function saveAOSRRow({ id = null, form, keepStatusDraft = false }){
+      const numberRaw = form.AOSR_NUMBER || "";
+      const objectRaw = form.OBJECT_NAME || form.NAME_AOSR || "";
+      const number = typeof numberRaw === "string" ? numberRaw.trim() : numberRaw;
+      const objectName = typeof objectRaw === "string" ? objectRaw.trim() : objectRaw;
+      let payload = { ...form };
+      const label = await getCurrentUserLabel();
+      let user = currentUser;
+      if (!user) {
+        const { data: userData } = await supabase.auth.getUser();
+        user = userData?.user || null;
+        if (user) {
+          currentUser = user;
+        }
+      }
+      const creatorEmail = user?.email || null;
+      const creatorId = user?.id || null;
+
+      const rowBase = {
+        number: number || null,
+        object_name: objectName || null,
+        user_id: creatorId,
+        status: keepStatusDraft ? 'draft' : 'draft'
+      };
+
+      if (id) {
+        if (!payload.created_by_name || !payload.created_by_id) {
+          try {
+            const { data: existingRow } = await supabase
+              .from('aosr')
+              .select('payload')
+              .eq('id', id)
+              .single();
+            if (existingRow?.payload) {
+              payload = { ...existingRow.payload, ...payload };
+            }
+          } catch (mergeError) {
+            console.warn('Не удалось получить существующий payload АОСР', mergeError);
+          }
+        }
+        if (!payload.created_by_name) payload.created_by_name = label;
+        if (!payload.created_by_email) payload.created_by_email = creatorEmail;
+        if (!payload.created_by_id) payload.created_by_id = creatorId;
+        const { error } = await supabase
+          .from('aosr')
+          .update({ ...rowBase, payload })
+          .eq('id', id);
+        if (error) throw error;
+        return id;
+      }
+
+      const { data, error } = await supabase
+        .from('aosr')
+        .insert({ ...rowBase,
+          payload: { ...payload, created_by_name: label, created_by_email: creatorEmail, created_by_id: creatorId } })
+        .select('id')
+        .single();
+      if (error) throw error;
+      return data?.id || null;
+    }
+
+    async function saveAOSRDraft(formData){
+      const existingId = aosrFormModal?.dataset?.aosrId || null;
+      const draftId = await saveAOSRRow({ id: existingId, form: formData, keepStatusDraft: true });
+      if (draftId && aosrFormModal) {
+        aosrFormModal.dataset.aosrId = draftId;
+        aosrFormModal.dataset.mode = 'edit';
+      }
+      updateAosrFormTitle();
+      await fillAOSRFormMeta(aosrFormModal?.dataset?.mode === 'edit' ? 'edit' : 'create');
+      showToast("Черновик сохранён");
+      console.log('AOSR draft saved', { id: draftId });
+      if (aosrListModal?.classList.contains('is-open')) {
+        await renderAOSRList();
+      }
+      return draftId;
+    }
+
+    async function saveAOSRDraftBeforeGenerate(formData){
+      const existingId = aosrFormModal?.dataset?.aosrId || null;
+      const draftId = await saveAOSRRow({ id: existingId, form: formData, keepStatusDraft: true });
+      if (draftId && aosrFormModal) {
+        aosrFormModal.dataset.aosrId = draftId;
+        aosrFormModal.dataset.mode = 'edit';
+      }
+      return draftId;
+    }
+
+    async function fetchAOSRList({ filter = 'all', search = '' } = {}){
+      let query = supabase
+        .from('aosr')
+        .select('*')
+        .order('updated_at', { ascending: false })
+        .limit(100);
+
+      if (filter === 'draft') {
+        query = query.eq('status', 'draft');
+      } else if (filter === 'final') {
+        query = query.eq('status', 'final');
+      }
+
+      const trimmed = search.trim();
+      if (trimmed) {
+        const term = `%${trimmed}%`;
+        query = query.or(`number.ilike.${term},object_name.ilike.${term}`);
+      }
+
+      const { data, error } = await query;
+      if (error) throw error;
+      return data || [];
+    }
+
+    async function renderAOSRList(overrides = {}){
+      aosrListState = { ...aosrListState, ...overrides };
+      const { filter, search } = aosrListState;
+      setActiveFilterButton(filter);
+      if (aosrSearchInput && aosrSearchInput.value.trim() !== search.trim()) {
+        aosrSearchInput.value = search;
+      }
+      if (aosrListContainer) {
+        aosrListContainer.innerHTML = '<div class="form-loading">Загрузка…</div>';
+      }
+      try {
+        const data = await fetchAOSRList(aosrListState);
+        aosrListCache = data;
+        console.log('AOSR list', { filter, search, count: data.length });
+        if (!data.length) {
+          if (aosrListContainer) aosrListContainer.innerHTML = '<div class="registry-empty">Ничего не найдено</div>';
+          return;
+        }
+        const rows = data.map(renderAosrRow).join('');
+        if (aosrListContainer) aosrListContainer.innerHTML = rows;
+      } catch (error) {
+        console.error('Не удалось загрузить список АОСР', error);
+        if (aosrListContainer) aosrListContainer.innerHTML = '<div class="registry-error">Не удалось загрузить список. Попробуйте позже.</div>';
+      }
+    }
+
+    function setActiveFilterButton(filter){
+      aosrFilterButtons.forEach((btn)=>{
+        btn.classList.toggle('active', btn.dataset.filter === filter);
+      });
+    }
+
+    async function openAOSRRow(row){
+      console.log('AOSR open', row.id, row.status, row.number);
+      if (row.doc_path && row.status === 'final') {
+        try {
+          const { data, error } = await supabase.storage.from(AOSR_DOCS_BUCKET).download(row.doc_path);
+          if (error) throw error;
+          const filenameBase = (row.number && row.number.trim()) || row.id;
+          saveAs(data, `АОСР_${filenameBase}.docx`);
+        } catch (error) {
+          console.error('Не удалось скачать документ АОСР', error);
+          alert('Не удалось скачать документ АОСР');
+        }
+        return;
+      }
+
+      closeModal('modal-aosr-list');
+      openModal(aosrModalId);
+      await ensureAosrFormLoaded();
+      clearAosrForm();
+      fillAosrForm(row.payload || {});
+      if (aosrFormModal) {
+        aosrFormModal.dataset.aosrId = row.id;
+        aosrFormModal.dataset.mode = 'edit';
+      }
+      updateAosrFormTitle();
+      await fillAOSRFormMeta('edit');
+      focusFirstField();
+    }
+
+    async function deleteAOSRRow(row, triggerBtn){
+      if (!row || !row.id) return;
+      const isFinal = row.status === 'final';
+      const confirmMessage = isFinal ? 'Удалить сформированный акт? Документ будет также удалён из хранилища.' : 'Удалить черновик акта?';
+      const confirmed = confirm(confirmMessage);
+      if (!confirmed) return;
+      if (triggerBtn) triggerBtn.disabled = true;
+      const shouldRefreshList = !!aosrListModal?.classList.contains('is-open');
+      try {
+        if (isFinal && row.doc_path && supabase?.storage) {
+          try {
+            const { error: storageError } = await supabase.storage.from(AOSR_DOCS_BUCKET).remove([row.doc_path]);
+            if (storageError) {
+              console.warn('Не удалось удалить файл АОСР из хранилища', storageError);
+            }
+          } catch (storageRemoveError) {
+            console.warn('Ошибка при удалении файла АОСР из хранилища', storageRemoveError);
+          }
+        }
+        const { error } = await supabase
+          .from('aosr')
+          .delete()
+          .eq('id', row.id);
+        if (error) throw error;
+        if (aosrFormModal?.dataset?.aosrId === row.id) {
+          clearAosrForm();
+          aosrFormModal.dataset.aosrId = '';
+          aosrFormModal.dataset.mode = 'create';
+          updateAosrFormTitle();
+        }
+        aosrListCache = aosrListCache.filter(item => item.id !== row.id);
+        showToast('АОСР удалён');
+      } catch (error) {
+        console.error('Не удалось удалить АОСР', error);
+        alert('Не удалось удалить АОСР. Попробуйте позже.');
+        return;
+      } finally {
+        if (triggerBtn) triggerBtn.disabled = false;
+      }
+      if (shouldRefreshList) {
+        try {
+          await renderAOSRList();
+        } catch (listError) {
+          console.error('Не удалось обновить список АОСР после удаления', listError);
+          alert('АОСР удалён, но не удалось обновить список. Обновите страницу.');
+        }
+      }
+    }
+
+    async function handleAosrOpenList(){
+      closeModal('modal-asko');
+      aosrListState = { filter: 'all', search: '' };
+      if (aosrSearchInput) aosrSearchInput.value = '';
+      openModal('modal-aosr-list');
+      await renderAOSRList({ filter: 'all', search: '' });
+    }
+
+    async function handleNewAosrDraft(){
+      closeModal('modal-aosr-list');
+      openModal(aosrModalId);
+      await ensureAosrFormLoaded();
+      clearAosrForm();
+      if (aosrFormModal) {
+        aosrFormModal.dataset.aosrId = '';
+        aosrFormModal.dataset.mode = 'create';
+      }
+      updateAosrFormTitle();
+      await fillAOSRFormMeta('create');
+      focusFirstField();
+    }
+
+    function renderAosrRow(row){
+      const number = safeText(row.number ?? row?.payload?.AOSR_NUMBER);
+      const objectName = safeText(row.object_name ?? row?.payload?.OBJECT_NAME ?? row?.payload?.NAME_AOSR);
+      const payloadName = row?.payload?.NAME_AOSR || row?.payload?.name_aosr || null;
+      const nameText = safeText(payloadName);
+      const statusLabel = row.status === 'final' ? 'Сформирован' : 'Черновик';
+      const statusClass = row.status === 'final' ? 'badge--final' : 'badge--draft';
+      const author = safeText(row?.payload?.created_by_name);
+      const updated = row.updated_at ? dayjs(row.updated_at).format('DD.MM.YYYY HH:mm') : '—';
+      const metaNumber = number !== '—' ? `№ ${number}` : '№ —';
+      const objectMetaRaw = objectName !== '—' ? objectName : '—';
+      const metaParts = [metaNumber, objectMetaRaw];
+      const metaHtml = metaParts.filter(Boolean).map((part, idx)=>`<span>${idx>0 ? '• ' : ''}${escapeHtml(part)}</span>`).join('');
+      const startStr = fmtDateParts(row?.payload?.ND, row?.payload?.NM, row?.payload?.NG);
+      const endStr = fmtDateParts(row?.payload?.KD, row?.payload?.KM, row?.payload?.KG);
+      const period = (startStr || endStr) ? `${startStr || '—'} — ${endStr || '—'}` : '—';
+      const footerMeta = `Добавил: ${author} • Обновлено: ${updated}`;
+      return `<div class="aosr-item ${row.status === 'final' ? 'is-final' : 'is-draft'}" data-id="${row.id}">
+        <div class="aosr-row-head">
+          <span class="badge ${statusClass}">${statusLabel}</span>
+          <div class="aosr-row-meta">${metaHtml}</div>
+        </div>
+        <div class="aosr-row-name">${nameText}</div>
+        <div class="aosr-row-period">Период: ${escapeHtml(period)}</div>
+        <div class="aosr-row-footer">
+          <span class="aosr-row-meta-audit">${footerMeta}</span>
+          <div class="aosr-row-actions">
+            <button type="button" class="btn ghost sm" data-action="open-aosr" data-id="${row.id}">Открыть</button>
+            <button type="button" class="btn btn-danger sm" data-action="delete-aosr" data-id="${row.id}">Удалить</button>
+          </div>
+        </div>
+      </div>`;
+    }
+
+    function safeText(value){
+      if (value === undefined || value === null) return '—';
+      const str = String(value).trim();
+      return str ? escapeHtml(str) : '—';
+    }
+
+    function fmtDateParts(D, M, G){
+      if (!D && !M && !G) return null;
+      const hasMonthNumber = M && !Number.isNaN(Number(M));
+      if (hasMonthNumber){
+        const dd = D ? String(D).padStart(2,'0') : '';
+        const mm = String(M).padStart(2,'0');
+        const yy = G ? String(G) : '';
+        return [dd, mm, yy].filter(Boolean).join('.') || null;
+      }
+      return [D, M, G].filter(Boolean).join(' ') || null;
+    }
+
+    function escapeHtml(value){
+      return String(value).replace(/[&<>"']/g, (ch)=>{
+        switch(ch){
+          case '&': return '&amp;';
+          case '<': return '&lt;';
+          case '>': return '&gt;';
+          case '"': return '&quot;';
+          case "'": return '&#39;';
+          default: return ch;
+        }
+      });
+    }
+
+    function showToast(message){
+      const toast = document.createElement('div');
+      toast.className = 'toast';
+      toast.textContent = message;
+      document.body.appendChild(toast);
+      requestAnimationFrame(()=> toast.classList.add('show'));
+      setTimeout(()=>{
+        toast.classList.remove('show');
+        setTimeout(()=> toast.remove(), 260);
+      }, 2400);
+    }
+
+    async function handleSaveDraft(){
+      const formData = collectAOSRFormData();
+      if (!formData) return;
+      try {
+        await saveAOSRDraft(formData);
+      } catch (error) {
+        console.error("Не удалось сохранить черновик", error);
+        const errorMessage = error?.message || error?.error_description || error?.hint || "";
+        alert(`Не удалось сохранить черновик.${errorMessage ? `\n${errorMessage}` : " Попробуйте позже."}`);
+      }
+    }
+
+    function applyIsoConversions(data){
+      const dateFields = [
+        { key: "Date", month: "Month", year: "year", yearType: "short" },
+        { key: "ND", month: "NM", year: "NG", yearType: "full" },
+        { key: "KD", month: "KM", year: "KG", yearType: "full" }
+      ];
+
+      dateFields.forEach(({ key, month, year, yearType }) => {
+        const raw = data[key];
+        if (!raw) return;
+        const parts = isoToParts(raw);
+        if (!parts) return;
+        data[key] = parts.day;
+        if (!data[month]) data[month] = parts.monthName;
+        if (!data[year]) data[year] = yearType === "short" ? parts.yearShort : parts.yearFull;
+      });
+    }
+
+    function hydrateDraft(){
+      const form = getAosrForm();
+      if (!form) return;
+      try {
+        const saved = localStorage.getItem(draftStorageKey);
+        if (!saved) return;
+        const parsed = JSON.parse(saved);
+        Object.entries(parsed || {}).forEach(([name, value]) => {
+          const field = form.querySelector(`[name="${CSS.escape(name)}"]`);
+          if (field && typeof value === "string") {
+            field.value = value;
+          }
+        });
+      } catch (error) {
+        console.warn("Не удалось загрузить черновик", error);
+      }
+    }
+
+    function isoToParts(value){
+      const trimmed = value.trim();
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(trimmed)) return null;
+      const parsed = dayjs(trimmed);
+      if (!parsed.isValid()) return null;
+      const monthIndex = parsed.month();
+      const day = String(parsed.date());
+      const yearFull = String(parsed.year());
+      return {
+        day,
+        monthName: MONTHS_GENITIVE[monthIndex] || "",
+        yearFull,
+        yearShort: yearFull.slice(-2)
+      };
+    }
+
+    async function fetchAOSRTemplateArrayBuffer(){
+      const { data, error } = await supabase
+        .storage
+        .from(AOSR_TEMPLATE_BUCKET)
+        .download(AOSR_TEMPLATE_PATH); // если файл перенесут в подпапку, указать путь как folder/file.docx
+
+      if (error) {
+        console.error('Ошибка загрузки шаблона:', error);
+        alert('Не удалось загрузить шаблон АОСР');
+        return null;
+      }
+
+      const arrayBuffer = await data.arrayBuffer();
+      console.log('Шаблон АОСР загружен, bytes:', arrayBuffer.byteLength);
+      try {
+        const zipPreview = new PizZip(arrayBuffer);
+        const docxml = zipPreview.file('word/document.xml')?.asText();
+        console.log('Первые 200 символов document.xml:', docxml?.slice(0,200));
+      } catch (previewError) {
+        console.warn('Не удалось прочитать document.xml для предпросмотра:', previewError);
+      }
+
+      return arrayBuffer;
+    }
+
+    function normalizeCurlyToSquare(zip){
+      const folder = zip.folder('word');
+      if (!folder) return { changed:false };
+      const files = [
+        'word/document.xml',
+        ...folder.file(/header\d+\.xml/).map(f => f.name),
+        ...folder.file(/footer\d+\.xml/).map(f => f.name),
+      ];
+      const re = /\{\{\s*([A-Za-z0-9_.]+)\s*\}\}/g;
+      let changed = false;
+      files.forEach(name => {
+        const f = zip.file(name);
+        if (!f) return;
+        const xml = f.asText();
+        const newXml = xml.replace(re, (_m, g1) => {
+          changed = true;
+          return `[[${g1}]]`;
+        });
+        if (newXml !== xml) zip.file(name, newXml);
+      });
+      return { changed };
+    }
+
+    function getDocxtemplaterCtor(){
+      const w = window;
+      return (
+        w.docxtemplater?.Docxtemplater ||
+        w.docxtemplater ||
+        w.Docxtemplater ||
+        w.docxtemplater?.default ||
+        null
+      );
+    }
+
+    function buildFileName(data){
+      const baseValue = data.AOSR_NUMBER && data.AOSR_NUMBER.length ? data.AOSR_NUMBER : dayjs().format("YYYY-MM-DD");
+      const base = String(baseValue).trim();
+      const sanitized = base.replace(/[^0-9A-Za-zА-Яа-я_\-]+/g, "_");
+      return `АОСР_${sanitized || dayjs().format("YYYY-MM-DD")}.docx`;
+    }
+
+    function handleDocxError(error){
+      console.error("DOCX generation error", error);
+      if (error?.properties?.errors?.length) {
+        const missing = error.properties.errors
+          .map((entry)=> entry?.properties?.expr || entry?.properties?.id || entry?.properties?.name)
+          .filter(Boolean);
+        if (missing.length) {
+          alert(`Не найдено значение для плейсхолдеров: ${missing.join(", ")}`);
+          return;
+        }
+      }
+      alert(`Не удалось сформировать документ. ${error.message || ""}`.trim());
+    }
+
+    function setGenerateState(isLoading){
+      if (!generateBtn) return;
+      generateBusy = isLoading;
+      if (isLoading) {
+        generateBtn.disabled = true;
+        generateBtn.textContent = "Генерация…";
+      } else {
+        generateBtn.disabled = false;
+        generateBtn.textContent = defaultGenerateLabel;
+      }
+    }
+
+    function flashInvalidButton(){
+      if (!generateBtn) return;
+      generateBtn.disabled = true;
+      const previous = generateBtn.textContent;
+      generateBtn.textContent = "Заполните обязательные поля";
+      setTimeout(()=>{
+        if (!generateBusy) {
+          generateBtn.disabled = false;
+          generateBtn.textContent = defaultGenerateLabel || previous;
+        }
+      }, 1400);
+    }
+
+    function resetGenerateButton(){
+      if (!generateBtn || generateBusy) return;
+      generateBtn.disabled = false;
+      generateBtn.textContent = defaultGenerateLabel;
+    }
+
+    window.openModal = openModal;
+    window.closeModal = closeModal;
+  </script>
+</body>
+</html>
+    #modal-aosr-form .modal__panel{padding-top:22px}
+    #modal-aosr-form .modal__hdr{margin:4px 0 16px 0}
+    #modal-aosr-form .modal__title{margin:0 0 6px 0;line-height:1.2}
+    #modal-aosr-form .modal__meta{opacity:.75;font-size:14px}

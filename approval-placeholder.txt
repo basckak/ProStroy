@@ -1,0 +1,147 @@
+async function renderApprovalPlaceholder(){
+      if (!approvalMount) return;
+      const session = currentSession || await ensureSession();
+      approvalMount.hidden = false;
+      approvalMount.innerHTML = `
+        <section class="card" style="display:grid;gap:16px" data-approval-placeholder>
+          <div class="badge-row">
+            <span class="status-badge status-draft">Черновик</span>
+            <span class="muted" style="font-size:.85rem">Назначьте согласующих до сохранения договора</span>
+          </div>
+          <div class="field full">
+            <label class="muted" style="font-size:.85rem">Согласующие</label>
+            <div class="multi-select" data-placeholder-ms>
+              <div class="input-face empty" data-placeholder-face role="button" tabindex="0" aria-haspopup="listbox" aria-expanded="false">Загрузка списка…</div>
+              <div class="multi-options" data-placeholder-options role="listbox" aria-multiselectable="true" aria-hidden="true"></div>
+            </div>
+            <div class="muted" style="font-size:.85rem;margin-top:6px" data-placeholder-hint>Загружаем сотрудников…</div>
+          </div>
+          <p class="muted" style="margin:0;font-size:.85rem">После сохранения договор появится в разделе <a href="./documents.html" style="color:#82cfff">Документы</a> с выбранными согласующими.</p>
+        </section>
+      `;
+
+      const multiSelect = approvalMount.querySelector("[data-placeholder-ms]");
+      const face = approvalMount.querySelector("[data-placeholder-face]");
+      const optionsBox = approvalMount.querySelector("[data-placeholder-options]");
+      const hint = approvalMount.querySelector("[data-placeholder-hint]");
+
+      const state = {
+        open: false
+      };
+
+      function closeDropdown(){
+        if (!multiSelect || !state.open) return;
+        multiSelect.classList.remove("is-open");
+        face?.setAttribute("aria-expanded", "false");
+        optionsBox?.setAttribute("aria-hidden", "true");
+        state.open = false;
+        document.removeEventListener("click", handleOutsideClick);
+      }
+
+      function openDropdown(){
+        if (!multiSelect || state.open) return;
+        multiSelect.classList.add("is-open");
+        face?.setAttribute("aria-expanded", "true");
+        optionsBox?.setAttribute("aria-hidden", "false");
+        state.open = true;
+        document.addEventListener("click", handleOutsideClick);
+      }
+
+      function handleOutsideClick(event){
+        if (!multiSelect.contains(event.target)){ closeDropdown(); }
+      }
+
+      face?.addEventListener("click", ()=>{
+        state.open ? closeDropdown() : openDropdown();
+      });
+      face?.addEventListener("keydown", (event)=>{
+        if (event.key === "Enter" || event.key === " "){
+          event.preventDefault();
+          state.open ? closeDropdown() : openDropdown();
+        }
+        if (event.key === "Escape"){
+          closeDropdown();
+        }
+      });
+
+      function updateFace(){
+        if (!face) return;
+        if (!pendingApproverIds.size){
+          face.classList.add("empty");
+          face.textContent = placeholderProfiles.length ? "Выберите согласующих" : "Загрузка списка…";
+          return;
+        }
+        face.classList.remove("empty");
+        face.innerHTML = "";
+        pendingApproverIds.forEach((id)=>{
+          const tag = document.createElement("button");
+          tag.type = "button";
+          tag.className = "tag";
+          tag.textContent = placeholderNameById(id);
+          tag.addEventListener("click", (event)=>{
+            event.stopPropagation();
+            toggleSelection(id);
+          });
+          face.appendChild(tag);
+        });
+      }
+
+      function toggleSelection(id){
+        if (pendingApproverIds.has(id)) pendingApproverIds.delete(id);
+        else pendingApproverIds.add(id);
+        updateFace();
+        renderOptions();
+      }
+
+      function renderOptions(){
+        if (!optionsBox) return;
+        optionsBox.innerHTML = "";
+        if (!placeholderProfiles.length){
+          const empty = document.createElement("div");
+          empty.className = "muted";
+          empty.textContent = "Сотрудники не найдены.";
+          optionsBox.appendChild(empty);
+          return;
+        }
+        const fragment = document.createDocumentFragment();
+        placeholderProfiles.forEach((profile)=>{
+          const option = document.createElement("button");
+          option.type = "button";
+          option.className = "multi-option";
+          option.dataset.userId = profile.id;
+          if (pendingApproverIds.has(profile.id)) option.classList.add("is-checked");
+          option.innerHTML = `
+            <div class="multi-check">${pendingApproverIds.has(profile.id) ? "<svg viewBox=\"0 0 16 16\"><path d=\"M3.5 8l3 3.5 6-7\"></path></svg>" : ""}</div>
+            <div class="multi-body">
+              <div class="multi-name">${placeholderNameById(profile.id)}</div>
+              <div class="multi-meta">${profile.login || ""}</div>
+            </div>
+          `;
+          option.addEventListener("click", (event)=>{
+            event.stopPropagation();
+            toggleSelection(profile.id);
+          });
+          fragment.appendChild(option);
+        });
+        optionsBox.appendChild(fragment);
+      }
+
+      try{
+        const { data, error } = await supabase
+          .from("profiles")
+          .select("id, full_name, login")
+          .order("full_name", { ascending: true })
+          .limit(500);
+        if (error) throw error;
+        placeholderProfiles = (data || []).filter((profile)=> profile?.id && profile.id !== session.user.id);
+        hint.textContent = placeholderProfiles.length ? "Выберите одного или нескольких согласующих." : "Сотрудники не найдены.";
+        renderOptions();
+        updateFace();
+      }catch(loadingError){
+        console.error("Не удалось загрузить сотрудников", loadingError);
+        hint.textContent = loadingError.message || "Не удалось загрузить сотрудников.";
+        face.textContent = "Ошибка загрузки";
+      }
+    }
+
+    

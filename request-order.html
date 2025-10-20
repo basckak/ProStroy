@@ -1,0 +1,603 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>ProStroy — Проект приказа</title>
+  <meta name="color-scheme" content="dark">
+  <link rel="stylesheet" href="assets/styles/base.css">
+  <link rel="stylesheet" href="assets/styles/header.css">
+  <script src="https://cdn.jsdelivr.net/npm/pizzip@3.1.7/dist/pizzip.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/docxtemplater@3.44.0/build/docxtemplater.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/file-saver@2.0.5/dist/FileSaver.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js" defer></script>
+  <script src="/js/supabaseClient.js" defer></script>
+  <script src="/header.js" defer></script>
+</head>
+<body style="--bg-video-filter: brightness(0.7);">
+  <video class="bg" autoplay muted loop playsinline preload="auto">
+    <source src="https://assets.mixkit.co/videos/30431/30431-720.mp4" type="video/mp4">
+  </video>
+
+  <div id="header"></div>
+
+  <div class="wrap">
+    <div class="page wide-page">
+      <section class="card">
+        <h1>Шаблон приказа</h1>
+        <p>Сформируйте проект приказа: заполните реквизиты, пункты распоряжения и блок ответственности. Ниже появится готовый текст документа, который можно скопировать или выгрузить в формате Word (DOCX) для юридического отдела.</p>
+
+        <form id="orderForm">
+          <div class="grid-2">
+            <div class="row">
+              <label for="orderNumber">Номер приказа *</label>
+              <input id="orderNumber" required placeholder="Например: 45/2024">
+            </div>
+            <div class="row">
+              <label for="orderDate">Дата *</label>
+              <input id="orderDate" type="date" required>
+            </div>
+          </div>
+
+          <div class="grid-2">
+            <div class="row">
+              <label for="department">Инициатор / подразделение *</label>
+              <input id="department" required placeholder="Департамент строительства">
+            </div>
+            <div class="row">
+              <label for="subject">Тема приказа *</label>
+              <input id="subject" required placeholder="О введении порядка контроля качества">
+            </div>
+          </div>
+
+          <div class="row">
+            <label for="basis">Основание</label>
+            <textarea id="basis" placeholder="Укажите норматив, решение совета директоров, служебную записку и т.п."></textarea>
+          </div>
+
+          <div class="row">
+            <label for="effective">Дата вступления в силу</label>
+            <input id="effective" type="date">
+          </div>
+
+          <div class="row">
+            <label>Пункты приказа</label>
+            <div class="muted">Опишите последовательность действий. Добавьте адресатов и сроки.</div>
+            <div class="list" id="pointsList"></div>
+            <button type="button" class="btn btn-ghost" id="addPoint">+ Добавить пункт</button>
+          </div>
+
+          <div class="row">
+            <label>Контроль исполнения</label>
+            <div class="muted">Отметьте ответственных за исполнение и контроль.</div>
+            <div class="list" id="controlList"></div>
+            <button type="button" class="btn btn-ghost" id="addController">+ Добавить ответственного</button>
+          </div>
+
+          <div class="row">
+            <label for="distribution">Перечень сотрудников / подразделений для ознакомления</label>
+            <textarea id="distribution" placeholder="Например: Руководители филиалов, HR, ПТО"></textarea>
+          </div>
+
+          <div class="actions">
+            <button class="btn btn-primary" type="submit">Сформировать текст</button>
+            <button class="btn btn-ghost" type="button" id="copyBtn">Скопировать</button>
+            <button class="btn btn-ghost" type="button" id="downloadBtn">Скачать Word</button>
+          </div>
+        </form>
+      </section>
+
+      <section class="card">
+        <h2>Предпросмотр</h2>
+        <div id="preview" class="preview">Заполните поля формы, чтобы увидеть проект приказа.</div>
+      </section>
+    </div>
+  </div>
+
+  <script type="module">
+    import supabase, { requireSession } from "./supabaseClient.js";
+    const headerReady = window.headerReady || Promise.resolve();
+    
+    await headerReady;
+
+    await requireSession();
+
+    const REQUEST_KIND = "order";
+    const STORAGE_BUCKET = "request-docs";
+    const TEMPLATE_BUCKET = "request-templates";
+    const TEMPLATE_KEY = "order_template.docx";
+    const DOCX_MIME = "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
+
+    const byId = (id)=>document.getElementById(id);
+    const listPoints = byId("pointsList");
+    const listControl = byId("controlList");
+    const preview = byId("preview");
+
+    const points = [];
+    const controllers = [];
+    let currentRequestId = null;
+
+    function buildFileName(values){
+      const base = values.orderNumber ? `prikaz-${values.orderNumber}` : "prikaz";
+      const slug = sanitizeFileSlug(base);
+      return `${slug || "prikaz"}.docx`;
+    }
+
+    function renderPoints(){
+      listPoints.innerHTML = "";
+      if (!points.length){
+        const empty = document.createElement("div");
+        empty.className = "muted";
+        empty.textContent = "Пункты ещё не добавлены.";
+        listPoints.appendChild(empty);
+      }
+      points.forEach((item, idx)=>{
+        const row = document.createElement("div");
+        row.className = "item";
+        row.innerHTML = `<div><strong>${idx+1}. ${item.action || "Без названия"}</strong><div class="muted">${item.deadline ? `Срок: ${item.deadline}` : ""} ${item.owner ? `· Ответственный: ${item.owner}` : ""}</div></div>`;
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.className = "btn btn-ghost";
+        btn.textContent = "Удалить";
+        btn.addEventListener("click", ()=>{
+          points.splice(idx, 1);
+          renderPoints();
+        });
+        row.appendChild(btn);
+        listPoints.appendChild(row);
+      });
+    }
+
+    function renderControllers(){
+      listControl.innerHTML = "";
+      if (!controllers.length){
+        const empty = document.createElement("div");
+        empty.className = "muted";
+        empty.textContent = "Ответственные не указаны.";
+        listControl.appendChild(empty);
+      }
+      controllers.forEach((item, idx)=>{
+        const row = document.createElement("div");
+        row.className = "item";
+        row.innerHTML = `<div><strong>${item.person || "Ответственный"}</strong><div class="muted">${item.role || ""}</div></div>`;
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.className = "btn btn-ghost";
+        btn.textContent = "Удалить";
+        btn.addEventListener("click", ()=>{
+          controllers.splice(idx, 1);
+          renderControllers();
+        });
+        row.appendChild(btn);
+        listControl.appendChild(row);
+      });
+    }
+
+    renderPoints();
+    renderControllers();
+
+    function openPrompt(title, defaults={}){
+      const action = window.prompt(`${title}\n\nТекст распоряжения:`, defaults.action || "");
+      if (action == null) return null;
+      const deadline = window.prompt("Срок исполнения (дата или период):", defaults.deadline || "");
+      if (deadline == null) return null;
+      const owner = window.prompt("Ответственный (ФИО, должность):", defaults.owner || "");
+      if (owner == null) return null;
+      return { action: action.trim(), deadline: deadline.trim(), owner: owner.trim() };
+    }
+
+    function openControllerPrompt(defaults={}){
+      const person = window.prompt("ФИО и должность ответственного за контроль:", defaults.person || "");
+      if (person == null) return null;
+      const role = window.prompt("Зона ответственности (контроль/исполнение):", defaults.role || "");
+      if (role == null) return null;
+      return { person: person.trim(), role: role.trim() };
+    }
+
+    byId("addPoint").addEventListener("click", ()=>{
+      const values = openPrompt("Новый пункт приказа");
+      if (values) {
+        points.push(values);
+        renderPoints();
+      }
+    });
+
+    byId("addController").addEventListener("click", ()=>{
+      const values = openControllerPrompt();
+      if (values){
+        controllers.push(values);
+        renderControllers();
+      }
+    });
+
+    function collectFormData(){
+      const dump = (v)=>v?.trim() || "";
+      return {
+        orderNumber: dump(byId("orderNumber").value),
+        orderDate: dump(byId("orderDate").value),
+        department: dump(byId("department").value),
+        subject: dump(byId("subject").value),
+        basis: dump(byId("basis").value),
+        effective: dump(byId("effective").value),
+        distribution: dump(byId("distribution").value),
+        points: points.map((p, idx)=>({
+          position: idx + 1,
+          action: dump(p.action),
+          deadline: dump(p.deadline),
+          owner: dump(p.owner)
+        })),
+        controllers: controllers.map((c)=>({
+          person: dump(c.person),
+          role: dump(c.role)
+        }))
+      };
+    }
+
+    function cloneForJson(value){
+      try{
+        return JSON.parse(JSON.stringify(value));
+      }catch(err){
+        console.warn("Не удалось сериализовать payload", err);
+        throw err;
+      }
+    }
+
+    function sanitizeFileSlug(input){
+      const base = (input || "").toString().trim().replace(/\.(rtf|docx)$/i, "");
+      if (!base) return "document";
+      return base
+        .replace(/\s+/g, "-")
+        .replace(/[^0-9A-Za-zА-Яа-яЁё_\-]/g, "-")
+        .replace(/-+/g, "-")
+        .replace(/^-|-$/g, "")
+        .slice(0, 96) || "document";
+    }
+
+    async function upsertRequestRecord(values){
+      const payload = cloneForJson(values);
+      const requestData = {
+        request_type: REQUEST_KIND,
+        number: values.orderNumber || null,
+        title: values.subject || null,
+        payload,
+        status: "draft"
+      };
+
+      let result;
+      if (currentRequestId){
+        result = await supabase
+          .from("request_documents")
+          .update(requestData)
+          .eq("id", currentRequestId)
+          .select("id")
+          .single();
+      }else{
+        result = await supabase
+          .from("request_documents")
+          .insert(requestData)
+          .select("id")
+          .single();
+      }
+
+      if (result.error){
+        throw result.error;
+      }
+
+      currentRequestId = result.data?.id || currentRequestId;
+      return currentRequestId;
+    }
+
+    async function uploadRequestDocument(recordId, blob, fileName, mime=DOCX_MIME){ 
+      if (!recordId) return null;
+      const baseRaw = fileName && fileName.trim() ? fileName.replace(/\.docx$/i, "") : `${REQUEST_KIND}-${recordId}`;
+      const slug = sanitizeFileSlug(baseRaw);
+      const finalName = `${slug}.docx`;
+      const objectPath = `${REQUEST_KIND}/${recordId}/${finalName}`;
+      const { error } = await supabase
+        .storage
+        .from(STORAGE_BUCKET)
+        .upload(objectPath, blob, {
+          upsert: true,
+          contentType: mime
+        });
+      if (error){
+        throw error;
+      }
+      return { path: objectPath, file: finalName };
+    }
+
+    async function finalizeRequestRecord(recordId, updates={}){
+      if (!recordId) return;
+      const payload = {
+        status: "final",
+        ...updates
+      };
+      const { error } = await supabase
+        .from("request_documents")
+        .update(payload)
+        .eq("id", recordId);
+      if (error){
+        throw error;
+      }
+    }
+
+    function formatPreview(values = collectFormData()){
+      const number = values.orderNumber;
+      const date = values.orderDate ? new Date(values.orderDate).toLocaleDateString() : "[дата]";
+      const dept = values.department || "[подразделение]";
+      const subject = values.subject || "[тема]";
+      const basis = values.basis;
+      const effective = values.effective ? new Date(values.effective).toLocaleDateString() : "с даты подписания";
+      const distribution = values.distribution;
+
+      let text = `ПРИКАЗ № ${number || "___"}\n${date}\n${dept}\n\n${subject.toUpperCase()}\n\n`;
+      if (basis){
+        text += `Основание: ${basis}\n\n`;
+      }
+      text += "ПРИКАЗЫВАЮ:\n";
+      if (values.points.length){
+        values.points.forEach((p, idx)=>{
+          const action = p.action || `[действие ${idx+1}]`;
+          const details = [];
+          if (p.deadline) details.push(`срок: ${p.deadline}`);
+          if (p.owner) details.push(`ответственный: ${p.owner}`);
+          text += `${idx+1}. ${action}${details.length ? ` (${details.join(", ")})` : ""}.\n`;
+        });
+      }else{
+        text += "1. [Добавьте пункты приказа].\n";
+      }
+
+      if (values.controllers.length){
+        text += "\nКонтроль исполнения:\n";
+        values.controllers.forEach((c)=>{
+          text += `— ${c.person || "[контролёр]"}${c.role ? ` — ${c.role}` : ""}.\n`;
+        });
+      }
+
+      text += `\nПриказ вступает в силу ${effective}.\n`;
+
+      if (distribution){
+        text += `\nС приказом ознакомить: ${distribution}.\n`;
+      }
+
+      text += "\nГенеральный директор _______________________\n";
+
+      preview.textContent = text;
+      return text;
+    }
+
+    byId("orderForm").addEventListener("submit", (evt)=>{
+      evt.preventDefault();
+      formatPreview();
+      preview.scrollIntoView({ behavior:"smooth", block:"start" });
+    });
+
+    function copyPreview(){
+      const text = formatPreview();
+      navigator.clipboard?.writeText(text).then(()=>{
+        window.alert("Текст приказа скопирован в буфер обмена.");
+      }).catch(()=> window.alert("Не удалось скопировать текст."));
+    }
+
+    function formatDate(value){
+      if (!value) return "";
+      const d = new Date(value);
+      if (Number.isNaN(d.getTime())) return value;
+      return d.toLocaleDateString("ru-RU");
+    }
+
+    function buildTemplateData(values){
+      const number = values.orderNumber || "___";
+      const orderDate = values.orderDate ? formatDate(values.orderDate) : "[дата]";
+      const department = values.department || "[подразделение]";
+      const subjectRaw = values.subject || "[тема]";
+      const basis = values.basis || "";
+      const distribution = values.distribution || "";
+      const effective = values.effective ? formatDate(values.effective) : "с даты подписания";
+
+      const points = (values.points.length ? values.points : [{ action: "[Добавьте пункты приказа]" }]).map((p, idx)=>{
+        const details = [];
+        if (p.deadline) details.push(`срок: ${p.deadline}`);
+        if (p.owner) details.push(`ответственный: ${p.owner}`);
+        return {
+          index: idx + 1,
+          action: p.action || `[действие ${idx + 1}]`,
+          deadline: p.deadline || "",
+          owner: p.owner || "",
+          details: details.join(", "),
+          has_details: details.length > 0
+        };
+      });
+
+      const controllers = values.controllers.map((c)=>{
+        const role = c.role || "";
+        return {
+          person: c.person || "",
+          role,
+          label: role ? `${c.person || "[контролёр]"} — ${role}` : (c.person || "[контролёр]")
+        };
+      });
+
+      return {
+        order_number: number,
+        order_date: orderDate,
+        department,
+        subject: subjectRaw,
+        subject_upper: subjectRaw.toUpperCase(),
+        basis,
+        has_basis: Boolean(basis),
+        effective,
+        distribution,
+        has_distribution: Boolean(distribution),
+        points,
+        has_points: points.length > 0,
+        controllers,
+        has_controllers: controllers.length > 0,
+        generated_at: new Date().toLocaleString("ru-RU")
+      };
+    }
+
+    async function fetchTemplateBuffer(){
+      const { data, error } = await supabase
+        .storage
+        .from(TEMPLATE_BUCKET)
+        .download(TEMPLATE_KEY);
+      if (error){
+        throw error;
+      }
+      return data.arrayBuffer();
+    }
+
+    function normalizeTemplateDelimiters(zip){
+      const folder = zip.folder("word");
+      if (!folder) return;
+      const files = [
+        "word/document.xml",
+        ...folder.file(/header\d+\.xml/).map((f)=>f.name),
+        ...folder.file(/footer\d+\.xml/).map((f)=>f.name)
+      ];
+      const re = /\{\{\s*([A-Za-z0-9_.#\/ ]+)\s*\}\}/g;
+      files.forEach((name)=>{
+        const file = zip.file(name);
+        if (!file) return;
+        const xml = file.asText();
+        const replaced = xml.replace(re, (_match, token)=>`[[${token.trim()}]]`);
+        if (replaced !== xml){
+          zip.file(name, replaced);
+        }
+      });
+    }
+
+    function getDocxtemplaterCtor(){
+      const w = window;
+      return (
+        w.docxtemplater?.Docxtemplater ||
+        w.docxtemplater ||
+        w.Docxtemplater ||
+        w.docxtemplater?.default ||
+        null
+      );
+    }
+
+    async function renderDocx(values){
+      const templateBuffer = await fetchTemplateBuffer();
+      let zip;
+      try {
+        zip = new PizZip(templateBuffer);
+      } catch (err){
+        console.error("Не удалось прочитать DOCX шаблон", err);
+        throw new Error("Повреждённый шаблон DOCX");
+      }
+
+      normalizeTemplateDelimiters(zip);
+      const DocxCtor = getDocxtemplaterCtor();
+      if (!DocxCtor){
+        throw new Error("Библиотека Docxtemplater не загружена");
+      }
+
+      const doc = new DocxCtor(zip, {
+        paragraphLoop: true,
+        linebreaks: true,
+        delimiters: { start: "[[", end: "]]" }
+      });
+
+      const templateData = buildTemplateData(values);
+      try{
+        doc.setData(templateData);
+        doc.render();
+      }catch(renderError){
+        console.error("Ошибка рендера DOCX", renderError);
+        if (renderError?.properties?.errors?.length){
+          const details = renderError.properties.errors
+            .map((item)=>item.properties?.id || item.properties?.expr || item.properties?.name || JSON.stringify(item))
+            .filter(Boolean)
+            .join("\n");
+          throw new Error(`Не удалось заполнить DOCX-шаблон. Проверьте плейсхолдеры:\n${details}`);
+        }
+        throw new Error(renderError.message || "Не удалось заполнить шаблон DOCX.");
+      }
+
+      return doc.getZip().generate({
+        type: "blob",
+        mimeType: DOCX_MIME
+      });
+    }
+
+    async function downloadFromSupabase(){
+      const btn = byId("downloadBtn");
+      const original = btn.textContent;
+      try{
+        btn.disabled = true;
+        btn.textContent = "Генерация…";
+
+        const values = collectFormData();
+        const previewText = formatPreview(values);
+        if (!previewText.trim()){
+          window.alert("Заполните форму, чтобы сформировать документ.");
+          return;
+        }
+
+        await requireSession();
+
+        // сохраняем черновик заявки
+        const recordId = await upsertRequestRecord(values);
+
+        const docId = recordId || currentRequestId;
+        if (!currentRequestId && docId){
+          currentRequestId = docId;
+        }
+
+        const blob = await renderDocx(values);
+        const filename = buildFileName(values);
+        const mime = DOCX_MIME;
+
+        let storagePath = null;
+        let storedFileName = filename;
+        try{
+          const uploaded = await uploadRequestDocument(currentRequestId || docId, blob, filename, mime);
+          if (uploaded){
+            storagePath = uploaded.path;
+            storedFileName = uploaded.file;
+          }
+        }catch(uploadError){
+          console.warn("Не удалось загрузить документ в хранилище", uploadError);
+        }
+
+        try{
+          const updates = {
+            number: values.orderNumber || null,
+            title: values.subject || null,
+            file_name: storedFileName,
+            mime_type: mime
+          };
+          if (storagePath) updates.doc_path = storagePath;
+          await finalizeRequestRecord(currentRequestId || docId, updates);
+        }catch(updateError){
+          console.warn("Не удалось обновить запись заявки", updateError);
+        }
+
+        if (typeof saveAs === "function"){
+          saveAs(blob, filename);
+        }else{
+          const link = document.createElement("a");
+          link.href = URL.createObjectURL(blob);
+          link.download = filename;
+          link.click();
+          setTimeout(()=>URL.revokeObjectURL(link.href), 2000);
+        }
+        window.alert("Документ сформирован и сохранён в Supabase.");
+      }catch(err){
+        console.error("Supabase document error", err);
+        const message = err?.message || "Не удалось получить файл.";
+        window.alert(`Ошибка при формировании документа: ${message}`);
+      }finally{
+        btn.disabled = false;
+        btn.textContent = original;
+      }
+    }
+
+    byId("copyBtn").addEventListener("click", copyPreview);
+    byId("downloadBtn").addEventListener("click", downloadFromSupabase);
+  </script>
+</body>
+</html>

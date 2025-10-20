@@ -1,0 +1,514 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>ProStroy — Документы</title>
+  <meta name="color-scheme" content="dark">
+  <link rel="stylesheet" href="assets/styles/base.css">
+  <link rel="stylesheet" href="assets/styles/header.css">
+  <style>
+    :root{
+      --surface:rgba(6,10,18,.58);
+      --border-soft:rgba(255,255,255,.12);
+      --accent:#22c55e;
+    }
+    body{margin:0;min-height:100dvh;background:var(--bg,#0b1220);color:var(--text,#eef3f9);font-family:var(--font-sans,system-ui,-apple-system,"Segoe UI",Roboto,Inter,Arial);overflow-y:scroll}
+    video.bg{position:fixed;inset:0;width:100%;height:100%;object-fit:cover;z-index:-2;filter:brightness(.72)}
+    .overlay{position:fixed;inset:0;z-index:-1;background:linear-gradient(180deg,rgba(5,8,13,.2),rgba(5,8,13,.72))}
+    .wrap{padding:20px}
+    .page{max-width:1200px;margin:0 auto;display:grid;gap:18px}
+    .card{background:var(--surface);border:1px solid var(--border-soft);border-radius:18px;padding:18px 22px;backdrop-filter:blur(10px);box-shadow:0 18px 40px rgba(0,0,0,.42)}
+    h1{margin:0 0 4px}
+    p.sub{margin:0;color:var(--muted,#a9b4c7)}
+    .doc-head{display:flex;justify-content:space-between;align-items:flex-start;gap:20px;flex-wrap:wrap}
+   
+    .newdoc-wrap{display:flex;flex-direction:column;gap:12px;align-items:flex-end;width:100%}
+    .doc-menu{display:none;width:100%;margin-top:12px;padding:24px;border-radius:18px;background:var(--surface);border:1px solid var(--border-soft);box-shadow:0 26px 60px rgba(0,0,0,.5);backdrop-filter:blur(14px);gap:22px;align-self:stretch;box-sizing:border-box}
+    .doc-menu.is-open{display:grid}
+    .doc-menu-section{display:grid;gap:14px}
+    .doc-menu-section + .doc-menu-section{border-top:1px solid rgba(255,255,255,.08);padding-top:18px;margin-top:6px}
+    .doc-menu-title{font-size:1rem;font-weight:650;letter-spacing:.01em;text-transform:none;color:#fff}
+    .doc-menu-grid{display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(280px,1fr))}
+    .doc-menu-link{display:flex;flex-direction:column;gap:6px;padding:16px 18px;border-radius:14px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.08);text-decoration:none;color:inherit;font-size:.95rem;line-height:1.3;transition:background .2s ease,border-color .2s ease,transform .16s ease}
+    .doc-menu-link:hover{background:rgba(34,197,94,.18);border-color:rgba(34,197,94,.38);color:#f4fff8;transform:translateY(-2px)}
+    .doc-menu-link-title{font-weight:600}
+    @media (max-width:720px){
+      .doc-menu{padding:20px}
+      .doc-menu-grid{grid-template-columns:minmax(0,1fr)}
+      .newdoc-wrap{align-items:stretch}
+      .newdoc-wrap > button{align-self:flex-end}
+    }
+    form.filters{display:flex;gap:12px;flex-wrap:wrap;align-items:center}
+    form.filters input,form.filters select{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.18);border-radius:12px;padding:10px 14px;color:inherit;font:inherit;min-width:180px}
+    form.filters input#searchInput{flex:1 1 260px}
+    .doc-table{width:100%;border-collapse:collapse;font-size:.95rem}
+    .doc-table thead{background:rgba(255,255,255,.06)}
+    .doc-table th,.doc-table td{padding:12px 14px;border-bottom:1px solid rgba(255,255,255,.08);text-align:center}
+    .doc-table tbody tr.highlight{box-shadow:0 0 0 1px rgba(34,197,94,.4)}
+    .actions{display:flex;gap:8px}
+    .btn{display:inline-flex;align-items:center;justify-content:center;padding:10px 16px;border-radius:12px;border:1px solid rgba(255,255,255,.18);background:rgba(255,255,255,.08);color:inherit;font-weight:600;cursor:pointer;transition:filter .2s ease,border-color .2s ease}
+    .btn:hover{filter:brightness(1.05);border-color:rgba(255,255,255,.28)}
+    .btn.ghost{background:transparent}
+    .btn.action{background:#22c55e;border:0;color:#0b1b14;box-shadow:0 10px 24px rgba(34,197,94,.18)}
+    .btn.sm{padding:6px 10px;font-size:.85rem;border-radius:10px}
+    .empty-state{padding:30px;text-align:center;color:var(--muted)}
+    .error-state{padding:24px;border-radius:14px;background:rgba(255,122,122,.12);border:1px solid rgba(255,122,122,.28);color:#ffc1c1}
+    @media (max-width:900px){
+      .wrap{padding:16px}
+      .doc-table{font-size:.9rem}
+      .doc-table thead{display:none}
+      .doc-table tbody tr{display:grid;border:1px solid rgba(255,255,255,.08);border-radius:14px;padding:12px;margin-bottom:12px}
+      .doc-table td{border:0;padding:6px 0}
+      .doc-table td[data-label]:before{content:attr(data-label)": ";color:var(--muted);font-size:.82rem}
+      .actions{justify-content:flex-start}
+    }
+  </style>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js" defer></script>
+  <script src="/js/supabaseClient.js" defer></script>
+  <script src="/header.js" defer></script>
+</head>
+<body class="documents-page">
+  <video class="bg" autoplay muted loop playsinline preload="auto">
+    <source src="https://assets.mixkit.co/videos/30431/30431-720.mp4" type="video/mp4">
+  </video>
+  <div class="overlay"></div>
+  <div id="header"></div>
+
+  <div class="wrap">
+    <div class="page">
+      <section class="card doc-head">
+        <div>
+          <h1>Документы</h1>
+          <p class="sub">Единый список документов проекта (договоры, акты, финансы, приказы и прочее) с поиском, фильтрами и скачиванием файлов.</p>
+        </div>
+        <div class="newdoc-wrap">
+          <button id="btnNewDoc" class="btn action">+ Новый документ</button>
+          <div id="newDocMenu" class="doc-menu" aria-hidden="true"></div>
+        </div>
+      </section>
+
+      <section class="card">
+        <form id="filters" class="filters" autocomplete="off">
+          <input id="searchInput" name="q" placeholder="Поиск: номер или название">
+          <select id="categoryFilter" name="category">
+            <option value="">Категория: все</option>
+          </select>
+          <select id="statusFilter" name="status"></select>
+          <input id="dateFrom" name="from" type="date" aria-label="С даты">
+          <input id="dateTo" name="to" type="date" aria-label="По дату">
+          <button type="button" id="resetFilters" class="btn ghost">Сброс</button>
+          <button type="submit" class="btn">Применить</button>
+        </form>
+      </section>
+
+      <section class="card">
+        <div id="docsContainer" class="list">
+          <div class="loader">Загрузка документов…</div>
+        </div>
+      </section>
+    </div>
+  </div>
+
+  <script type="module">
+    import { requireSession } from "./supabaseClient.js";
+    import { fetchDocs, publicUrl } from "./js/documents-api.js";
+
+    const headerReady = window.headerReady || Promise.resolve();
+    await headerReady;
+    await requireSession({ redirectTo: './index.html' });
+
+    const CATEGORY_DEFS = {
+      contracts: {
+        label: "Договоры",
+        subtypes: {
+          subcontract: { label: "Договор подряда/субподряда", href: "./docs/contracts/subcontract.html" },
+          supply: { label: "Договор поставки", href: "./docs/contracts/supply.html" },
+          customer: { label: "Контракт с заказчиком", href: "./docs/contracts/customer-contract.html" },
+          rental: { label: "Договор аренды имущества / техники", href: "./docs/contracts/rental.html" },
+          service_gph: { label: "Договор оказания услуг / ГПХ (физ. лица)", href: "./docs/contracts/service-gph.html" },
+          employment: { label: "Трудовой договор / доп. соглашение", href: "./docs/orders/employment-contract.html" },
+          insurance: { label: "Договор страхования / субсидирования / пожертвования", href: "./docs/contracts/insurance.html" },
+          license: { label: "Лицензионный / авторский договор", href: "./docs/contracts/license.html" },
+          loan: { label: "Договор займа / финансирования", href: "./docs/contracts/loan.html" },
+          addendum: { label: "Допсоглашение", href: "./docs/contracts/addendum.html", hidden: true },
+          disagreement: { label: "Протокол разногласий", href: "./docs/contracts/disagreement.html", hidden: true }
+        }
+      },
+      acts: {
+        label: "Акты",
+        subtypes: {
+          ks2: { label: "Акт КС-2", href: "./docs/acts/ks2.html" },
+          ks3: { label: "Справка КС-3", href: "./docs/acts/ks3.html" },
+          writeoff: { label: "Акт списания / дефектный", href: "./docs/acts/writeoff.html" },
+          workCompletion: { label: "Акт выполненных работ", href: "./docs/acts/work-completion.html" }
+        }
+      },
+      finance: {
+        label: "Финансы",
+        subtypes: {
+          invoice: { label: "Счёт / счёт-фактура", href: "./docs/finance/invoice.html" },
+          advanceReport: { label: "Авансовый отчёт", href: "./docs/finance/advance-report.html" },
+          paymentOrder: { label: "Платёжное поручение", href: "./docs/finance/payment-order.html" },
+          reconciliationAct: { label: "Акт сверки", href: "./docs/finance/reconciliation-act.html" }
+        }
+      },
+      orders: {
+        label: "Приказы и персонал",
+        subtypes: {
+          employmentContract: { label: "Трудовой договор", href: "./docs/orders/employment-contract.html" },
+          hireDismiss: { label: "Приказ о приёме/увольнении", href: "./docs/orders/hire-dismiss.html" },
+          tripVacationBonus: { label: "Командировка / отпуск / премия", href: "./docs/orders/trip-vacation-bonus.html" },
+          siteOrder: { label: "Приказ по объекту / ТБ", href: "./docs/orders/site-order.html" },
+          memo: { label: "Служебная записка", href: "./docs/orders/memo.html" }
+        }
+      },
+      misc: {
+        label: "Прочее",
+        subtypes: {
+          regulation: { label: "ЛНА", href: "./docs/misc/regulation.html" },
+          meetingMinutes: { label: "Протокол совещания", href: "./docs/misc/meeting-minutes.html" },
+          letters: { label: "Письма / уведомления", href: "./docs/misc/letters.html" },
+          other: { label: "Иные документы", href: "./docs/misc/other.html" }
+        }
+      }
+    };
+
+    const STATUS_LABELS = {
+      draft: { label: "Черновик", class: "status-draft" },
+      in_review: { label: "На согласовании", class: "status-on_review" },
+      pending: { label: "На согласовании", class: "status-on_review" },
+      on_review: { label: "На согласовании", class: "status-on_review" },
+      approved: { label: "Согласовано", class: "status-approved" },
+      finalized: { label: "Оформлен", class: "status-completed" },
+      final: { label: "Оформлен", class: "status-completed" },
+      rejected: { label: "Отклонён", class: "status-rejected" }
+    };
+
+    const STATUS_OPTIONS = [
+      { value: '', label: 'Статус: все' },
+      { value: 'draft', label: 'Черновик' },
+      { value: 'in_review', label: 'На согласовании' },
+      { value: 'approved', label: 'Согласовано' },
+      { value: 'finalized', label: 'Оформлен' },
+      { value: 'rejected', label: 'Отклонён' }
+    ];
+
+    const btnNewDoc = document.getElementById('btnNewDoc');
+    const newDocMenu = document.getElementById('newDocMenu');
+    const docsContainer = document.getElementById('docsContainer');
+    const filtersForm = document.getElementById('filters');
+    const searchInput = document.getElementById('searchInput');
+    const categoryFilter = document.getElementById('categoryFilter');
+    const statusFilter = document.getElementById('statusFilter');
+    const dateFrom = document.getElementById('dateFrom');
+    const dateTo = document.getElementById('dateTo');
+    const resetFilters = document.getElementById('resetFilters');
+
+    populateCategoryFilter();
+    populateStatusFilter();
+    renderNewDocMenu();
+
+    let currentFilters = { q: '', category: '', status: '', from: '', to: '' };
+    const hasInitialFilters = applyInitialFilters();
+    if (!hasInitialFilters) {
+      showSearchPrompt();
+    }
+
+    btnNewDoc.addEventListener('click', (event)=>{
+      event.preventDefault();
+      const isOpen = newDocMenu.classList.contains('is-open');
+      closeMenu();
+      if (!isOpen){
+        newDocMenu.classList.add('is-open');
+        newDocMenu.setAttribute('aria-hidden', 'false');
+      }
+    });
+
+    document.addEventListener('click', (event)=>{
+      if (!newDocMenu.classList.contains('is-open')) return;
+      if (event.target === btnNewDoc || btnNewDoc.contains(event.target)) return;
+      if (!newDocMenu.contains(event.target)) closeMenu();
+    });
+
+    window.addEventListener('keydown', (event)=>{
+      if (event.key === 'Escape') closeMenu();
+    });
+
+    filtersForm.addEventListener('submit', (event)=>{
+      event.preventDefault();
+      currentFilters = {
+        q: searchInput.value.trim(),
+        category: categoryFilter.value,
+        status: statusFilter.value,
+        from: dateFrom.value,
+        to: dateTo.value
+      };
+      loadDocs();
+    });
+
+    resetFilters.addEventListener('click', ()=>{
+      searchInput.value = '';
+      categoryFilter.value = '';
+      statusFilter.value = '';
+      dateFrom.value = '';
+      dateTo.value = '';
+      currentFilters = { q: '', category: '', status: '', from: '', to: '' };
+      showSearchPrompt();
+    });
+
+    function closeMenu(){
+      newDocMenu.classList.remove('is-open');
+      newDocMenu.setAttribute('aria-hidden', 'true');
+    }
+
+    function populateCategoryFilter(){
+      Object.entries(CATEGORY_DEFS).forEach(([key, cfg])=>{
+        const option = document.createElement('option');
+        option.value = key;
+        option.textContent = cfg.label;
+        categoryFilter.appendChild(option);
+      });
+    }
+
+    function populateStatusFilter(){
+      statusFilter.innerHTML = '';
+      STATUS_OPTIONS.forEach(opt => {
+        const option = document.createElement('option');
+        option.value = opt.value;
+        option.textContent = opt.label;
+        statusFilter.appendChild(option);
+      });
+    }
+
+    function showSearchPrompt(){
+      docsContainer.innerHTML = '<div class="empty-state">Уточните параметры поиска и нажмите «Применить».</div>';
+    }
+
+    function renderNewDocMenu(){
+      newDocMenu.innerHTML = Object.entries(CATEGORY_DEFS).map(([category, cfg])=>{
+        const links = Object.entries(cfg.subtypes)
+          .filter(([, meta]) => !meta.hidden)
+          .map(([subtype, meta])=>`
+            <a class="doc-menu-link" data-category="${category}" data-subtype="${subtype}" href="${meta.href}">
+              <span class="doc-menu-link-title">${meta.label}</span>
+            </a>
+          `).join('');
+        return `
+          <article class="doc-menu-section">
+            <div class="doc-menu-title">${cfg.label}</div>
+            <div class="doc-menu-grid">${links}</div>
+          </article>
+        `;
+      }).join('');
+    }
+
+    newDocMenu.addEventListener('click', (event)=>{
+      const link = event.target.closest('.doc-menu-link');
+      if (!link) return;
+      closeMenu();
+    });
+
+    function applyInitialFilters(){
+      const params = new URLSearchParams(location.search);
+      if (location.hash.length > 1){
+        const hashValue = location.hash.slice(1);
+        if (hashValue.includes("=")){
+          const hashParams = new URLSearchParams(hashValue);
+          hashParams.forEach((value, key) => params.set(key, value));
+        } else {
+          const map = {
+            "draft": "draft",
+            "drafts": "draft",
+            "in-review": "in_review",
+            "pending": "in_review",
+            "approved": "approved",
+            "finalized": "finalized",
+            "completed": "finalized",
+            "rejected": "rejected"
+          };
+          const mapped = map[hashValue.toLowerCase()];
+          if (mapped) params.set("status", mapped);
+        }
+      }
+
+      let touched = false;
+      const setIfParam = (param, element) => {
+        if (!element || !params.has(param)) return;
+        const value = params.get(param) ?? "";
+        element.value = value;
+        touched = touched || value !== "";
+      };
+
+      setIfParam("q", searchInput);
+      setIfParam("category", categoryFilter);
+      setIfParam("status", statusFilter);
+      setIfParam("from", dateFrom);
+      setIfParam("to", dateTo);
+
+      if (!touched) return false;
+
+      currentFilters = {
+        q: searchInput.value.trim(),
+        category: categoryFilter.value,
+        status: statusFilter.value,
+        from: dateFrom.value,
+        to: dateTo.value
+      };
+      loadDocs();
+      return true;
+    }
+
+    async function loadDocs(){
+      docsContainer.innerHTML = '<div class="loader">Загрузка документов…</div>';
+      try {
+        const data = await fetchDocs(currentFilters);
+        if (!data.length){
+          docsContainer.innerHTML = '<div class="empty-state">Документов пока нет.</div>';
+          return;
+        }
+        const table = document.createElement('table');
+        table.className = 'doc-table';
+        table.innerHTML = `
+          <thead>
+            <tr>
+              <th>№ / Название</th>
+              <th>Категория</th>
+              <th>Дата</th>
+              <th>Статус</th>
+              <th>Автор</th>
+              <th>Обновлено</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        `;
+        const tbody = table.querySelector('tbody');
+        data.forEach(doc => tbody.appendChild(renderRow(doc)));
+        docsContainer.innerHTML = '';
+        docsContainer.appendChild(table);
+        highlightJustCreated();
+      } catch (error){
+        console.error('Не удалось загрузить документы', error);
+        docsContainer.innerHTML = '<div class="error-state">Ошибка загрузки списка документов.</div>';
+      }
+    }
+
+    function renderRow(doc){
+      const tr = document.createElement('tr');
+      tr.dataset.docId = doc.id;
+      const categoryInfo = CATEGORY_DEFS[doc.category] || { label: doc.category || '—', subtypes: {} };
+      const subtypeInfo = categoryInfo.subtypes?.[doc.subtype];
+      const statusInfo = STATUS_LABELS[doc.status] || STATUS_LABELS.draft;
+      const authorProfile = doc._author_profile || null;
+      const authorLabel =
+        (authorProfile?.full_name && authorProfile.full_name.trim()) ||
+        authorProfile?.login ||
+        doc.payload?.created_by_name ||
+        (doc.created_by ? String(doc.created_by).slice(0, 8) : '—');
+      const updatedLabel = doc.updated_at ? formatDateTime(doc.updated_at) : '—';
+      const docDate = doc.doc_date ? formatDate(doc.doc_date) : '—';
+      const titlePart = doc.title || doc.name || doc.object_name || '';
+      const numberPart = doc.number || '—';
+
+      tr.innerHTML = `
+        <td data-label="№ / Название">${escape(numberPart)}${titlePart ? `<div class="muted">${escape(titlePart)}</div>` : ''}</td>
+        <td data-label="Категория">${escape(categoryInfo.label)}${subtypeInfo ? `<div class="muted">${escape(subtypeInfo.label)}</div>` : ''}</td>
+        <td data-label="Дата">${escape(docDate)}</td>
+        <td data-label="Статус"><span class="status-badge ${statusInfo.class}">${statusInfo.label}</span></td>
+        <td data-label="Автор">${escape(authorLabel)}</td>
+        <td data-label="Обновлено">${escape(updatedLabel)}</td>
+      `;
+
+      const actionsTd = document.createElement('td');
+      actionsTd.dataset.label = 'Действия';
+      actionsTd.className = 'actions';
+
+      const openBtn = document.createElement('button');
+      openBtn.className = 'btn ghost sm';
+      openBtn.type = 'button';
+      openBtn.textContent = 'Открыть';
+      openBtn.addEventListener('click', ()=>{
+        const openUrl = getFormUrl(doc.category, doc.subtype);
+        if (!openUrl){
+          alert('Не найдена страница формы для этого документа.');
+          return;
+        }
+        const url = new URL(openUrl, location.origin);
+        url.searchParams.set('id', doc.id);
+        location.href = url.pathname + url.search;
+      });
+      actionsTd.appendChild(openBtn);
+
+      const downloadBtn = document.createElement('button');
+      downloadBtn.className = 'btn ghost sm';
+      downloadBtn.type = 'button';
+      downloadBtn.textContent = 'Скачать';
+      downloadBtn.addEventListener('click', async ()=>{
+        if (!doc.doc_path){
+          alert('Файл ещё не загружен.');
+          return;
+        }
+        try {
+          const url = await publicUrl(doc.doc_path);
+          if (url){
+            window.open(url, '_blank');
+          } else {
+            alert('Не удалось получить ссылку на файл.');
+          }
+        } catch (err){
+          console.error('download error', err);
+          alert('Ошибка при получении файла.');
+        }
+      });
+      actionsTd.appendChild(downloadBtn);
+
+      tr.appendChild(actionsTd);
+      return tr;
+    }
+
+    function getFormUrl(category, subtype){
+      const cat = CATEGORY_DEFS[category];
+      if (!cat) return null;
+      return cat.subtypes?.[subtype]?.href || null;
+    }
+
+    function highlightJustCreated(){
+      const params = new URLSearchParams(location.search);
+      const targetId = params.get('created') || params.get('updated') || params.get('justCreated');
+      if (!targetId) return;
+      let row = null;
+      if (typeof CSS !== 'undefined' && CSS.escape){
+        row = docsContainer.querySelector(`tr[data-doc-id="${CSS.escape(targetId)}"]`);
+      }
+      if (!row){
+        row = Array.from(docsContainer.querySelectorAll('tr[data-doc-id]')).find(r => r.dataset.docId === targetId) || null;
+      }
+      if (row){
+        row.classList.add('highlight');
+        row.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        setTimeout(()=> row.classList.remove('highlight'), 4000);
+      }
+    }
+
+    function formatDate(value){
+      if (!value) return '—';
+      const date = new Date(value);
+      if (Number.isNaN(date.getTime())) return value;
+      return new Intl.DateTimeFormat('ru-RU', { dateStyle: 'medium' }).format(date);
+    }
+
+    function formatDateTime(value){
+      if (!value) return '—';
+      const date = new Date(value);
+      if (Number.isNaN(date.getTime())) return value;
+      return new Intl.DateTimeFormat('ru-RU', { dateStyle: 'short', timeStyle: 'short' }).format(date);
+    }
+
+    function escape(value){
+      const map = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' };
+      return String(value ?? '').replace(/[&<>"']/g, ch => map[ch] || ch);
+    }
+  </script>
+</body>
+</html>

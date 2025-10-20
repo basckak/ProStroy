@@ -1,0 +1,253 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>ProStroy — Контрагент</title>
+  <meta name="color-scheme" content="dark">
+  <link rel="stylesheet" href="assets/styles/base.css">
+  <link rel="stylesheet" href="assets/styles/header.css">
+  <style>
+    :root{
+      --surface:rgba(6,10,18,.58);
+      --border-soft:rgba(255,255,255,.12);
+      --accent:#22c55e;
+    }
+    body{margin:0;min-height:100dvh;background:var(--bg,#0b1220);color:var(--text,#eef3f9);font-family:var(--font-sans);--bg-video-filter:brightness(.72)}
+    video.bg{position:fixed;inset:0;width:100%;height:100%;object-fit:cover;z-index:-2}
+    .wrap{padding:24px}
+    .page{max-width:960px;margin:0 auto;display:grid;gap:20px}
+    .card{background:var(--surface);border:1px solid var(--border-soft);border-radius:20px;padding:26px 30px;backdrop-filter:blur(8px);box-shadow:0 26px 50px rgba(0,0,0,.54);display:grid;gap:20px}
+    header.header{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;flex-wrap:wrap}
+    h1{margin:0;font-size:1.9rem;font-weight:700}
+    .muted{color:var(--muted,#a9b4c7)}
+    .badge{display:inline-flex;align-items:center;gap:8px;padding:6px 14px;border-radius:999px;font-weight:600;font-size:.85rem;text-transform:uppercase;letter-spacing:.08em;border:1px solid rgba(255,255,255,.2)}
+    .badge.legal{background:rgba(34,197,94,.16);color:#bbf7d0;border-color:rgba(34,197,94,.32)}
+    .badge.individual{background:rgba(125,211,255,.16);color:#dbeafe;border-color:rgba(125,211,255,.32)}
+    .actions{display:flex;gap:12px;flex-wrap:wrap}
+    .btn{display:inline-flex;align-items:center;justify-content:center;padding:10px 18px;border-radius:12px;border:1px solid rgba(255,255,255,.16);background:rgba(255,255,255,.08);color:inherit;text-decoration:none;font-weight:600;transition:filter .2s ease,border-color .2s ease}
+    .btn:hover{filter:brightness(1.05);border-color:rgba(255,255,255,.26)}
+    .btn.primary{background:linear-gradient(135deg,var(--accent),#1ed760);border:0;color:#062a16;box-shadow:0 14px 32px rgba(34,197,94,.22)}
+    .section{border:1px solid rgba(255,255,255,.08);border-radius:16px;padding:18px 20px;background:rgba(255,255,255,.04);display:grid;gap:16px}
+    .section h2{margin:0;font-size:1.08rem}
+    .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px}
+    .tile{display:grid;gap:6px;padding:14px;border-radius:14px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1)}
+    .tile dt{margin:0;font-size:.75rem;text-transform:uppercase;letter-spacing:.08em;color:var(--muted,#a9b4c7)}
+    .tile dd{margin:0;font-size:.98rem;word-break:break-word}
+    .empty{padding:18px;border-radius:14px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);text-align:center;color:var(--muted,#a9b4c7)}
+    @media(max-width:720px){
+      .wrap{padding:18px}
+      .card{padding:22px}
+      h1{font-size:1.6rem}
+      .actions{flex-direction:column}
+      .btn{width:100%}
+    }
+  </style>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js" defer></script>
+  <script src="/js/supabaseClient.js" defer></script>
+  <script src="/header.js" defer></script>
+</head>
+<body>
+  <video class="bg" autoplay muted loop playsinline preload="auto">
+    <source src="https://assets.mixkit.co/videos/30431/30431-720.mp4" type="video/mp4">
+  </video>
+  <div id="header"></div>
+
+  <div class="wrap">
+    <div class="page" id="page">
+      <section class="card" id="detailsCard">
+        <header class="header">
+          <div>
+            <p class="muted">Контрагент</p>
+            <h1 id="cpName">Загрузка…</h1>
+          </div>
+          <div class="actions">
+            <div class="badge" id="cpType">—</div>
+            <a class="btn primary" id="editBtn" href="./counterparty-edit.html">Редактировать</a>
+            <a class="btn" href="./counterparties-list.html">К списку</a>
+          </div>
+        </header>
+
+        <div id="generalSection" class="section">
+          <h2>Основное</h2>
+          <div id="generalGrid" class="grid"></div>
+        </div>
+
+        <div id="legalSection" class="section" hidden>
+          <h2>Данные юридического лица</h2>
+          <div id="legalGrid" class="grid"></div>
+        </div>
+
+        <div id="individualSection" class="section" hidden>
+          <h2>Данные физлица / ИП</h2>
+          <div id="individualGrid" class="grid"></div>
+        </div>
+
+        <div id="notesSection" class="section" hidden>
+          <h2>Примечания</h2>
+          <div id="notesContent" class="tile"></div>
+        </div>
+      </section>
+    </div>
+  </div>
+
+  <script type="module">
+    console.log("counterparty-view script v2", new Date().toISOString());
+    import supabase, { requireSession } from "./supabaseClient.js";
+    const headerReady = window.headerReady || Promise.resolve();
+
+    const params = new URLSearchParams(location.search);
+    const id = params.get("id");
+
+    const cpNameEl = document.getElementById("cpName");
+    const cpTypeEl = document.getElementById("cpType");
+    const editBtn = document.getElementById("editBtn");
+    const detailsCard = document.getElementById("detailsCard");
+    const generalGrid = document.getElementById("generalGrid");
+    const legalGrid = document.getElementById("legalGrid");
+    const individualGrid = document.getElementById("individualGrid");
+    const notesSection = document.getElementById("notesSection");
+    const notesContent = document.getElementById("notesContent");
+    const legalSection = document.getElementById("legalSection");
+    const individualSection = document.getElementById("individualSection");
+
+    function escapeHtml(value){
+      return String(value ?? "—").replace(/[&<>"']/g, ch => ({
+        "&": "&amp;",
+        "<": "&lt;",
+        ">": "&gt;",
+        '"': "&quot;",
+        "'": "&#39;"
+      })[ch] || ch);
+    }
+
+    function addTile(target, title, value){
+      if (value === null || value === undefined || value === "") return;
+      target.insertAdjacentHTML("beforeend", `
+        <dl class="tile">
+          <dt>${escapeHtml(title)}</dt>
+          <dd>${escapeHtml(value)}</dd>
+        </dl>
+      `);
+    }
+
+    function formatDate(value){
+      if (!value) return null;
+      const dt = new Date(value);
+      if (Number.isNaN(dt.getTime())) return null;
+      return dt.toLocaleString("ru-RU");
+    }
+
+    function renderError(message){
+      detailsCard.innerHTML = `<div class="empty">${escapeHtml(message || "Контрагент не найден или доступ ограничен.")}</div>`;
+    }
+
+    await headerReady;
+    await requireSession({ redirectTo: "./index.html" });
+
+    if (!id){
+      renderError("Не передан идентификатор контрагента.");
+      cpTypeEl.textContent = "—";
+      editBtn.remove();
+    } else {
+      editBtn.href = `./counterparty-edit.html?id=${encodeURIComponent(id)}`;
+
+      const { data, error } = await supabase
+        .from("counterparties")
+        .select("*")
+        .eq("id", id)
+        .maybeSingle();
+
+      if (error || !data){
+        console.error("[counterparty-view] load error", error);
+        renderError("Не удалось загрузить контрагента. Возможно, запись удалена.");
+        cpTypeEl.textContent = "—";
+        editBtn.remove();
+      } else {
+        const roleLabels = {
+          supplier: "Поставщик",
+          contractor: "Подрядчик",
+          customer: "Заказчик",
+          subcontractor: "Субподрядчик",
+          leasing: "Лизингодатель",
+          other: "Другое"
+        };
+        const statusLabels = {
+          active: "Активен",
+          pending: "На проверке",
+          blocked: "Заблокирован"
+        };
+
+        const isLegal = data.type === "legal";
+        cpNameEl.textContent = data.name || "(без названия)";
+        cpTypeEl.classList.toggle("legal", isLegal);
+        cpTypeEl.classList.toggle("individual", !isLegal);
+        cpTypeEl.textContent = isLegal ? "Юр лицо" : "Физ лицо / ИП";
+
+        generalGrid.innerHTML = "";
+        addTile(generalGrid, "Тип контрагента", roleLabels[data.role || ""] || data.role || "—");
+        addTile(generalGrid, "Статус", statusLabels[data.status || ""] || data.status || "—");
+        addTile(generalGrid, "Ответственный менеджер", data.manager);
+        addTile(generalGrid, "Теги / категории", data.tags);
+        addTile(generalGrid, "Привязанные объекты", data.linked_objects);
+        addTile(generalGrid, "Контакты", data.contact);
+        addTile(generalGrid, "Создан", formatDate(data.created_at));
+        addTile(generalGrid, "Создан через", data.created_via);
+
+        if (isLegal){
+          legalGrid.innerHTML = "";
+          addTile(legalGrid, "ИНН", data.inn);
+          addTile(legalGrid, "КПП", data.kpp);
+          addTile(legalGrid, "ОГРН", data.ogrn);
+          addTile(legalGrid, "ОГРНИП", data.ogrnip);
+          addTile(legalGrid, "Юридический адрес", data.legal_address);
+          addTile(legalGrid, "Почтовый адрес", data.post_address);
+          addTile(legalGrid, "Телефон", data.phone);
+          addTile(legalGrid, "Email", data.email);
+          addTile(legalGrid, "Сайт", data.site);
+          addTile(legalGrid, "Руководитель", data.director_name || data.director);
+          addTile(legalGrid, "Должность руководителя", data.director_position);
+          addTile(legalGrid, "Основание полномочий", data.power_basis);
+          addTile(legalGrid, "Ссылка на доверенность", data.power_file);
+          addTile(legalGrid, "Банк", data.bank_name);
+          addTile(legalGrid, "БИК", data.bank_bik);
+          addTile(legalGrid, "Расчётный счёт", data.bank_account);
+          addTile(legalGrid, "Корреспондентский счёт", data.bank_corr);
+          addTile(legalGrid, "Доп. реквизиты", data.bank_details);
+          addTile(legalGrid, "Валюта", data.currency);
+          addTile(legalGrid, "Учредительные документы", data.charter_file);
+          addTile(legalGrid, "NDA / рамочный договор", data.nda_file);
+          addTile(legalGrid, "Дата последней проверки", formatDate(data.last_check_date));
+          legalSection.hidden = false;
+        } else {
+          individualGrid.innerHTML = "";
+          addTile(individualGrid, "ИНН", data.inn);
+          addTile(individualGrid, "СНИЛС", data.snils);
+          addTile(individualGrid, "Статус налогоплательщика", data.tax_status === "nonresident" ? "Нерезидент РФ" : "Резидент РФ");
+          addTile(individualGrid, "Статус деятельности", ({
+            none: "Нет",
+            self_employed: "Самозанятый",
+            sole_proprietor: "Индивидуальный предприниматель"
+          })[data.self_status || "none"]);
+          addTile(individualGrid, "Паспорт", data.passport);
+          addTile(individualGrid, "Кем и когда выдан", data.passport_issued);
+          addTile(individualGrid, "Адрес регистрации", data.registration_address);
+          addTile(individualGrid, "БИК", data.bank_bik);
+          addTile(individualGrid, "Расчётный счёт", data.bank_account);
+          individualSection.hidden = false;
+        }
+
+        if (data.notes){
+          notesContent.innerHTML = `
+            <dl class="tile">
+              <dt>Примечания</dt>
+              <dd>${escapeHtml(data.notes)}</dd>
+            </dl>
+          `;
+          notesSection.hidden = false;
+        }
+      }
+    }
+  </script>
+</body>
+</html>

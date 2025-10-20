@@ -1,0 +1,339 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>ProStroy — Договор подряда / субподряда</title>
+  <meta name="color-scheme" content="dark">
+  <link rel="stylesheet" href="../../assets/styles/base.css">
+  <link rel="stylesheet" href="../../assets/styles/header.css">
+  <style>
+    :root{
+      --surface:rgba(8,12,20,.72);
+      --border:rgba(255,255,255,.12);
+      --muted:#97a6bf;
+      --pill-gray-bg:rgba(148,163,184,.22);
+      --pill-yellow-bg:rgba(234,179,8,.22);
+      --pill-green-bg:rgba(34,197,94,.2);
+      --pill-red-bg:rgba(239,68,68,.2);
+    }
+    body{margin:0;min-height:100dvh;background:var(--bg,#0b1220);color:var(--text,#eef3f9);font-family:var(--font-sans,system-ui,-apple-system,"Segoe UI",Roboto,Inter,Arial)}
+    video.bg{position:fixed;inset:0;width:100%;height:100%;object-fit:cover;z-index:-2;filter:brightness(.7)}
+    .overlay{position:fixed;inset:0;background:linear-gradient(180deg,rgba(5,8,13,.24),rgba(5,8,13,.8));z-index:-1}
+    .wrap{padding:28px;display:flex;justify-content:center}
+    .form-container{width:min(1180px,100%);margin:0;background:var(--surface);border:1px solid var(--border);border-radius:24px;padding:32px 40px;backdrop-filter:blur(18px);box-shadow:0 28px 60px rgba(0,0,0,.6);display:grid;gap:28px}
+    .form-header{display:flex;justify-content:space-between;align-items:flex-start;gap:20px;flex-wrap:wrap}
+    .form-header h1{margin:4px 0 0;font-size:1.8rem;letter-spacing:.02em}
+    .form-mode{margin:0;font-size:.92rem;color:var(--muted);text-transform:uppercase;letter-spacing:.14em;font-weight:600}
+    form{display:grid;gap:22px}
+    .field-group{display:grid;gap:12px}
+    .field-row{display:grid;gap:18px;grid-template-columns:repeat(auto-fit,minmax(240px,1fr))}
+    .field-row.tight{grid-template-columns:repeat(auto-fit,minmax(220px,1fr))}
+    .field-full{grid-column:1 / -1}
+    .field{display:grid;gap:6px}
+    label{font-size:.95rem;color:#dbe3f7;font-weight:600}
+    label .req{color:#fca5a5;margin-left:6px}
+    input,select,textarea{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.16);border-radius:12px;padding:12px 14px;color:inherit;font:inherit;min-height:48px}
+    textarea{resize:vertical;min-height:120px}
+    select option{color:#0f172a}
+    .inline{display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+    .alert{padding:12px 14px;border-radius:12px;font-size:.9rem}
+    .alert.error{background:rgba(248,113,113,.16);border:1px solid rgba(248,113,113,.28);color:#ffc1c1}
+    details.section{background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08);border-radius:16px;padding:18px 20px}
+    details.section summary{cursor:pointer;font-weight:650;font-size:1.02rem;letter-spacing:.01em;margin:-18px -20px 14px;padding:18px 20px;border-radius:16px;color:#f1f5f9;list-style:none}
+    details.section[open] summary{background:rgba(255,255,255,.04)}
+    details.section summary::-webkit-details-marker{display:none}
+    .section-grid{display:grid;gap:16px}
+    .section-grid.split{grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:18px}
+    .button-row{display:flex;gap:12px;flex-wrap:wrap;justify-content:flex-end}
+    .btn{display:inline-flex;align-items:center;justify-content:center;padding:12px 22px;border-radius:12px;border:1px solid rgba(255,255,255,.16);background:rgba(255,255,255,.08);color:#f8fafc;font-weight:600;cursor:pointer;transition:filter .2s,border-color .2s}
+    .btn:hover{filter:brightness(1.05);border-color:rgba(255,255,255,.24)}
+    .btn.action{background:#22c55e;border:0;color:#0b1b14;box-shadow:0 14px 32px rgba(34,197,94,.2)}
+    .btn.link{padding:10px 16px;background:transparent;border:1px solid rgba(255,255,255,.14)}
+    .hint{font-size:.86rem;color:var(--muted);margin-top:4px}
+    body.has-modal{overflow:hidden}
+    .hidden{display:none!important}
+    #formMessage{display:none;margin-top:-8px;padding:12px 16px;border-radius:12px;font-size:.92rem;font-weight:500}
+    #formMessage.ok{display:block;background:rgba(34,197,94,.16);border:1px solid rgba(34,197,94,.32);color:#bbf7d0}
+    #formMessage.err{display:block;background:rgba(248,113,113,.16);border:1px solid rgba(248,113,113,.3);color:#fecaca}
+    .approval-section{background:rgba(255,255,255,.04);border:1px solid rgba(148,163,184,.22);border-radius:18px;padding:24px 26px;display:grid;gap:22px;box-shadow:0 22px 42px rgba(8,12,20,.34)}
+    .approval-section[hidden]{display:none!important}
+    .approval-section__head{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;flex-wrap:wrap}
+    .approval-section__title{margin:0;font-size:1.36rem;letter-spacing:.015em}
+    .approval-section__description{margin:4px 0 0;font-size:.9rem;color:var(--muted);max-width:520px}
+    .approval-section__body{display:grid;gap:18px}
+    .approval-card{padding:18px 20px;border-radius:16px;border:1px solid rgba(148,163,184,.24);background:linear-gradient(145deg,rgba(19,31,49,.94),rgba(12,22,39,.86));box-shadow:0 18px 36px rgba(8,12,20,.32);display:grid;gap:18px}
+    .approval-card__header{display:flex;align-items:flex-start;justify-content:space-between;gap:18px;flex-wrap:wrap}
+    .approval-card__title{margin:0;font-size:1.14rem;letter-spacing:.015em}
+    .approval-card__meta{margin:6px 0 18px;font-size:.86rem;color:var(--muted);display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+    .approval-card__actions{display:flex;gap:12px;flex-wrap:wrap}
+    .approval-card__actions .btn{min-width:200px}
+    .approval-card__actions .btn.link{padding:12px 20px}
+    .approval-table-wrapper{overflow:hidden;border-radius:14px;border:1px solid rgba(148,163,184,.18)}
+    .appr-table{width:100%;border-collapse:collapse;min-width:560px;background:rgba(15,23,42,.78)}
+    .appr-table thead{background:rgba(148,163,184,.14)}
+    .appr-table thead th{padding:8px 14px;text-align:center;font-size:.72rem;letter-spacing:.09em;text-transform:uppercase;color:#e2e8f0;border-bottom:1px solid rgba(148,163,184,.24)}
+    .appr-table tbody td{padding:12px 16px;border-bottom:1px solid rgba(148,163,184,.14);font-size:.86rem;vertical-align:middle;text-align:center;border-bottom:0}
+    .appr-table tbody tr{background:rgba(24,34,53,.72);position:relative}
+    .appr-table tbody tr::after{content:"";position:absolute;left:0;right:0;bottom:0;border-bottom:1px solid rgba(148,163,184,.14)}
+    .appr-table tbody tr:last-child::after{display:none}
+    .appr-table tr[data-status="pending"]{background:linear-gradient(135deg,rgba(37,99,235,.18),rgba(15,23,42,.78))}
+    .appr-table tr[data-status="approved"]{background:linear-gradient(135deg,rgba(34,197,94,.2),rgba(15,32,30,.78))}
+    .appr-table tr[data-status="rejected"]{background:linear-gradient(135deg,rgba(239,68,68,.2),rgba(40,18,26,.78))}
+    .appr-table td[data-label]{position:relative}
+    .appr-cell-inner{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;width:100%;height:100%;min-height:100px}
+    .appr-cell-user{min-width:220px}
+    .appr-user-name{font-weight:600;font-size:.9rem}
+    .appr-user-meta{margin-top:4px;font-size:.78rem;color:var(--muted)}
+    .appr-status-cell{display:flex;flex-direction:column;gap:8px;min-width:180px;padding:0}
+    .approval-status-line{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;width:100%;height:100%}
+    .badge.badge--double{display:flex;flex-direction:column;gap:0;padding:6px 16px;text-transform:none;font-size:.78rem;line-height:1.1;min-width:160px;align-items:center;justify-content:center;height:50px}
+    .badge.badge--double span{display:block;text-transform:none;white-space:nowrap}
+    .appr-cell-comment{min-width:280px}
+    .appr-status-comment{font-size:.84rem;color:var(--muted);white-space:pre-wrap;margin:0;text-align:center}
+    .appr-comment-input{width:100%;text-align:center}
+    .appr-actions{min-width:160px;padding:0}
+    .appr-actions-wrap{display:flex;flex-direction:row;gap:10px;flex-wrap:wrap;align-items:center;justify-content:center;width:100%}
+    .appr-actions .btn{min-width:140px;font-size:.82rem;white-space:nowrap}
+    .appr-actions .muted{font-size:.82rem}
+    .appr-empty{padding:22px 18px;border-radius:14px;border:1px dashed rgba(148,163,184,.28);background:rgba(15,23,42,.62);font-size:.9rem;color:var(--muted);text-align:center}
+    .button-row.hidden{display:none!important}
+    .approver-modal{position:fixed;inset:0;display:flex;align-items:flex-start;justify-content:center;padding:28px;z-index:3000;background:rgba(7,11,18,.72);backdrop-filter:blur(14px);--modal-offset:0px;}
+    .approver-modal[hidden]{display:none}
+    .approver-modal__panel{width:min(94vw,780px);max-height:78vh;display:grid;grid-template-rows:auto 1fr auto;background:linear-gradient(160deg,rgba(17,24,39,.96),rgba(10,15,26,.93));border-radius:28px;border:1px solid rgba(148,163,184,.18);box-shadow:0 48px 90px rgba(5,10,25,.65);overflow:hidden;margin-top:var(--modal-offset,0px);} 
+    .approver-modal__head{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:26px 30px;border-bottom:1px solid rgba(148,163,184,.16)}
+    .approver-modal__title{margin:0;font-size:1.26rem;letter-spacing:.02em}
+    .approver-modal__close{width:40px;height:40px;border-radius:14px;border:1px solid rgba(148,163,184,.24);background:rgba(15,23,42,.6);color:#e2e8f0;font-size:1.2rem;line-height:1;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:background .2s ease,border-color .2s ease}
+    .approver-modal__close:hover{background:rgba(34,197,94,.12);border-color:rgba(34,197,94,.35)}
+    .approver-modal__body{padding:26px 30px;overflow:auto;display:grid;gap:26px}
+    .approver-modal__body .field{position:relative;display:grid;gap:14px;background:linear-gradient(155deg,rgba(21,32,52,.82),rgba(12,20,34,.88));border:1px solid rgba(148,163,184,.24);border-radius:22px;padding:22px 24px;box-shadow:0 22px 48px rgba(6,12,24,.38)}
+    .approver-modal__body label{font-size:1.04rem;font-weight:600;letter-spacing:.01em}
+    .approver-modal__body .hint{margin:0;font-size:.86rem;color:rgba(226,232,240,.72)}
+    .approver-search__input{width:100%;padding:14px 16px;border-radius:16px;border:1px solid rgba(191,223,255,.18);background:rgba(8,16,28,.88);color:inherit;font:inherit;transition:border-color .18s ease, box-shadow .18s ease}
+    .approver-search__input:focus{outline:none;border-color:rgba(34,197,94,.45);box-shadow:0 0 0 3px rgba(34,197,94,.18)}
+    .approver-modal__actions{padding:24px 30px;border-top:1px solid rgba(148,163,184,.16);display:flex;justify-content:flex-end;gap:14px;flex-wrap:wrap;background:rgba(8,12,20,.42)}
+    .approver-modal__actions .btn{min-width:160px}
+    .approver-modal .approver-search{width:100%}
+    .approver-modal .approver-options{max-height:320px;overflow:auto;box-shadow:0 18px 40px rgba(5,10,25,.45)}
+    .approval-card h3{margin:0 0 12px;font-size:1.08rem;letter-spacing:.01em}
+    .approval-card .muted{font-size:.86rem}
+    .payment-field{display:grid;gap:12px}
+    .payment-field textarea{min-height:140px}
+    .payment-field .btn{justify-self:flex-start;padding:10px 18px}
+    @media(max-width:720px){
+      .wrap{padding:20px;display:block}
+      .form-container{padding:22px}
+      .form-header h1{font-size:1.5rem}
+      .button-row{flex-direction:column;align-items:stretch}
+      .button-row .btn{width:100%}
+    }
+  </style>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js" defer></script>
+  <script src="/js/supabaseClient.js" defer></script>
+  <script src="/header.js" defer></script>
+</head>
+<body>
+  <video class="bg" autoplay muted loop playsinline preload="auto">
+    <source src="https://assets.mixkit.co/videos/30431/30431-720.mp4" type="video/mp4">
+  </video>
+  <div class="overlay"></div>
+  <div id="header"></div>
+
+  <div class="wrap">
+    <div class="form-container card">
+      <header class="form-header">
+        <div>
+          <p id="formModeLabel" class="form-mode">Создать документ</p>
+          <h1>Договор подряда / субподряда</h1>
+        </div>
+        <div id="docStatusPill" class="status-badge status-draft">Черновик</div>
+      </header>
+
+      <form id="docForm" novalidate>
+        <section class="field-group">
+          <div class="field">
+            <label for="title">Название документа<span class="req">*</span></label>
+            <input id="title" name="title" required placeholder="Например: Договор подряда по объекту №45">
+          </div>
+          <div class="field">
+            <label for="number">Номер</label>
+            <input id="number" name="number" placeholder="Номер договора">
+          </div>
+          <div class="field">
+            <label for="fldObject">Объект<span class="req">*</span></label>
+            <select id="fldObject" name="object_id" required></select>
+          </div>
+          <div class="field">
+            <label for="fldCp1">Контрагент 1<span class="req">*</span></label>
+            <select id="fldCp1" name="counterparty_id" required></select>
+          </div>
+          <div class="field">
+            <label for="fldCp2">Контрагент 2</label>
+            <select id="fldCp2" name="counterparty2_id"></select>
+          </div>
+          <div id="refsError" class="alert error" hidden></div>
+          <div class="field">
+            <label for="amount">Сумма<span class="req">*</span></label>
+            <input id="amount" name="amount" inputmode="decimal" placeholder="0,00" required>
+            <div class="hint">Используйте точку или запятую для копеек</div>
+          </div>
+          <div class="field">
+            <label for="notes">Примечания</label>
+            <textarea id="notes" name="notes" placeholder="Дополнительные условия, комментарии…"></textarea>
+          </div>
+          <div class="field">
+            <label for="file">Файл договора</label>
+            <input id="file" name="file" type="file" accept=".pdf,.doc,.docx,.xls,.xlsx">
+            <div id="currentFileLink" class="hint"></div>
+          </div>
+        </section>
+
+        <details class="section">
+          <summary>Предмет и сроки</summary>
+          <div class="field-group">
+            <div class="field-row tight">
+              <div class="field">
+                <label for="work_scope">Вид работ</label>
+                <input id="work_scope" name="work_scope" placeholder="Описание работ">
+              </div>
+              <div class="field">
+                <label for="work_address">Адрес / участок работ</label>
+                <input id="work_address" name="work_address" placeholder="Адрес выполнения работ">
+              </div>
+              <div class="field">
+                <label for="base_spec_ref">Основание (ТЗ, смета)</label>
+                <input id="base_spec_ref" name="base_spec_ref" placeholder="Например: ТЗ №12 от 10.05.2025">
+              </div>
+            </div>
+            <div class="field-row tight">
+              <div class="field">
+                <label for="start_date">Дата начала</label>
+                <input id="start_date" name="start_date" type="date">
+              </div>
+              <div class="field">
+                <label for="end_date">Дата окончания</label>
+                <input id="end_date" name="end_date" type="date">
+              </div>
+            </div>
+          </div>
+        </details>
+
+        <details class="section">
+          <summary>Расчёты и условия</summary>
+          <div class="field-group">
+            <div class="field-row tight">
+              <div class="field">
+                <label>С НДС?</label>
+                <div class="inline">
+                  <label class="inline">
+                    <input id="vat_included" name="vat_included" type="checkbox" value="yes">
+                    <span>Да, с НДС</span>
+                  </label>
+                  <select id="vat_rate" name="vat_rate" class="hidden">
+                    <option value="20">20%</option>
+                    <option value="10">10%</option>
+                    <option value="0">0%</option>
+                  </select>
+                </div>
+              </div>
+              <div class="field">
+                <label for="prepayment_percent">Аванс, %</label>
+                <input id="prepayment_percent" name="prepayment_percent" inputmode="decimal" placeholder="Например: 30">
+              </div>
+              <div class="field">
+                <label for="retention_percent">Удержание, %</label>
+                <input id="retention_percent" name="retention_percent" inputmode="decimal" placeholder="Например: 5">
+              </div>
+              <div class="field">
+                <label for="payment_delay_days">Отсрочка платежа (дни)</label>
+                <input id="payment_delay_days" name="payment_delay_days" inputmode="numeric" placeholder="Например: 15">
+              </div>
+            </div>
+            <div class="field field-full payment-field">
+              <label for="payment_terms">Порядок оплат</label>
+              <textarea id="payment_terms" name="payment_terms" placeholder="Опишите порядок и сроки оплат"></textarea>
+              <button type="button" id="btnDefaultTerms" class="btn link">Подставить стандартные</button>
+            </div>
+          </div>
+        </details>
+
+        <details class="section">
+          <summary>Гарантии и связи</summary>
+          <div class="field-group">
+            <div class="field-row tight">
+              <div class="field">
+                <label for="warranty_months">Гарантийный срок, мес</label>
+                <input id="warranty_months" name="warranty_months" inputmode="numeric" placeholder="Например: 12">
+              </div>
+              <div class="field">
+                <label for="customer_contract_number">Контракт с заказчиком</label>
+                <input id="customer_contract_number" name="customer_contract_number" placeholder="Номер / дата контракта">
+              </div>
+              <div class="field">
+                <label for="estimate_ref">Привязка к смете</label>
+                <input id="estimate_ref" name="estimate_ref" placeholder="Смета №...">
+              </div>
+            </div>
+            <div class="field-row tight">
+              <div class="field">
+                <label for="resp_internal">Ответственный с нашей стороны</label>
+                <input id="resp_internal" name="resp_internal" placeholder="ФИО, должность">
+              </div>
+              <div class="field">
+                <label for="resp_external">Ответственный со стороны контрагента</label>
+                <input id="resp_external" name="resp_external" placeholder="ФИО, должность">
+              </div>
+            </div>
+          </div>
+        </details>
+
+        <div id="formMessage"></div>
+
+        <div class="button-row">
+          <button id="btnSave" type="submit" class="btn link" data-action="save">Сохранить черновик</button>
+          <button id="btnSubmitApproval" type="submit" class="btn action" data-action="submit">Отправить на согласование</button>
+        </div>
+      </form>
+      <section id="approvalSection" class="approval-section" hidden>
+        <div class="approval-section__head">
+          <div>
+            <h2 class="approval-section__title">Согласование документа</h2>
+            <p class="approval-section__description">Назначайте согласующих через кнопку «Добавить согласующего» и отслеживайте их решения в таблице ниже.</p>
+          </div>
+        </div>
+        <div class="approval-section__body">
+          <div id="approvalBlockCard" class="approval-card" hidden>
+            <div class="muted" id="approvalBlockHint">После назначения и отправки документ автоматически обновит состав и статусы.</div>
+            <div id="approval-block-mount"></div>
+          </div>
+        </div>
+        <div id="approverModal" class="approver-modal" hidden>
+          <div class="approver-modal__panel">
+            <div class="approver-modal__head">
+              <h3 class="approver-modal__title">Назначить согласующих</h3>
+              <button type="button" class="approver-modal__close" id="approverModalClose" aria-label="Закрыть окно">&times;</button>
+            </div>
+            <div class="approver-modal__body">
+              <div class="field" id="approverPickerField" hidden>
+                <label for="approversSearch">Выберите сотрудников</label>
+                <div id="approversSelect" class="approver-search">
+                  <div id="approversDisplay" class="approver-selected empty" aria-live="polite"></div>
+                  <input id="approversSearch" class="approver-search__input" type="search" placeholder="Начните вводить фамилию, должность или email" autocomplete="off" spellcheck="false">
+                  <div id="approversOptions" class="approver-options" role="listbox" aria-multiselectable="true"></div>
+                </div>
+                <div class="hint" id="approversHelp">Начните вводить фамилию, должность или email.</div>
+              </div>
+            </div>
+            <div class="approver-modal__actions">
+              <button type="button" class="btn link" id="approverModalCancel">Отмена</button>
+              <button type="button" class="btn action" id="approverModalApply">Готово</button>
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
+  </div>
+
+  <script type="module" src="/js/contracts-subcontract.js"></script>
+</body>
+</html>

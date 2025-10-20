@@ -1,0 +1,220 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>ProStroy — Служебная записка</title>
+  <meta name="color-scheme" content="dark">
+  <link rel="stylesheet" href="assets/styles/base.css">
+  <link rel="stylesheet" href="assets/styles/header.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js" defer></script>
+  <script src="/js/supabaseClient.js" defer></script>
+  <script src="/header.js" defer></script>
+</head>
+<body style="--bg-video-filter: brightness(0.7);">
+  <video class="bg" autoplay muted loop playsinline preload="auto">
+    <source src="https://assets.mixkit.co/videos/30431/30431-720.mp4" type="video/mp4">
+  </video>
+
+  <div id="header"></div>
+
+  <div class="wrap">
+    <div class="page">
+      <section class="card">
+        <h1>Служебная записка</h1>
+        <p>Заполните сведения об авторе, адресате, сути вопроса и ожидаемых действиях. Текст записки сформируется автоматически в корпоративном формате и будет готов для согласования или отправки.</p>
+
+        <form id="noteForm">
+          <div class="grid-2">
+            <div class="row">
+              <label for="noteNumber">Номер</label>
+              <input id="noteNumber" placeholder="Например: СЗ-15/24">
+            </div>
+            <div class="row">
+              <label for="noteDate">Дата *</label>
+              <input id="noteDate" type="date" required>
+            </div>
+          </div>
+
+          <div class="grid-2">
+            <div class="row">
+              <label for="sender">От кого *</label>
+              <input id="sender" required placeholder="ФИО, должность инициатора">
+            </div>
+            <div class="row">
+              <label for="recipient">Кому адресована *</label>
+              <input id="recipient" required placeholder="Руководитель отдела закупок">
+            </div>
+          </div>
+
+          <div class="row">
+            <label for="copy">Копия</label>
+            <input id="copy" placeholder="Дополнительные получатели (через запятую)">
+          </div>
+
+          <div class="row">
+            <label for="topic">Тема *</label>
+            <input id="topic" required placeholder="О согласовании закупки дополнительного оборудования">
+          </div>
+
+          <div class="row">
+            <label for="context">Вводная и фактическая информация *</label>
+            <textarea id="context" required placeholder="Кратко опишите текущую ситуацию, основания, ссылки на документы"></textarea>
+          </div>
+
+          <div class="row">
+            <label>Предлагаемые действия / просьба</label>
+            <div class="muted">Сформулируйте конкретные пункты. Можно указать сроки и ответственных.</div>
+            <div id="actionsList" class="list"></div>
+            <button type="button" class="btn btn-ghost" id="addAction">+ Добавить действие</button>
+          </div>
+
+          <div class="grid-2">
+            <div class="row">
+              <label for="deadline">Желаемый срок исполнения</label>
+              <input id="deadline" type="date">
+            </div>
+            <div class="row">
+              <label for="attachments">Приложения</label>
+              <textarea id="attachments" placeholder="Список приложений, ссылки на документы"></textarea>
+            </div>
+          </div>
+
+          <div class="actions">
+            <button class="btn btn-primary" type="submit">Сформировать текст</button>
+            <button class="btn btn-ghost" type="button" id="copyBtn">Скопировать</button>
+            <button class="btn btn-ghost" type="button" id="downloadBtn">Скачать TXT</button>
+          </div>
+        </form>
+      </section>
+
+      <section class="card">
+        <h2>Предпросмотр</h2>
+        <div id="preview" class="preview">Заполните поля формы, чтобы увидеть готовую служебную записку.</div>
+      </section>
+    </div>
+  </div>
+
+  <script type="module">
+    const headerReady = window.headerReady || Promise.resolve();
+    
+    await headerReady;
+
+    const byId = (id)=>document.getElementById(id);
+    const actions = [];
+    const actionsList = byId("actionsList");
+    const preview = byId("preview");
+
+    function renderActions(){
+      actionsList.innerHTML = "";
+      if (!actions.length){
+        const empty = document.createElement("div");
+        empty.className = "muted";
+        empty.textContent = "Действия ещё не добавлены.";
+        actionsList.appendChild(empty);
+      }
+      actions.forEach((item, idx)=>{
+        const row = document.createElement("div");
+        row.className = "item";
+        row.innerHTML = `<div><strong>${item.text || "Действие"}</strong><div class="muted">${item.owner ? `Ответственный: ${item.owner}` : ""} ${item.due ? `· Срок: ${item.due}` : ""}</div></div>`;
+        const btn = document.createElement("button");
+        btn.className = "btn btn-ghost";
+        btn.type = "button";
+        btn.textContent = "Удалить";
+        btn.addEventListener("click", ()=>{
+          actions.splice(idx, 1);
+          renderActions();
+        });
+        row.appendChild(btn);
+        actionsList.appendChild(row);
+      });
+    }
+
+    renderActions();
+
+    function promptAction(){
+      const text = window.prompt("Опишите действие или просьбу:");
+      if (text == null) return null;
+      const owner = window.prompt("Ответственный (опционально):");
+      if (owner == null) return null;
+      const due = window.prompt("Желаемый срок (дата или период):");
+      if (due == null) return null;
+      return { text: text.trim(), owner: owner.trim(), due: due.trim() };
+    }
+
+    byId("addAction").addEventListener("click", ()=>{
+      const action = promptAction();
+      if (action) { actions.push(action); renderActions(); }
+    });
+
+    function formatPreview(){
+      const number = byId("noteNumber").value.trim();
+      const date = byId("noteDate").value ? new Date(byId("noteDate").value).toLocaleDateString() : "[дата]";
+      const sender = byId("sender").value.trim() || "[инициатор]";
+      const recipient = byId("recipient").value.trim() || "[адресат]";
+      const copy = byId("copy").value.trim();
+      const topic = byId("topic").value.trim() || "[тема]";
+      const context = byId("context").value.trim() || "[описание ситуации]";
+      const deadline = byId("deadline").value ? new Date(byId("deadline").value).toLocaleDateString() : "";
+      const attachments = byId("attachments").value.trim();
+
+      let text = `Служебная записка ${number ? `№ ${number}` : ""}\n${date}\n\nКому: ${recipient}\nОт: ${sender}\n`;
+      if (copy){
+        text += `Копия: ${copy}\n`;
+      }
+      text += `\nТема: ${topic}\n\n1. Исходные данные и обоснование\n${context}\n`;
+
+      text += "\n2. Предлагаемые действия\n";
+      if (actions.length){
+        actions.forEach((a, idx)=>{
+          const extras = [];
+          if (a.owner) extras.push(`ответственный — ${a.owner}`);
+          if (a.due) extras.push(`срок — ${a.due}`);
+          text += `${idx+1}. ${a.text || "[действие]"}${extras.length ? ` (${extras.join(", ")})` : ""}.\n`;
+        });
+      }else{
+        text += "1. [Опишите, что требуется от адресата].\n";
+      }
+
+      if (deadline){
+        text += `\nОжидаемый срок исполнения: ${deadline}.\n`;
+      }
+
+      if (attachments){
+        text += `\nПриложения: ${attachments}.\n`;
+      }
+
+      text += "\nС уважением,\n" + sender + "\n";
+
+      preview.textContent = text;
+      return text;
+    }
+
+    byId("noteForm").addEventListener("submit", (evt)=>{
+      evt.preventDefault();
+      formatPreview();
+      preview.scrollIntoView({ behavior:"smooth", block:"start" });
+    });
+
+    function copyPreview(){
+      const text = formatPreview();
+      navigator.clipboard?.writeText(text).then(()=>{
+        window.alert("Текст записки скопирован в буфер обмена.");
+      }).catch(()=> window.alert("Не удалось скопировать текст."));
+    }
+
+    function downloadPreview(){
+      const text = formatPreview();
+      const blob = new Blob([text], { type:"text/plain;charset=utf-8" });
+      const link = document.createElement("a");
+      link.href = URL.createObjectURL(blob);
+      link.download = `sluzhebnaya-${byId("noteNumber").value || "draft"}.txt`;
+      link.click();
+      URL.revokeObjectURL(link.href);
+    }
+
+    byId("copyBtn").addEventListener("click", copyPreview);
+    byId("downloadBtn").addEventListener("click", downloadPreview);
+  </script>
+</body>
+</html>

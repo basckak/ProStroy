@@ -1,0 +1,363 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>ProStroy — Авансовый отчет</title>
+  <meta name="color-scheme" content="dark">
+  <link rel="stylesheet" href="assets/styles/base.css">
+  <link rel="stylesheet" href="assets/styles/header.css">
+  <link rel="stylesheet" href="assets/styles/contract-form.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js" defer></script>
+  <script src="/js/supabaseClient.js" defer></script>
+  <script src="/header.js" defer></script>
+</head>
+<body style="--bg-video-filter: brightness(0.7);">
+  <video class="bg" autoplay muted loop playsinline preload="auto">
+    <source src="https://assets.mixkit.co/videos/30431/30431-720.mp4" type="video/mp4">
+  </video>
+
+  <div id="header"></div>
+
+  <div class="wrap">
+    <div class="page">
+      <section class="card">
+        <h1>Авансовый отчёт</h1>
+        <p>Заполните сведения об авансе и прикрепите подтверждающие документы. Отчёт будет сохранён и привязан к выбранному сотруднику и объекту.</p>
+
+        <div id="ok" class="status-pane status-ok">Авансовый отчёт сохранён.</div>
+        <div id="err" class="status-pane status-err">Не удалось сохранить отчёт.</div>
+
+        <form id="advanceForm">
+          <div class="grid-2">
+            <div class="row">
+              <label for="reportNumber">Номер отчёта *</label>
+              <input id="reportNumber" required placeholder="АО-15/2024">
+            </div>
+            <div class="row">
+              <label for="reportDate">Дата отчёта *</label>
+              <input id="reportDate" type="date" required>
+            </div>
+          </div>
+
+          <div class="grid-2">
+            <div class="row">
+              <label for="employeeId">Сотрудник *</label>
+              <select id="employeeId" required>
+                <option value="" selected disabled>Выберите сотрудника</option>
+              </select>
+              <div class="muted text-note" id="employeeHint">Загрузка сотрудников…</div>
+            </div>
+            <div class="row">
+              <label for="objectId">Объект</label>
+              <select id="objectId">
+                <option value="" selected>Не выбран</option>
+              </select>
+              <div class="muted text-note" id="objectsHint">Загрузка объектов…</div>
+            </div>
+          </div>
+
+          <div class="row">
+            <label for="amountIssued">Сумма аванса *</label>
+            <input id="amountIssued" required inputmode="decimal" placeholder="50 000">
+            <div class="muted text-note">Укажите сумму без валюты, разделитель — точка или запятая.</div>
+          </div>
+
+          <div class="row">
+            <label for="purpose">Назначение аванса *</label>
+            <textarea id="purpose" required placeholder="Например: командировка в Казань, закупка материалов"></textarea>
+          </div>
+
+          <div class="row">
+            <label for="notes">Комментарии</label>
+            <textarea id="notes" placeholder="Дополнительные сведения или ссылки на отчёты"></textarea>
+          </div>
+
+          <div class="row">
+            <label for="fileInput">Подтверждающие документы *</label>
+            <div class="file-box">
+              <input id="fileInput" type="file" accept=".pdf,.doc,.docx,.xls,.xlsx,.zip,.png,.jpg,.jpeg" required>
+              <span class="file-hint">Прикрепите сканы чеков, билетов и самого отчёта (до 20 МБ).</span>
+              <span id="fileName" class="file-name" hidden></span>
+            </div>
+          </div>
+
+          <div class="row">
+            <label for="approversDisplay">Согласующие</label>
+            <div id="approversSelect" class="approver-search">
+              <div id="approversDisplay" class="approver-selected empty" aria-live="polite">Загружаем сотрудников…</div>
+              <div class="approver-search__field">
+                <input id="approversSearch" type="search" placeholder="Начните вводить фамилию, должность или email" autocomplete="off" spellcheck="false">
+              </div>
+              <div id="approversOptions" class="approver-options" role="listbox" aria-multiselectable="true"></div>
+            </div>
+            <div class="muted text-note" id="approversHelp">Загружаем сотрудников…</div>
+          </div>
+
+          <div class="actions">
+            <button id="submitBtn" class="btn btn-primary" type="submit">Сохранить</button>
+            <button class="btn btn-ghost" type="button" id="resetBtn">Очистить форму</button>
+          </div>
+        </form>
+      </section>
+    </div>
+  </div>
+
+  <script type="module">
+    import supabase, { requireSession } from "./supabaseClient.js";
+        import { createApprovalPicker } from "./approvalPicker.js";
+        const headerReady = window.headerReady || Promise.resolve();
+    const STORAGE_BUCKET = "contract-docs";
+    const TABLE_NAME = "advance_reports";
+
+    await headerReady;
+
+    const okBox = document.getElementById("ok");
+    const errBox = document.getElementById("err");
+    const form = document.getElementById("advanceForm");
+    const submitBtn = document.getElementById("submitBtn");
+    const resetBtn = document.getElementById("resetBtn");
+    const fileInput = document.getElementById("fileInput");
+    const fileNameLabel = document.getElementById("fileName");
+    const employeeSelect = document.getElementById("employeeId");
+    const employeeHint = document.getElementById("employeeHint");
+    const objectSelect = document.getElementById("objectId");
+    const objectsHint = document.getElementById("objectsHint");
+    const approvalPicker = createApprovalPicker({
+      supabase,
+      wrapper: "approversSelect",
+      display: "approversDisplay",
+      search: "approversSearch",
+      options: "approversOptions",
+      help: "approversHelp"
+    });
+
+    function showOk(message){
+      okBox.textContent = message;
+      okBox.style.display = "block";
+      errBox.style.display = "none";
+    }
+
+    function showErr(message){
+      errBox.textContent = message;
+      errBox.style.display = "block";
+      okBox.style.display = "none";
+    }
+
+    function sanitizeFilename(name){
+      return (name || "document")
+        .replace(/[\\\s]+/g, "-")
+        .replace(/[^0-9A-Za-zА-Яа-яЁё_.-]/g, "-")
+        .replace(/-+/g, "-")
+        .replace(/^(-|\.)+/, "")
+        .slice(0, 120) || "document";
+    }
+
+    function parseAmount(value){
+      const trimmed = (value || "").trim();
+      if (!trimmed) return null;
+      const normalized = trimmed.replace(/\s+/g, "").replace(',', '.');
+      const num = Number.parseFloat(normalized);
+      return Number.isFinite(num) ? num : null;
+    }
+
+    async function loadEmployees(){
+      try{
+        const { data, error } = await supabase
+          .from("profiles")
+          .select("id, full_name, login")
+          .order("full_name", { ascending: true });
+        if (error) throw error;
+        if (!data?.length){
+          employeeHint.textContent = "Нет сотрудников. Добавьте их в разделе Профили.";
+          employeeSelect.disabled = true;
+          return;
+        }
+        const frag = document.createDocumentFragment();
+        data.forEach((row)=>{
+          const option = document.createElement("option");
+          option.value = row.id;
+          option.textContent = row.full_name || row.login || row.id;
+          option.dataset.name = row.full_name || row.login || "";
+          frag.appendChild(option);
+        });
+        employeeSelect.appendChild(frag);
+        employeeSelect.disabled = false;
+        employeeHint.textContent = "Выберите сотрудника, оформившего аванс.";
+      }catch(error){
+        console.error("Не удалось загрузить сотрудников", error);
+        employeeHint.textContent = "Ошибка загрузки сотрудников.";
+        employeeSelect.disabled = true;
+      }
+    }
+
+    async function loadObjects(){
+      try{
+        const { data, error } = await supabase
+          .from("objects")
+          .select("id, title, status")
+          .eq("status", "активен")
+          .order("title", { ascending: true });
+        if (error) throw error;
+        if (!data?.length){
+          objectsHint.textContent = "Нет активных объектов. Добавьте объект в разделе \"Объекты\".";
+          objectSelect.disabled = true;
+          return;
+        }
+        const frag = document.createDocumentFragment();
+        data.forEach((row)=>{
+          const option = document.createElement("option");
+          option.value = row.id;
+          option.textContent = row.title || "Без названия";
+          frag.appendChild(option);
+        });
+        objectSelect.appendChild(frag);
+        objectSelect.disabled = false;
+        objectsHint.textContent = "При необходимости привяжите отчёт к объекту.";
+      }catch(error){
+        console.error("Не удалось загрузить объекты", error);
+        objectsHint.textContent = "Ошибка загрузки объектов.";
+        objectSelect.disabled = true;
+      }
+    }
+
+    fileInput.addEventListener("change", ()=>{
+      const file = fileInput.files?.[0];
+      if (file){
+        fileNameLabel.textContent = `${file.name} (${(file.size / 1024 / 1024).toFixed(2)} МБ)`;
+        fileNameLabel.hidden = false;
+      }else{
+        fileNameLabel.hidden = true;
+      }
+    });
+
+    resetBtn.addEventListener("click", ()=>{
+      form.reset();
+      fileNameLabel.hidden = true;
+      okBox.style.display = "none";
+      errBox.style.display = "none";
+      if (employeeSelect.options.length) employeeSelect.selectedIndex = 0;
+      if (objectSelect.options.length) objectSelect.selectedIndex = 0;
+      approvalPicker.reset();
+    });
+
+    form.addEventListener("submit", async (event)=>{
+      event.preventDefault();
+      okBox.style.display = "none";
+      errBox.style.display = "none";
+
+      const file = fileInput.files?.[0];
+      if (!file){
+        showErr("Прикрепите подтверждающие документы.");
+        return;
+      }
+      if (file.size > 20 * 1024 * 1024){
+        showErr("Файл превышает 20 МБ.");
+        return;
+      }
+
+      if (!employeeSelect.value){
+        showErr("Выберите сотрудника.");
+        return;
+      }
+
+      const amountIssued = parseAmount(document.getElementById("amountIssued").value);
+      if (amountIssued === null){
+        showErr("Проверьте сумму выданного аванса.");
+        return;
+      }
+
+      let session;
+      try{
+        session = await requireSession();
+      }catch(authError){
+        showErr(authError.message || "Необходимо авторизоваться.");
+        return;
+      }
+
+      submitBtn.disabled = true;
+      submitBtn.textContent = "Сохранение…";
+
+      try{
+        const recordId = crypto.randomUUID();
+        const sanitizedName = sanitizeFilename(file.name);
+        const storagePath = `${session.user.id}/${recordId}/${sanitizedName}`;
+
+        const { error: uploadError } = await supabase
+          .storage
+          .from(STORAGE_BUCKET)
+          .upload(storagePath, file, {
+            upsert: true,
+            contentType: file.type || "application/octet-stream"
+          });
+        if (uploadError){
+          throw uploadError;
+        }
+
+        const selectedEmployee = employeeSelect.options[employeeSelect.selectedIndex];
+        const approverIds = approvalPicker.getSelectedIds();
+        const approvalPayload = approverIds.length ? {
+          approver_ids: approverIds,
+          approver_names: approvalPicker.getSelectedNames()
+        } : null;
+        const payload = {
+          id: recordId,
+          report_number: document.getElementById("reportNumber").value.trim(),
+          report_date: document.getElementById("reportDate").value || null,
+          created_by: session.user.id,
+          employee_id: employeeSelect.value,
+          employee_name: selectedEmployee?.dataset?.name || selectedEmployee?.textContent || null,
+          object_id: objectSelect.value || null,
+          amount_issued: amountIssued,
+          purpose: document.getElementById("purpose").value.trim(),
+          notes: document.getElementById("notes").value.trim() || null,
+          file_path: storagePath,
+          file_name: sanitizedName,
+          file_type: file.type || null,
+          file_size: file.size,
+          approver_ids: approverIds,
+          approval: approvalPayload,
+          status: "draft"
+        };
+
+        const { error: insertError } = await supabase
+          .from(TABLE_NAME)
+          .insert(payload);
+        if (insertError){
+          await supabase.storage.from(STORAGE_BUCKET).remove([storagePath]).catch(()=>{});
+          throw insertError;
+        }
+
+        showOk("Авансовый отчёт сохранён.");
+        form.reset();
+        fileNameLabel.hidden = true;
+        if (employeeSelect.options.length) employeeSelect.selectedIndex = 0;
+        if (objectSelect.options.length) objectSelect.selectedIndex = 0;
+        approvalPicker.reset();
+      }catch(error){
+        console.error("Ошибка сохранения авансового отчёта", error);
+        showErr(error.message || "Не удалось сохранить авансовый отчёт.");
+      }finally{
+        submitBtn.disabled = false;
+        submitBtn.textContent = "Сохранить";
+      }
+    });
+
+    await requireSession();
+    approvalPicker.loadDirectory().catch((error)=>{
+      console.error("Не удалось загрузить согласующих", error);
+    });
+    await Promise.all([loadEmployees(), loadObjects()]);
+
+    supabase.auth.onAuthStateChange((_evt, session)=>{
+      if (!session){
+        location.replace("./index.html");
+        return;
+      }
+      approvalPicker.loadDirectory().catch((error)=>{
+        console.error("Не удалось обновить список согласующих", error);
+      });
+    });
+  </script>
+</body>
+</html>

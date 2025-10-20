@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>ProStroy — Соглашение о досудебном урегулировании</title>
+  <meta name="color-scheme" content="dark">
+  <link rel="stylesheet" href="assets/styles/base.css">
+  <link rel="stylesheet" href="assets/styles/header.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js" defer></script>
+  <script src="/js/supabaseClient.js" defer></script>
+  <script src="/header.js" defer></script>
+</head>
+<body style="--bg-video-filter: brightness(0.7);">
+  <video class="bg" autoplay muted loop playsinline preload="auto">
+    <source src="https://assets.mixkit.co/videos/30431/30431-720.mp4" type="video/mp4">
+  </video>
+  <div id="header"></div>
+  <div class="wrap">
+    <div class="page">
+      <section class="card">
+        <h1>Соглашение о досудебном урегулировании спора</h1>
+        <p>Опишите стороны, историю конфликта и достигнутые договорённости. Шаблон подготовит текст соглашения.</p>
+        <form id="pretrialForm">
+          <div class="grid-2">
+            <div class="row">
+              <label for="date">Дата заключения *</label>
+              <input id="date" type="date" required>
+            </div>
+            <div class="row">
+              <label for="number">Номер</label>
+              <input id="number" placeholder="ПРЕТ-2024/06">
+            </div>
+          </div>
+          <div class="row">
+            <label for="partyA">Сторона А *</label>
+            <textarea id="partyA" required placeholder="ООО «Прострой», реквизиты, представитель"></textarea>
+          </div>
+          <div class="row">
+            <label for="partyB">Сторона Б *</label>
+            <textarea id="partyB" required placeholder="Контрагент, реквизиты, представитель"></textarea>
+          </div>
+          <div class="row">
+            <label for="background">Предыстория спора *</label>
+            <textarea id="background" required placeholder="Опишите суть разногласий, ссылки на договор"></textarea>
+          </div>
+          <div class="row">
+            <label for="terms">Условия урегулирования *</label>
+            <textarea id="terms" required placeholder="Сумма выплаты, график, обязательства сторон"></textarea>
+          </div>
+          <div class="row">
+            <label for="timeline">Сроки и контроль *</label>
+            <textarea id="timeline" required placeholder="Даты исполнения обязательств, ответственные лица"></textarea>
+          </div>
+          <div class="row">
+            <label for="confidentiality">Конфиденциальность / запрет уступки</label>
+            <textarea id="confidentiality" placeholder="Условия не разглашаются, уступка прав невозможна без согласия"></textarea>
+          </div>
+          <div class="row">
+            <label for="breach">Ответственность за нарушения</label>
+            <textarea id="breach" placeholder="Штрафы, возможность обращения в суд"></textarea>
+          </div>
+          <div class="actions">
+            <button class="btn btn-primary" type="submit">Сформировать текст</button>
+            <button class="btn btn-ghost" type="button" id="copyBtn">Скопировать</button>
+            <button class="btn btn-ghost" type="button" id="downloadBtn">Скачать TXT</button>
+          </div>
+        </form>
+      </section>
+      <section class="card">
+        <h2>Предпросмотр</h2>
+        <div id="preview" class="preview">Введите условия урегулирования, чтобы получить соглашение.</div>
+      </section>
+    </div>
+  </div>
+  <script type="module">
+    const headerReady = window.headerReady || Promise.resolve();
+        await headerReady;
+    const byId = (id)=>document.getElementById(id);
+    const preview = byId("preview");
+    function formatPreview(){
+      const date = byId("date").value ? new Date(byId("date").value).toLocaleDateString() : "[дата]";
+      const number = byId("number").value.trim();
+      const partyA = byId("partyA").value.trim() || "[Сторона А]";
+      const partyB = byId("partyB").value.trim() || "[Сторона Б]";
+      const background = byId("background").value.trim() || "[История спора]";
+      const terms = byId("terms").value.trim() || "[Условия урегулирования]";
+      const timeline = byId("timeline").value.trim() || "[Сроки]";
+      const confidentiality = byId("confidentiality").value.trim();
+      const breach = byId("breach").value.trim();
+      let text = `СОГЛАШЕНИЕ О ДОСУДЕБНОМ УРЕГУЛИРОВАНИИ ${number ? `№ ${number}` : ""}\n\nг. ____________ ${date}\n\n${partyA} и ${partyB}, далее совместно "Стороны", заключили настоящее соглашение о нижеследующем.\n\n1. Предпосылки спора\n1.1. ${background}.\n\n2. Условия урегулирования\n2.1. ${terms}.\n\n3. Сроки и контроль исполнения\n3.1. ${timeline}.\n`;
+      if (confidentiality){ text += `\n4. Конфиденциальность и запреты\n${confidentiality}\n`; }
+      if (breach){ text += `\n5. Ответственность за нарушение соглашения\n${breach}\n`; }
+      text += "\n6. Настоящее соглашение вступает в силу с момента подписания и является достаточным доказательством урегулирования спора.\n\nСторона А ______________________\nСторона Б ______________________\n";
+      preview.textContent = text;
+      return text;
+    }
+    byId("pretrialForm").addEventListener("submit", (evt)=>{evt.preventDefault();formatPreview();preview.scrollIntoView({behavior:"smooth",block:"start"});});
+    const copyPreview = ()=>{const text=formatPreview();navigator.clipboard?.writeText(text).then(()=>window.alert("Текст соглашения скопирован.")) .catch(()=>window.alert("Не удалось скопировать текст."));};
+    const downloadPreview = ()=>{const text=formatPreview();const blob=new Blob([text],{type:"text/plain;charset=utf-8"});const link=document.createElement("a");link.href=URL.createObjectURL(blob);link.download=`pretrial-${byId("number").value || "draft"}.txt`;link.click();URL.revokeObjectURL(link.href);};
+    byId("copyBtn").addEventListener("click", copyPreview);
+    byId("downloadBtn").addEventListener("click", downloadPreview);
+  </script>
+</body>
+</html>

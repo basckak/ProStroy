@@ -1,0 +1,115 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>ProStroy — Договор пожертвования</title>
+  <meta name="color-scheme" content="dark">
+  <link rel="stylesheet" href="assets/styles/base.css">
+  <link rel="stylesheet" href="assets/styles/header.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js" defer></script>
+  <script src="/js/supabaseClient.js" defer></script>
+  <script src="/header.js" defer></script>
+</head>
+<body style="--bg-video-filter: brightness(0.7);">
+  <video class="bg" autoplay muted loop playsinline preload="auto">
+    <source src="https://assets.mixkit.co/videos/30431/30431-720.mp4" type="video/mp4">
+  </video>
+  <div id="header"></div>
+  <div class="wrap">
+    <div class="page">
+      <section class="card">
+        <h1>Договор пожертвования</h1>
+        <p>Заполните сведения о дарителе, одаряемом и предметe пожертвования. Шаблон поможет подготовить документ для благотворительных проектов.</p>
+        <form id="donationForm">
+          <div class="grid-2">
+            <div class="row">
+              <label for="date">Дата заключения *</label>
+              <input id="date" type="date" required>
+            </div>
+            <div class="row">
+              <label for="number">Номер</label>
+              <input id="number" placeholder="ПОЖ-2024/03">
+            </div>
+          </div>
+          <div class="grid-2">
+            <div class="row">
+              <label for="donor">Даритель *</label>
+              <textarea id="donor" required placeholder="ООО «Прострой», реквизиты"></textarea>
+            </div>
+            <div class="row">
+              <label for="donee">Одаряемый *</label>
+              <textarea id="donee" required placeholder="Фонд/организация, реквизиты"></textarea>
+            </div>
+          </div>
+          <div class="row">
+            <label for="subject">Предмет пожертвования *</label>
+            <textarea id="subject" required placeholder="Денежные средства в размере..., оборудование..., и т.д."></textarea>
+          </div>
+          <div class="row">
+            <label for="purpose">Целевое назначение *</label>
+            <textarea id="purpose" required placeholder="Использование средств на поддержку образовательных программ"></textarea>
+          </div>
+          <div class="grid-2">
+            <div class="row">
+              <label for="transfer">Порядок передачи *</label>
+              <textarea id="transfer" required placeholder="Безналичный перевод на счёт одаряемого до 15.07.2024"></textarea>
+            </div>
+            <div class="row">
+              <label for="reporting">Отчётность</label>
+              <textarea id="reporting" placeholder="Одаряемый предоставляет отчёт о целевом использовании до 31.12.2024"></textarea>
+            </div>
+          </div>
+          <div class="row">
+            <label for="liability">Ответственность</label>
+            <textarea id="liability" placeholder="В случае нецелевого использования даритель вправе потребовать возврата"></textarea>
+          </div>
+          <div class="row">
+            <label for="notes">Дополнительные условия</label>
+            <textarea id="notes" placeholder="Конфиденциальность, публичное признание, контактные лица"></textarea>
+          </div>
+          <div class="actions">
+            <button class="btn btn-primary" type="submit">Сформировать текст</button>
+            <button class="btn btn-ghost" type="button" id="copyBtn">Скопировать</button>
+            <button class="btn btn-ghost" type="button" id="downloadBtn">Скачать TXT</button>
+          </div>
+        </form>
+      </section>
+      <section class="card">
+        <h2>Предпросмотр</h2>
+        <div id="preview" class="preview">Заполните поля, чтобы увидеть текст договора пожертвования.</div>
+      </section>
+    </div>
+  </div>
+  <script type="module">
+    const headerReady = window.headerReady || Promise.resolve();
+        await headerReady;
+    const byId = (id)=>document.getElementById(id);
+    const preview = byId("preview");
+    function formatPreview(){
+      const date = byId("date").value ? new Date(byId("date").value).toLocaleDateString() : "[дата]";
+      const number = byId("number").value.trim();
+      const donor = byId("donor").value.trim() || "[Даритель]";
+      const donee = byId("donee").value.trim() || "[Одаряемый]";
+      const subject = byId("subject").value.trim() || "[Предмет]";
+      const purpose = byId("purpose").value.trim() || "[Цель]";
+      const transfer = byId("transfer").value.trim() || "[Порядок передачи]";
+      const reporting = byId("reporting").value.trim();
+      const liability = byId("liability").value.trim();
+      const notes = byId("notes").value.trim();
+      let text = `ДОГОВОР ПОЖЕРТВОВАНИЯ ${number ? `№ ${number}` : ""}\n\nг. ____________ ${date}\n\n${donor}, именуемое "Даритель", и ${donee}, именуемое "Одаряемый", заключили настоящий договор о нижеследующем.\n\n1. Предмет договора\n1.1. Даритель безвозмездно передает Одаряемому ${subject}.\n1.2. Пожертвование предназначено для ${purpose}.\n\n2. Порядок передачи\n2.1. ${transfer}.\n`;
+      if (reporting){ text += `\n3. Отчетность Одаряемого\n${reporting}\n`; }
+      if (liability){ text += `\n4. Ответственность сторон\n${liability}\n`; }
+      if (notes){ text += `\n5. Дополнительные условия\n${notes}\n`; }
+      text += "\nНастоящий договор составлен в двух экземплярах.\n\nДаритель _____________________\nОдаряемый _____________________\n";
+      preview.textContent = text;
+      return text;
+    }
+    byId("donationForm").addEventListener("submit", (evt)=>{evt.preventDefault();formatPreview();preview.scrollIntoView({behavior:"smooth",block:"start"});});
+    const copyPreview = ()=>{const text=formatPreview();navigator.clipboard?.writeText(text).then(()=>window.alert("Текст договора скопирован.")) .catch(()=>window.alert("Не удалось скопировать текст."));};
+    const downloadPreview = ()=>{const text=formatPreview();const blob=new Blob([text],{type:"text/plain;charset=utf-8"});const link=document.createElement("a");link.href=URL.createObjectURL(blob);link.download=`donation-${byId("number").value || "draft"}.txt`;link.click();URL.revokeObjectURL(link.href);};
+    byId("copyBtn").addEventListener("click", copyPreview);
+    byId("downloadBtn").addEventListener("click", downloadPreview);
+  </script>
+</body>
+</html>

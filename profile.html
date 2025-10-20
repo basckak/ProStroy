@@ -1,0 +1,701 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>ProStroy — Личный кабинет</title>
+  <meta name="color-scheme" content="dark">
+  <link rel="stylesheet" href="assets/styles/base.css">
+  <link rel="stylesheet" href="assets/styles/header.css">
+  <link rel="stylesheet" href="assets/styles/profile.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js" defer></script>
+  <script src="/js/supabaseClient.js" defer></script>
+  <script src="/header.js" defer></script>
+</head>
+<body class="profile-page">
+  <!-- видео фон -->
+  <video class="bg" autoplay muted loop playsinline preload="auto">
+    <source src="https://assets.mixkit.co/videos/30431/30431-720.mp4" type="video/mp4">
+  </video>
+
+  <!-- общий хедер -->
+  <div id="header"></div>
+
+  <!-- контент -->
+  <div class="wrap">
+    <div class="profile-grid">
+      <!-- Левая колонка: меню задач и документов -->
+      <section class="card approvals-card">
+        <nav id="approvals-menu" class="approvals-menu" aria-label="Навигация по задачам и документам">
+          <div class="approvals-menu__group">
+            <div class="approvals-menu__group-title">
+              <span class="approvals-menu__icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+                  <rect x="4.5" y="5" width="15" height="15" rx="2.5"></rect>
+                  <path d="M9 3.5h6"></path>
+                  <path d="M9 11h6"></path>
+                  <path d="M9 15h6"></path>
+                </svg>
+              </span>
+              <span>Задачи</span>
+            </div>
+            <ul class="approvals-menu__list">
+              <li>
+                <a class="approvals-menu__item" href="./request-incoming.html#pending" data-count-key="incoming-pending">
+                  <span class="approvals-menu__icon" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M19 12H6"></path>
+                      <path d="M10 8l-4 4 4 4"></path>
+                    </svg>
+                  </span>
+                  <span class="approvals-menu__label">Входящие невыполненные</span>
+                  <span class="approvals-menu__badge" data-count="incoming-pending">0</span>
+                </a>
+              </li>
+              <li>
+                <a class="approvals-menu__item" href="./request-incoming.html#completed" data-count-key="incoming-done">
+                  <span class="approvals-menu__icon" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+                      <circle cx="12" cy="12" r="7"></circle>
+                      <path d="M9.5 12.5l2 2.2L15 10"></path>
+                    </svg>
+                  </span>
+                  <span class="approvals-menu__label">Входящие выполненные</span>
+                  <span class="approvals-menu__badge" data-count="incoming-done">0</span>
+                </a>
+              </li>
+              <li>
+                <a class="approvals-menu__item" href="./request-outgoing.html#pending" data-count-key="outgoing-pending">
+                  <span class="approvals-menu__icon" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M5 12h13"></path>
+                      <path d="M15 8l4 4-4 4"></path>
+                    </svg>
+                  </span>
+                  <span class="approvals-menu__label">Исходящие невыполненные</span>
+                  <span class="approvals-menu__badge" data-count="outgoing-pending">0</span>
+                </a>
+              </li>
+              <li>
+                <a class="approvals-menu__item" href="./request-outgoing.html#completed" data-count-key="outgoing-done">
+                  <span class="approvals-menu__icon" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M5 12h13"></path>
+                      <path d="M15 8l4 4-4 4"></path>
+                      <path d="M8.5 13l1.8 1.9L13 12"></path>
+                    </svg>
+                  </span>
+                  <span class="approvals-menu__label">Исходящие выполненные</span>
+                  <span class="approvals-menu__badge" data-count="outgoing-done">0</span>
+                </a>
+              </li>
+            </ul>
+          </div>
+
+          <div class="approvals-menu__group">
+            <div class="approvals-menu__group-title">
+              <span class="approvals-menu__icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M8 4h6l4 4v12H8a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2z"></path>
+                  <path d="M14 4v4h4"></path>
+                </svg>
+              </span>
+              <span>Входящие документы</span>
+            </div>
+            <ul class="approvals-menu__list">
+              <li>
+                <a class="approvals-menu__item" href="./documents.html?scope=incoming&status=draft" data-count-key="docs-draft">
+                  <span class="approvals-menu__icon" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M8 4h6l4 4v12H8a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2z"></path>
+                      <path d="M14 4v4h4"></path>
+                      <path d="M9 14h6"></path>
+                    </svg>
+                  </span>
+                  <span class="approvals-menu__label">Черновики</span>
+                  <span class="approvals-menu__badge" data-count="docs-draft">0</span>
+                </a>
+              </li>
+              <li>
+                <a class="approvals-menu__item approvals-menu__item--accent" href="./documents.html?scope=incoming&status=in_review" data-count-key="docs-pending">
+                  <span class="approvals-menu__icon" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M8 4h6l4 4v12H8a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2z"></path>
+                      <path d="M14 4v4h4"></path>
+                      <path d="M9 14h6"></path>
+                    </svg>
+                  </span>
+                  <span class="approvals-menu__label">На согласовании</span>
+                  <span class="approvals-menu__badge" data-count="docs-pending">0</span>
+                </a>
+              </li>
+              <li>
+                <a class="approvals-menu__item" href="./documents.html?scope=incoming&status=approved" data-count-key="docs-approved">
+                  <span class="approvals-menu__icon" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M8 4h6l4 4v12H8a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2z"></path>
+                      <path d="M14 4v4h4"></path>
+                      <path d="M9.5 15l2 2.1L15 13"></path>
+                    </svg>
+                  </span>
+                  <span class="approvals-menu__label">Согласованные</span>
+                  <span class="approvals-menu__badge" data-count="docs-approved">0</span>
+                </a>
+              </li>
+              <li>
+                <a class="approvals-menu__item" href="./documents.html?scope=incoming&status=finalized" data-count-key="docs-finalized">
+                  <span class="approvals-menu__icon" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M8 4h6l4 4v12H8a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2z"></path>
+                      <path d="M14 4v4h4"></path>
+                      <path d="M9 12h6"></path>
+                    </svg>
+                  </span>
+                  <span class="approvals-menu__label">Оформленные</span>
+                  <span class="approvals-menu__badge" data-count="docs-finalized">0</span>
+                </a>
+              </li>
+              <li>
+                <a class="approvals-menu__item" href="./documents.html?scope=incoming&status=rejected" data-count-key="docs-rejected">
+                  <span class="approvals-menu__icon" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M7 5h10a2 2 0 0 1 2 2v12a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V7a2 2 0 0 1 2-2z"></path>
+                      <path d="M9 9l6 6"></path>
+                      <path d="M15 9l-6 6"></path>
+                    </svg>
+                  </span>
+                  <span class="approvals-menu__label">Отклонённые</span>
+                  <span class="approvals-menu__badge" data-count="docs-rejected">0</span>
+                </a>
+              </li>
+            </ul>
+          </div>
+
+          <div class="approvals-menu__group">
+            <div class="approvals-menu__group-title">
+              <span class="approvals-menu__icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M3 9h6l2 2h10v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+                  <path d="M5 5h5l2 2"></path>
+                </svg>
+              </span>
+              <span>Мои документы</span>
+            </div>
+            <ul class="approvals-menu__list">
+              <li>
+                <a class="approvals-menu__item" href="./documents.html#mine" data-count-key="my-docs">
+                  <span class="approvals-menu__icon" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+                      <circle cx="12" cy="8" r="3.5"></circle>
+                      <path d="M6 19.5c.5-3.6 3.3-5.5 6-5.5s5.5 1.9 6 5.5"></path>
+                    </svg>
+                  </span>
+                  <span class="approvals-menu__label">Мои документы</span>
+                  <span class="approvals-menu__badge" data-count="my-docs">0</span>
+                </a>
+              </li>
+            </ul>
+          </div>
+
+          <div class="approvals-menu__group approvals-menu__group--inline">
+            <a class="approvals-menu__item approvals-menu__item--ghost" href="./request-new.html">
+              <span class="approvals-menu__icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M12 5v14"></path>
+                  <path d="M5 12h14"></path>
+                </svg>
+              </span>
+              <span class="approvals-menu__label">Добавить</span>
+            </a>
+          </div>
+        </nav>
+      </section>
+
+      <!-- Правая колонка: профиль -->
+      <section class="card profile-card">
+        <h2 class="profile-heading">Профиль</h2>
+
+        <div id="profile-kv">
+          <div class="kv"><div class="muted">ФИО</div><div id="kv-name">—</div></div>
+          <div class="kv"><div class="muted">Email</div><div id="kv-email">—</div></div>
+          <div class="kv"><div class="muted">User ID</div><div id="kv-id" class="mono">—</div></div>
+          <div class="kv"><div class="muted">Последний вход</div><div id="kv-last">—</div></div>
+        </div>
+
+        <hr class="divider">
+
+        <div class="row">
+          <label for="new_pass">Сменить пароль</label>
+          <div class="inline gap-8 flex-wrap">
+            <input id="new_pass" type="password" placeholder="Новый пароль" class="flex-1 min-240">
+            <input id="new_pass2" type="password" placeholder="Повторите пароль" class="flex-1 min-240">
+            <button id="btn-save-pass" class="btn btn-ghost">Обновить</button>
+          </div>
+          <div class="muted">Пароль меняется через Supabase Auth (updateUser).</div>
+          <div id="ok-pass" class="ok">Пароль обновлён.</div>
+          <div id="err-pass" class="err">Ошибка при смене пароля.</div>
+        </div>
+      </section>
+    </div>
+  </div>
+
+  <!-- Скрипты -->
+  <script type="module">
+        import supabase, { requireSession } from "./supabaseClient.js";
+    import { cachedFetch, invalidateCache } from "./cache.js";
+    const headerReady = window.headerReady || Promise.resolve();
+
+    // Совпадает с index.html
+
+    // Жёсткая проверка авторизации
+    async function requireAuth() {
+      const { data:{ session } } = await supabase.auth.getSession();
+      if (!session) { location.replace("./index.html"); return null; }
+      return session.user;
+    }
+
+    // Инициализация
+    await headerReady;
+    const user = await requireAuth();
+    if (!user) throw new Error("no auth");
+
+    const PENDING_STATUS_PREFIXES = ["на согласовании", "на ознакомлении"];
+    const PENDING_STATUS_EXACT = ["черновик", "draft"];
+    const DOC_STATUS_LABELS = {
+      draft: "Черновик",
+      in_review: "На согласовании",
+      approved: "Согласовано",
+      finalized: "Оформлен",
+      rejected: "Отклонено"
+    };
+
+    const DOCUMENT_TYPE_ROUTES = {
+      "request_documents.subcontract": "./docs/contracts/subcontract.html",
+      "contract_documents.subcontract": "./docs/contracts/subcontract.html",
+      "contract_documents.contract": "./docs/contracts/subcontract.html",
+      "contract_documents.addendum": "./docs/contracts/subcontract.html"
+    };
+
+    const DOCUMENT_SUBTYPE_ROUTES = {
+      subcontract: "./docs/contracts/subcontract.html"
+    };
+
+    const menuBadges = {
+      "incoming-pending": document.querySelector('[data-count="incoming-pending"]'),
+      "incoming-done": document.querySelector('[data-count="incoming-done"]'),
+      "outgoing-pending": document.querySelector('[data-count="outgoing-pending"]'),
+      "outgoing-done": document.querySelector('[data-count="outgoing-done"]'),
+      "docs-draft": document.querySelector('[data-count="docs-draft"]'),
+      "docs-pending": document.querySelector('[data-count="docs-pending"]'),
+      "docs-approved": document.querySelector('[data-count="docs-approved"]'),
+      "docs-finalized": document.querySelector('[data-count="docs-finalized"]'),
+      "docs-rejected": document.querySelector('[data-count="docs-rejected"]'),
+      "my-docs": document.querySelector('[data-count="my-docs"]')
+    };
+
+    const menuItems = {};
+    Object.entries(menuBadges).forEach(([key, badge]) => {
+      if (!badge) return;
+      const item = badge.closest(".approvals-menu__item");
+      if (item) menuItems[key] = item;
+    });
+
+    const updateMenuCount = (key, value) => {
+      const badge = menuBadges[key];
+      if (!badge) return;
+      const numericValue = Number(value);
+      const safeValue = Number.isFinite(numericValue) ? Math.max(0, numericValue) : 0;
+      const item = menuItems[key];
+      if (item) {
+        item.classList.toggle("is-empty", safeValue === 0);
+      }
+
+      const previous = Number(badge.dataset.countValue ?? badge.textContent ?? NaN);
+      if (Number.isFinite(previous) && previous === safeValue) return;
+
+      badge.dataset.countValue = String(safeValue);
+      badge.textContent = String(safeValue);
+    };
+
+    const resetMenuCounts = (keys) => {
+      keys.forEach(key => updateMenuCount(key, 0));
+    };
+
+    const TASK_COUNTER_KEYS = ["incoming-pending", "incoming-done", "outgoing-pending", "outgoing-done"];
+    const DOC_COUNTER_KEYS = ["docs-draft", "docs-pending", "docs-approved", "docs-finalized", "docs-rejected", "my-docs"];
+
+    resetMenuCounts(TASK_COUNTER_KEYS);
+    resetMenuCounts(DOC_COUNTER_KEYS);
+
+    const normalizeStatus = (status)=> (status || "").toString().trim().toLowerCase();
+
+    const isPendingStatusNormalized = (normalized) => {
+      if (!normalized) return true;
+      if (normalized === "in_review") return true;
+      if (normalized === "draft") return true;
+      if (PENDING_STATUS_PREFIXES.some(prefix => normalized.startsWith(prefix))) return true;
+      if (PENDING_STATUS_EXACT.includes(normalized)) return true;
+      if (normalized.includes("ожид") && !normalized.includes("одобр") && !normalized.includes("откл")) return true;
+      return false;
+    };
+
+    function isPendingStatus(status){
+      return isPendingStatusNormalized(normalizeStatus(status));
+    }
+
+    const isCompletedStatusNormalized = (normalized) => {
+      if (!normalized) return false;
+      if (normalized === "approved" || normalized === "completed" || normalized === "finalized") return true;
+      if (normalized === "rejected") return true;
+      if (normalized.includes("одобр") || normalized.includes("соглас") || normalized.includes("утверж") || normalized.includes("заверш") || normalized.includes("выполн") || normalized.includes("закры") || normalized.includes("исполн") || normalized.includes("откл")) {
+        return true;
+      }
+      return false;
+    };
+
+    function isCompletedStatus(status){
+      return isCompletedStatusNormalized(normalizeStatus(status));
+    }
+
+    function resolveDocumentStatus(status){
+      const normalized = normalizeStatus(status);
+      const key = normalized.replace(/-/g, "_");
+      return DOC_STATUS_LABELS[key] || status || "—";
+    }
+
+    function buildDocumentLink(path, id){
+      if (!path) return "./documents.html";
+      if (!id) return path;
+      try{
+        const url = new URL(path, location.origin);
+        url.searchParams.set("id", id);
+        const relative = `${url.pathname}${url.search}${url.hash}`;
+        if (path.startsWith("./") && relative.startsWith("/")){
+          return `.${relative}`;
+        }
+        if (path.startsWith("../") && relative.startsWith("/")){
+          return `..${relative}`;
+        }
+        return relative;
+      }catch(_){
+        const separator = path.includes("?") ? "&" : "?";
+        return `${path}${separator}id=${encodeURIComponent(id)}`;
+      }
+    }
+
+    function resolveDocLink(assign){
+      if (!assign) return "./documents.html";
+      if (assign.document_url){
+        return buildDocumentLink(assign.document_url, assign.document_id);
+      }
+      const type = (assign.document_type || "").toLowerCase();
+      if (DOCUMENT_TYPE_ROUTES[type]){
+        return buildDocumentLink(DOCUMENT_TYPE_ROUTES[type], assign.document_id);
+      }
+      const subtype = type.split(".").pop();
+      if (subtype && DOCUMENT_SUBTYPE_ROUTES[subtype]){
+        return buildDocumentLink(DOCUMENT_SUBTYPE_ROUTES[subtype], assign.document_id);
+      }
+      return buildDocumentLink("./documents.html", assign.document_id);
+    }
+
+    function statusBadgeClass(value){
+      const normalized = normalizeStatus(value);
+      if (normalized.includes("одобр") || normalized.includes("соглас")) return "status-approved";
+      if (normalized.includes("откл")) return "status-rejected";
+      return "status-on_review";
+    }
+
+    // ---------- согласование: upsert + модалка ----------
+    async function upsertMyDecision(requestId, decision, comment = null) {
+      const { error } = await supabase
+        .from("transport_request_approvals")
+        .upsert(
+          { request_id: requestId, approver_id: user.id, decision, comment },
+          { onConflict: "request_id,approver_id" }
+        );
+      if (error) throw error;
+      invalidateCache(`approvals:user:${user.id}`);
+    }
+
+    // modal state
+    const DM = {
+      root: document.getElementById("dm-backdrop"),
+      title: document.getElementById("dm-title"),
+      reqno: document.getElementById("dm-reqno"),
+      tip: document.getElementById("dm-tip"),
+      comment: document.getElementById("dm-comment"),
+      error: document.getElementById("dm-error"),
+      btnSave: document.getElementById("dm-save"),
+      btnCancel: document.getElementById("dm-cancel"),
+      action: null,   // 'approve' | 'reject'
+      requestId: null,
+      requestNo: null
+    };
+
+    function openDecisionModal({ id, reqno, action }) {
+      DM.requestId = id;
+      DM.requestNo = reqno || "";
+      DM.action = action;
+      DM.reqno.textContent = reqno ? `· ${reqno}` : "";
+      DM.comment.value = "";
+      DM.error.style.display = "none";
+
+      if (action === "reject") {
+        DM.comment.placeholder = "Укажите причину отклонения (обязательно)…";
+        DM.tip.textContent = "Комментарий обязателен при отклонении.";
+      } else {
+        DM.comment.placeholder = "Комментарий (необязательно)…";
+        DM.tip.textContent = "Комментарий необязателен при одобрении.";
+      }
+
+      DM.root.hidden = false;
+      DM.comment.focus();
+    }
+    function closeDecisionModal() {
+      DM.root.hidden = true;
+      DM.action = null;
+      DM.requestId = null;
+      DM.requestNo = null;
+      DM.error.style.display = "none";
+    }
+
+    DM.btnCancel.addEventListener("click", closeDecisionModal);
+    DM.root.addEventListener("click", (e)=> { if (e.target === DM.root) closeDecisionModal(); });
+    document.addEventListener("keydown", (e)=> { if (!DM.root.hidden && e.key === "Escape") closeDecisionModal(); });
+
+    DM.btnSave.addEventListener("click", async ()=> {
+      const comment = DM.comment.value.trim();
+      if (DM.action === "reject" && !comment) {
+        DM.error.textContent = "Комментарий обязателен при отклонении.";
+        DM.error.style.display = "block";
+        return;
+      }
+      try{
+        await upsertMyDecision(DM.requestId, DM.action === "approve" ? "approved" : "rejected", comment || null);
+        closeDecisionModal();
+        await loadApprovals(); // перерисовать список
+      }catch(e){
+        DM.error.textContent = e.message || "Не удалось сохранить решение.";
+        DM.error.style.display = "block";
+      }
+    });
+
+    // Заполняем карточку профиля
+    async function resolveDisplayName(user){
+      try{
+        const { data, error } = await supabase.from("profiles").select("full_name").eq("id", user.id).maybeSingle();
+        if (!error && data?.full_name) return data.full_name;
+      }catch(_){}
+      return user?.user_metadata?.full_name || user?.user_metadata?.name || user?.email || "Пользователь";
+    }
+
+    async function renderProfile(){
+      const name = await resolveDisplayName(user);
+      document.getElementById("kv-name").textContent = name;
+      document.getElementById("kv-email").textContent = user.email || "—";
+      document.getElementById("kv-id").textContent = user.id;
+      // Supabase не хранит last_sign_in_at в user, поэтому попробуем взять из auth.getUser()
+      const { data:{ user:full } } = await supabase.auth.getUser();
+      document.getElementById("kv-last").textContent = full?.last_sign_in_at
+        ? new Date(full.last_sign_in_at).toLocaleString()
+        : "—";
+      // Подставим в поле редактирования имя
+      const input = document.getElementById("full_name");
+      if (input && !input.value) input.value = name !== (user.email || "Пользователь") ? name : "";
+    }
+
+
+
+    // Смена пароля
+    document.getElementById("btn-save-pass").addEventListener("click", async ()=>{
+      const ok = document.getElementById("ok-pass");
+      const err = document.getElementById("err-pass");
+      ok.style.display="none"; err.style.display="none";
+
+      const p1 = document.getElementById("new_pass").value;
+      const p2 = document.getElementById("new_pass2").value;
+      if (!p1 || p1.length < 6){ err.textContent="Минимум 6 символов."; err.style.display="block"; return; }
+      if (p1 !== p2){ err.textContent="Пароли не совпадают."; err.style.display="block"; return; }
+
+      const btn = document.getElementById("btn-save-pass");
+      btn.disabled = true; const sp = document.createElement("span"); sp.className="spinner"; btn.appendChild(sp);
+
+      const { error } = await supabase.auth.updateUser({ password: p1 });
+
+      btn.disabled = false; sp.remove();
+      if (error){ err.textContent = error.message || "Ошибка при смене пароля."; err.style.display="block"; return; }
+      ok.style.display="block";
+      // по правилам Supabase в отдельных провайдерах может потребоваться reauth — в базовом пароле ок
+      document.getElementById("new_pass").value=""; document.getElementById("new_pass2").value="";
+    });
+    function handleApprovalsClick(e){
+      const t = e.target.closest("button[data-act]");
+      if (!t) return;
+      const id = t.getAttribute("data-id");
+      const act = t.getAttribute("data-act"); // 'approve' | 'reject'
+      const reqno = t.getAttribute("data-reqno");
+      openDecisionModal({ id, reqno, action: act });
+    }
+
+    // Рендер списка адресованных мне заявок
+    async function loadApprovals(){
+      try{
+        const cacheKey = `approvals:user:${user.id}`;
+        const { rows, decisions } = await cachedFetch(cacheKey, async ()=>{
+          const [requestsRes, decisionsRes] = await Promise.all([
+            supabase
+              .from("transport_requests")
+              .select("id, request_no, destination, date_from, date_to, vehicle, status, created_at, user_id")
+              .contains("approver_ids", [user.id])
+              .order("created_at", { ascending:false })
+              .limit(120),
+            supabase
+              .from("transport_request_approvals")
+              .select("request_id, decision")
+              .eq("approver_id", user.id)
+              .limit(200)
+          ]);
+
+          if (requestsRes.error) throw requestsRes.error;
+          if (decisionsRes.error) throw decisionsRes.error;
+
+          return {
+            rows: Array.isArray(requestsRes.data) ? requestsRes.data : [],
+            decisions: Array.isArray(decisionsRes.data) ? decisionsRes.data : []
+          };
+        }, { ttlMs: 45000 });
+
+        const decisionByRequest = {};
+        decisions.forEach((item)=>{
+          if (item?.request_id) decisionByRequest[item.request_id] = item.decision;
+        });
+
+        const counts = {
+          "incoming-pending": 0,
+          "incoming-done": 0,
+          "outgoing-pending": 0,
+          "outgoing-done": 0
+        };
+
+        rows.forEach((request)=>{
+          const myDecision = decisionByRequest[request.id];
+          if (myDecision === "approved" || myDecision === "rejected") {
+            counts["incoming-done"] += 1;
+          } else {
+            counts["incoming-pending"] += 1;
+          }
+
+          if (request.user_id === user.id) {
+            const normalizedStatus = normalizeStatus(request.status);
+            if (isCompletedStatusNormalized(normalizedStatus)) {
+              counts["outgoing-done"] += 1;
+            } else {
+              counts["outgoing-pending"] += 1;
+            }
+          }
+        });
+
+        Object.entries(counts).forEach(([key, value]) => updateMenuCount(key, value));
+      }catch(error){
+        console.error("Ошибка загрузки заявок:", error);
+        resetMenuCounts(TASK_COUNTER_KEYS);
+      }
+    }
+
+    async function loadDocApprovals(){
+      try{
+        const cacheKey = `doc-approvals:user:${user.id}`;
+        const { assignments } = await cachedFetch(cacheKey, async ()=>{
+          const assignmentsRes = await supabase
+            .from("document_approval_assignments")
+            .select("id, document_type, document_id, status, approver_ids, approver_names, document_title, document_number, document_url, created_at, updated_at")
+            .contains("approver_ids", [user.id])
+            .order("updated_at", { ascending:false })
+            .limit(200);
+
+          if (assignmentsRes.error) throw assignmentsRes.error;
+          return {
+            assignments: Array.isArray(assignmentsRes.data) ? assignmentsRes.data : []
+          };
+        }, { ttlMs: 45000 });
+
+        const counts = {
+          "docs-draft": 0,
+          "docs-pending": 0,
+          "docs-approved": 0,
+          "docs-finalized": 0,
+          "docs-rejected": 0,
+          "my-docs": assignments.length
+        };
+
+        assignments.forEach(assign => {
+          const normalized = normalizeStatus(assign.status);
+          if (!normalized || normalized === "draft" || normalized.includes("чернов")) {
+            counts["docs-draft"] += 1;
+            return;
+          }
+          if (isPendingStatusNormalized(normalized)) {
+            counts["docs-pending"] += 1;
+            return;
+          }
+          if (normalized.includes("откл")) {
+            counts["docs-rejected"] += 1;
+            return;
+          }
+          if (
+            normalized.includes("оформ") ||
+            normalized === "finalized" ||
+            normalized === "completed"
+          ) {
+            counts["docs-finalized"] += 1;
+            return;
+          }
+          if (
+            normalized.includes("соглас") ||
+            normalized.includes("одобр") ||
+            normalized === "approved"
+          ) {
+            counts["docs-approved"] += 1;
+            return;
+          }
+          counts["docs-pending"] += 1;
+        });
+
+        Object.entries(counts).forEach(([key, value]) => updateMenuCount(key, value));
+      }catch(error){
+        console.error("Ошибка загрузки документов:", error);
+        resetMenuCounts(DOC_COUNTER_KEYS);
+      }
+    }
+
+    await renderProfile();
+    await loadApprovals();
+    await loadDocApprovals();
+
+    // На всякий случай: если истечёт сессия — уводим на логин
+    supabase.auth.onAuthStateChange((_evt, session)=>{
+      if (!session) location.replace("./index.html");
+    });
+
+  </script>
+
+  <!-- Modal: комментарий к решению согласования -->
+  <div id="dm-backdrop" class="ps-modal-backdrop" hidden>
+    <div class="ps-modal" role="dialog" aria-modal="true" aria-labelledby="dm-title">
+      <h3 id="dm-title">Согласование заявки <span id="dm-reqno" class="muted"></span></h3>
+      <div id="dm-tip" class="muted">Комментарий необязателен при одобрении, но обязателен при отклонении.</div>
+      <div class="row">
+        <label for="dm-comment">Комментарий</label>
+        <textarea id="dm-comment" placeholder="Например: согласовано в текущем объёме…"></textarea>
+      </div>
+      <div id="dm-error" class="err">Ошибка</div>
+      <div class="actions">
+        <button id="dm-cancel" class="btn btn-ghost">Отмена</button>
+        <button id="dm-save" class="btn btn-primary">Сохранить</button>
+      </div>
+    </div>
+  </div>
+
+</body>
+</html>

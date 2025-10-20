@@ -1,0 +1,115 @@
+<div class="approval-block" data-approval-root hidden>
+  <section class="approval-card">
+    <header class="approval-card__head">
+      <div>
+        <h2 class="approval-card__title">Согласование</h2>
+        <p class="approval-card__subtitle" data-approval-summary>Назначьте согласующих и отслеживайте решения.</p>
+      </div>
+      <div class="approval-card__status">
+        <span class="approval-status status-badge" data-approval-status>—</span>
+      </div>
+    </header>
+
+    <div class="approval-card__section">
+      <h3 class="approval-card__section-title">Согласующие</h3>
+      <p class="approval-card__hint" data-approval-manage-hint>Только автор документа может редактировать список согласующих.</p>
+      <div class="approval-picker" data-approval-picker>
+        <div class="approval-picker__chips" data-approval-selected></div>
+        <div class="approval-picker__controls" data-approval-controls>
+          <label class="approval-picker__label" for="approvalPickerSelect">Выберите сотрудников:</label>
+          <select id="approvalPickerSelect" data-approval-select multiple size="6"></select>
+          <div class="approval-picker__buttons">
+            <button type="button" class="approval-btn" data-approval-save>Сохранить</button>
+            <button type="button" class="approval-btn approval-btn--ghost" data-approval-reset>Сбросить</button>
+          </div>
+        </div>
+        <div class="approval-picker__locked" data-approval-locked hidden>
+          <p class="approval-card__hint">Список согласующих недоступен для редактирования.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="approval-card__section">
+      <h3 class="approval-card__section-title">Решения согласующих</h3>
+      <div class="approval-decisions" data-approval-decisions>
+        <p class="approval-card__hint">Решения ещё не вынесены.</p>
+      </div>
+    </div>
+
+    <div class="approval-card__section" data-approval-actions hidden>
+      <h3 class="approval-card__section-title">Ваше решение</h3>
+      <div class="approval-actions">
+        <button type="button" class="approval-btn approval-btn--success" data-approval-action="approve">Согласовать</button>
+        <button type="button" class="approval-btn approval-btn--danger" data-approval-action="reject">Отклонить</button>
+      </div>
+    </div>
+
+    <div class="approval-card__section" data-approval-finalize hidden>
+      <h3 class="approval-card__section-title">Оформление документа</h3>
+      <p class="approval-card__hint">Загрузите финальную версию документа и отметьте его как оформленный.</p>
+      <button type="button" class="approval-btn approval-btn--primary" data-approval-finalize>Отметить как оформленный</button>
+    </div>
+  </section>
+
+  <div class="approval-dialog" data-approval-dialog hidden>
+    <div class="approval-dialog__content">
+      <h3 class="approval-dialog__title" data-approval-dialog-title>Комментарий</h3>
+      <p class="approval-dialog__tip" data-approval-dialog-tip></p>
+      <textarea class="approval-dialog__textarea" data-approval-dialog-text placeholder="Введите комментарий..."></textarea>
+      <p class="approval-dialog__error" data-approval-dialog-error hidden></p>
+      <div class="approval-dialog__actions">
+        <button type="button" class="approval-btn approval-btn--primary" data-approval-dialog-save>Сохранить</button>
+        <button type="button" class="approval-btn approval-btn--ghost" data-approval-dialog-cancel>Отмена</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+  .approval-block{font-family:inherit;color:inherit}
+  .approval-card{background:rgba(0,0,0,.55);border:1px solid rgba(255,255,255,.12);border-radius:18px;padding:22px;display:grid;gap:22px}
+  .approval-card__head{display:flex;justify-content:space-between;gap:16px;align-items:flex-start;flex-wrap:wrap}
+  .approval-card__title{margin:0;font-size:1.4rem}
+  .approval-card__subtitle{margin:4px 0 0;color:var(--muted,#a9b4c7);font-size:.95rem}
+  .approval-card__status{display:flex;align-items:center}
+  .approval-status{font-size:.86rem;letter-spacing:.02em;}
+  .approval-card__section{display:grid;gap:12px}
+  .approval-card__section-title{margin:0;font-size:1.05rem}
+  .approval-card__hint{margin:0;color:var(--muted,#94a3b8);font-size:.9rem}
+  .approval-picker{display:grid;gap:12px}
+  .approval-picker__chips{display:flex;gap:8px;flex-wrap:wrap}
+  .approval-chip{display:inline-flex;align-items:center;gap:6px;padding:4px 10px;border-radius:999px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.2);font-size:.88rem}
+  .approval-chip button{background:none;border:none;color:inherit;font-size:1rem;cursor:pointer;line-height:1;padding:0}
+  .approval-picker__controls{display:grid;gap:10px}
+  .approval-picker__label{font-size:.9rem;color:var(--muted,#94a3b8)}
+  .approval-picker select{width:100%;min-height:140px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.2);border-radius:12px;color:inherit;padding:8px}
+  .approval-picker__buttons{display:flex;gap:8px;flex-wrap:wrap}
+  .approval-picker__locked{padding:12px;border:1px dashed rgba(255,255,255,.2);border-radius:12px}
+  .approval-decisions{display:grid;gap:12px}
+  .approval-decision{padding:12px;border-radius:12px;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.04);display:grid;gap:6px}
+  .approval-decision__head{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;align-items:center}
+  .approval-decision__name{font-weight:600}
+  .approval-decision__tag{display:inline-flex;align-items:center;gap:6px;padding:2px 10px;border-radius:999px;font-size:.78rem;border:1px solid rgba(255,255,255,.2)}
+  .approval-decision__tag.approved{background:rgba(34,197,94,.12);border-color:rgba(34,197,94,.45)}
+  .approval-decision__tag.rejected{background:rgba(248,113,113,.12);border-color:rgba(248,113,113,.45)}
+  .approval-decision__tag.pending{background:rgba(148,163,184,.12);border-color:rgba(148,163,184,.35)}
+  .approval-decision__comment{font-size:.88rem;color:var(--muted,#94a3b8)}
+  .approval-actions{display:flex;gap:12px;flex-wrap:wrap}
+  .approval-btn{cursor:pointer;padding:8px 14px;border-radius:12px;border:1px solid rgba(255,255,255,.18);background:rgba(255,255,255,.06);color:inherit;font:inherit;font-weight:600}
+  .approval-btn:disabled{opacity:.5;cursor:not-allowed}
+  .approval-btn--primary{background:linear-gradient(135deg,#22c55e,#16a34a);color:#041d10;border:none}
+  .approval-btn--success{background:linear-gradient(135deg,#22c55e,#16a34a);color:#041d10;border:none}
+  .approval-btn--danger{background:linear-gradient(135deg,#ef4444,#dc2626);color:#2f0707;border:none}
+  .approval-btn--ghost{background:transparent}
+  .approval-dialog{position:fixed;inset:0;display:flex;justify-content:center;align-items:center;background:rgba(0,0,0,.65);z-index:1000}
+  .approval-dialog__content{background:rgba(11,18,32,.95);border:1px solid rgba(255,255,255,.15);border-radius:16px;padding:22px;max-width:420px;width:100%;display:grid;gap:12px}
+  .approval-dialog__title{margin:0;font-size:1.1rem}
+  .approval-dialog__tip{margin:0;color:var(--muted,#94a3b8);font-size:.9rem}
+  .approval-dialog__textarea{min-height:120px;border-radius:12px;border:1px solid rgba(255,255,255,.2);background:rgba(255,255,255,.06);color:inherit;padding:10px;resize:vertical}
+  .approval-dialog__error{margin:0;color:#fecaca;font-size:.88rem}
+  .approval-dialog__actions{display:flex;gap:10px;justify-content:flex-end}
+  @media (max-width:640px){
+    .approval-picker select{min-height:200px}
+    .approval-dialog__content{margin:0 12px}
+  }
+</style>

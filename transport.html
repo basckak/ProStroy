@@ -1,0 +1,390 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>ProStroy — Заявка на автотранспорт</title>
+  <meta name="color-scheme" content="dark">
+  <link rel="stylesheet" href="assets/styles/base.css">
+  <link rel="stylesheet" href="assets/styles/header.css">
+  <style>
+    :root{
+      --bg:#0b1220; --panel:#0e172a; --panel2:rgba(11,19,32,.88);
+      --text:#eef3f9; --muted:#a9b4c7;
+      --green:#22c55e; --green-2:#1ed760;
+      --border:rgba(255,255,255,.12); --border-strong:rgba(255,255,255,.22);
+      --shadow:0 18px 60px rgba(0,0,0,.45);
+      --radius:18px;
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{margin:0;background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,Segoe UI,Roboto,Inter,Arial}
+    video.bg{position:fixed;inset:0;width:100%;height:100%;object-fit:cover;z-index:-2;filter:brightness(.7)}
+    .wrap{min-height:100%;padding:28px;max-width:1180px;margin:0 auto;display:flex;justify-content:center}
+    .card{width:100%;background:rgba(0,0,0,.55);border:1px solid var(--border);border-radius:24px;
+      box-shadow:var(--shadow);backdrop-filter:blur(14px);padding:32px 40px;display:grid;gap:28px}
+    h1{margin:0 0 16px;font-size:1.9rem}
+    .muted{margin:0 0 26px;font-size:.88rem;color:var(--muted)}
+
+    label{font-size:.92rem;color:#d7deea;font-weight:500}
+    input, select, .text-area, button{
+      font:inherit;color:inherit;background:rgba(255,255,255,.06);
+      border:1px solid var(--border);border-radius:12px;padding:12px 14px;outline:none;
+      transition:border-color .18s ease, box-shadow .18s ease, background-color .18s ease;
+      width:100%;min-height:48px;
+    }
+    input:focus, select:focus, .text-area:focus-visible{
+      border-color:#3b4458;box-shadow:0 0 0 3px rgba(59,68,88,.25)
+    }
+    select{
+      appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='7' viewBox='0 0 12 7'%3E%3Cpath fill='rgba(255,255,255,0.72)' d='M6 7L0 .5h12z'/%3E%3C/svg%3E");
+      background-repeat:no-repeat;background-position:right 14px center;background-size:12px;padding-right:36px
+    }
+    .text-area{
+      min-height:132px;resize:none;line-height:1.5;white-space:pre-wrap;overflow-y:auto;
+      scroll-padding:8px;display:block
+    }
+    .text-area[contenteditable="true"]:empty::before{content:attr(data-placeholder);color:var(--muted)}
+    .text-area:focus-visible{outline:none}
+
+    button{cursor:pointer}
+    .button-row{margin-top:8px;display:flex;gap:12px;flex-wrap:wrap;justify-content:flex-end}
+    .button-row.hidden{display:none!important}
+    .btn{display:inline-flex;align-items:center;justify-content:center;padding:12px 22px;border-radius:12px;border:1px solid rgba(255,255,255,.16);background:rgba(255,255,255,.06);color:#f8fafc;font-weight:600;cursor:pointer;transition:filter .2s ease,border-color .2s ease,box-shadow .2s ease}
+    .btn:hover{filter:brightness(1.05);border-color:rgba(255,255,255,.24)}
+    .btn:active{filter:brightness(.96)}
+    .btn.link{padding:10px 18px;background:transparent;border:1px solid rgba(255,255,255,.18)}
+    .btn.action{background:linear-gradient(135deg,var(--green),var(--green-2));border:0;color:#062915;box-shadow:0 16px 36px rgba(34,197,94,.22)}
+    #formMessage{display:none;margin-top:-8px;padding:12px 16px;border-radius:12px;font-size:.92rem;font-weight:500}
+    #formMessage.ok{display:block;background:rgba(34,197,94,.16);border:1px solid rgba(34,197,94,.32);color:#bbf7d0}
+    #formMessage.err{display:block;background:rgba(248,113,113,.16);border:1px solid rgba(248,113,113,.3);color:#fecaca}
+
+    .approval-section{margin-top:12px;background:rgba(0,0,0,.55);border:1px solid rgba(255,255,255,.14);border-radius:20px;padding:24px 26px;display:grid;gap:20px;box-shadow:var(--shadow);max-width:100%}
+    .approval-section[hidden]{display:none!important}
+    .approval-section__head{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;flex-wrap:wrap}
+    .approval-section__title{margin:0;font-size:1.36rem;letter-spacing:.015em}
+    .approval-section__description{margin:4px 0 0;font-size:.9rem;color:var(--muted);max-width:520px}
+    .approval-section__body{display:grid;gap:18px}
+    .approval-card{padding:20px;border-radius:16px;border:1px solid rgba(148,163,184,.24);background:linear-gradient(155deg,rgba(12,22,36,.92),rgba(6,10,18,.92));box-shadow:0 18px 32px rgba(0,0,0,.36);display:grid;gap:18px;max-width:100%}
+    .approval-card__head{display:flex;align-items:flex-start;justify-content:space-between;gap:18px;flex-wrap:wrap}
+    .approval-card__title{margin:0;font-size:1.18rem;letter-spacing:.015em}
+    .approval-card__meta{margin:6px 0 12px;font-size:.86rem;color:var(--muted);display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+    .approval-card__actions{display:flex;gap:12px;flex-wrap:wrap}
+    .approval-card__actions .btn{min-width:200px}
+    .approval-table-wrapper{width:100%;overflow:auto;border-radius:14px;border:1px solid rgba(148,163,184,.2)}
+    .approval-table-wrapper::-webkit-scrollbar{height:6px}
+    .approval-table-wrapper::-webkit-scrollbar-thumb{background:rgba(148,163,184,.32);border-radius:999px}
+    .approver-modal[hidden]{display:none!important}
+    .approver-modal{position:fixed;inset:0;display:flex;align-items:flex-start;justify-content:center;padding:28px;z-index:3000;background:rgba(7,11,18,.72);backdrop-filter:blur(14px)}
+    .approver-modal__panel{width:min(94vw,780px);max-height:82vh;display:grid;grid-template-rows:auto 1fr auto;background:linear-gradient(160deg,rgba(17,24,39,.96),rgba(10,15,26,.93));border-radius:26px;border:1px solid rgba(148,163,184,.2);box-shadow:0 44px 88px rgba(0,0,0,.65);overflow:hidden}
+    .approver-modal__head{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:24px 28px;border-bottom:1px solid rgba(148,163,184,.16)}
+    .approver-modal__title{margin:0;font-size:1.22rem;letter-spacing:.02em}
+    .approver-modal__close{width:40px;height:40px;border-radius:14px;border:1px solid rgba(148,163,184,.24);background:rgba(15,23,42,.6);color:#e2e8f0;font-size:1.2rem;line-height:1;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:background .2s ease,border-color .2s ease}
+    .approver-modal__close:hover{background:rgba(34,197,94,.12);border-color:rgba(34,197,94,.35)}
+    .approver-modal__body{padding:26px 30px;overflow:auto;display:grid;gap:24px}
+    .approver-modal__body .field{display:grid;gap:12px;background:linear-gradient(150deg,rgba(21,32,52,.82),rgba(12,20,34,.88));border:1px solid rgba(148,163,184,.24);border-radius:20px;padding:22px 24px;box-shadow:0 22px 48px rgba(6,12,24,.38)}
+    .approver-modal__body .hint{margin:0;font-size:.86rem;color:rgba(226,232,240,.72)}
+    .approver-search__input{width:100%;padding:14px 16px;border-radius:16px;border:1px solid rgba(191,223,255,.18);background:rgba(8,16,28,.88);color:inherit;font:inherit;transition:border-color .18s ease,box-shadow .18s ease}
+    .approver-search__input:focus{outline:none;border-color:rgba(34,197,94,.45);box-shadow:0 0 0 3px rgba(34,197,94,.18)}
+    .approver-modal__actions{padding:22px 28px;border-top:1px solid rgba(148,163,184,.16);display:flex;justify-content:flex-end;gap:14px;flex-wrap:wrap;background:rgba(8,12,20,.42)}
+    .approver-modal__actions .btn{min-width:150px}
+    .approver-modal .approver-options{max-height:320px;overflow:auto;box-shadow:0 18px 40px rgba(5,10,25,.45)}
+    body.has-modal{overflow:hidden}
+
+    details.section{background:var(--panel2);border:1px solid var(--border);border-radius:18px;padding:22px;
+      transition:border-color .18s ease, background-color .18s ease}
+    details.section:not(:last-child){margin-bottom:18px}
+    details.section[open]{border-color:var(--border-strong);background:rgba(14,25,40,.92)}
+    details.section summary{list-style:none;cursor:pointer;display:flex;align-items:center;gap:12px;
+      font-weight:600;font-size:1.04rem;color:var(--text)}
+    details.section summary::-webkit-details-marker{display:none}
+    details.section summary::after{content:"";margin-left:auto;width:12px;height:12px;border-right:2px solid rgba(238,243,249,.65);
+      border-bottom:2px solid rgba(238,243,249,.65);transform:rotate(-45deg) translateY(-2px);transition:transform .18s ease}
+    details.section[open] summary::after{transform:rotate(45deg) translateY(2px)}
+
+    .section-body{margin-top:22px;display:grid;gap:24px}
+    .field-grid{display:grid;gap:22px;grid-template-columns:repeat(auto-fit,minmax(280px,1fr))}
+    .field{display:flex;flex-direction:column;gap:8px;min-width:0}
+    .field.full{grid-column:1/-1}
+
+
+
+    @media (max-width:720px){
+      .wrap{padding:20px}
+      .card{padding:24px}
+      details.section{padding:18px}
+      .section-body{gap:20px}
+      .field-grid{grid-template-columns:1fr;gap:18px}
+      .text-area{min-height:120px}
+      .button-row{flex-direction:column;align-items:stretch}
+      .button-row .btn{width:100%}
+      .approval-section{padding:20px}
+      .approver-modal{padding:18px}
+      .approver-modal__panel{width:100%;max-height:86vh}
+    }
+  </style>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js" defer></script>
+  <script src="/js/supabaseClient.js" defer></script>
+  <script src="/header.js" defer></script>
+</head>
+<body>
+  <!-- фон-видео -->
+  <video class="bg" autoplay muted loop playsinline preload="auto">
+    <source src="https://assets.mixkit.co/videos/30431/30431-720.mp4" type="video/mp4">
+  </video>
+
+  <!-- общий header -->
+  <div id="header"></div>
+
+  <!-- форма заявки -->
+  <div class="wrap">
+    <div class="card">
+      <h1>Заявка на автотранспорт</h1>
+      <p class="muted">Заполните ключевые данные о поездке и грузе, чтобы диспетчер быстро подобрал подходящую технику.</p>
+      <form id="transportForm">
+        <details class="section" open>
+          <summary>Основная информация</summary>
+          <div class="section-body">
+            <div class="field full">
+              <label for="destination_object">Объект *</label>
+              <select id="destination_object" name="destination_object" required>
+                <option value="" disabled selected>Загружаем список…</option>
+              </select>
+              <div id="destination_object_info" class="muted text-note"></div>
+            </div>
+            <div class="field-grid">
+              <div class="field">
+                <label for="date_from">Дата начала *</label>
+                <input id="date_from" type="date" required>
+              </div>
+              <div class="field">
+                <label for="date_to">Дата окончания *</label>
+                <input id="date_to" type="date" required>
+              </div>
+            </div>
+            <div class="field-grid">
+              <div class="field">
+                <label for="vehicle_type">Тип техники *</label>
+                <select id="vehicle_type" required>
+                  <option value="" disabled selected>Выберите тип</option>
+                  <option>Самосвал</option>
+                  <option>Экскаватор</option>
+                  <option>Манипулятор</option>
+                  <option>Автокран</option>
+                  <option>Бортовой грузовик</option>
+                  <option>Фура</option>
+                  <option>Бетоновоз</option>
+                  <option>Другое</option>
+                </select>
+              </div>
+              <div class="field">
+                <label for="vehicle_loading">Вид погрузки *</label>
+                <select id="vehicle_loading" required>
+                  <option value="" disabled selected>Выберите вариант</option>
+                  <option>Задняя</option>
+                  <option>Боковая</option>
+                  <option>Верхняя</option>
+                  <option>Кран-манипулятор</option>
+                  <option>Самозаряд</option>
+                  <option>Не требуется</option>
+                </select>
+              </div>
+            </div>
+            <div class="field full">
+              <label for="vehicle_details">Детали по технике</label>
+              <input id="vehicle_details" placeholder="Требуемая грузоподъёмность, марка, количество единиц">
+            </div>
+          </div>
+        </details>
+
+        <details class="section" open>
+          <summary>Информация о грузе</summary>
+          <div class="section-body">
+            <div class="field full">
+              <label for="cargo_name">Что перевозим *</label>
+              <input id="cargo_name" placeholder="Наименование груза" required>
+            </div>
+            <div class="field-grid">
+              <div class="field">
+                <label for="cargo_type">Тип груза *</label>
+                <select id="cargo_type" required>
+                  <option value="" disabled selected>Выберите тип</option>
+                  <option>Сыпучий</option>
+                  <option>Наливной</option>
+                  <option>Сборный</option>
+                  <option>Негабаритный</option>
+                  <option>Оборудование</option>
+                  <option>Стройматериалы</option>
+                  <option>Опасный</option>
+                  <option>Другое</option>
+                </select>
+              </div>
+              <div class="field">
+                <label for="cargo_hazard">Класс опасности</label>
+                <select id="cargo_hazard">
+                  <option value="">Не опасный</option>
+                  <option>Класс 1 — Взрывчатые</option>
+                  <option>Класс 2 — Газы</option>
+                  <option>Класс 3 — Легковоспламеняющиеся жидкости</option>
+                  <option>Класс 4 — Легковоспламеняющиеся твёрдые вещества</option>
+                  <option>Класс 5 — Окислители и пероксиды</option>
+                  <option>Класс 6 — Токсичные вещества</option>
+                  <option>Класс 7 — Радиоактивные</option>
+                  <option>Класс 8 — Коррозионные</option>
+                  <option>Класс 9 — Прочие опасные</option>
+                </select>
+              </div>
+            </div>
+            <div class="field-grid">
+              <div class="field">
+                <label for="cargo_weight">Вес, т *</label>
+                <input id="cargo_weight" type="number" min="0" step="0.01" placeholder="Например: 18" required>
+              </div>
+              <div class="field">
+                <label for="cargo_volume">Объём, м³</label>
+                <input id="cargo_volume" type="number" min="0" step="0.01" placeholder="Например: 36">
+              </div>
+              <div class="field">
+                <label for="cargo_packaging">Тип упаковки</label>
+                <select id="cargo_packaging">
+                  <option value="">Без упаковки</option>
+                  <option>Биг-бэги</option>
+                  <option>Паллеты</option>
+                  <option>Контейнеры</option>
+                  <option>Ящики</option>
+                  <option>Рулоны</option>
+                  <option>Штучно</option>
+                </select>
+              </div>
+            </div>
+            <div class="field full">
+              <label for="cargo_notes">Особые условия по грузу</label>
+              <div id="cargo_notes" class="text-area" contenteditable="true" data-placeholder="Температурный режим, закрепление, приоритеты доставки"></div>
+            </div>
+          </div>
+        </details>
+
+        <details class="section">
+          <summary>Маршрут и условия</summary>
+          <div class="section-body">
+            <div class="field full">
+              <label for="route">Маршрут</label>
+              <div id="route" class="text-area" contenteditable="true" data-placeholder="Ключевые точки маршрута, время в пути"></div>
+            </div>
+            <div class="field-grid">
+              <div class="field">
+                <label for="loading_conditions">Условия подачи</label>
+                <select id="loading_conditions">
+                  <option value="">Стандартные</option>
+                  <option>Требуется пропуск</option>
+                  <option>Только дневная работа</option>
+                  <option>Ночной выезд</option>
+                  <option>Разрешение на спецтехнику</option>
+                  <option>Согласование охраны</option>
+                </select>
+              </div>
+              <div class="field">
+                <label for="priority">Приоритет</label>
+                <select id="priority">
+                  <option value="Средний" selected>Средний</option>
+                  <option>Высокий</option>
+                  <option>Низкий</option>
+                  <option>Срочно сегодня</option>
+                </select>
+              </div>
+            </div>
+            <div class="field full">
+              <label for="requirements">Требования</label>
+              <div id="requirements" class="text-area" contenteditable="true" data-placeholder="Сменные графики, экипировка водителя, страховка"></div>
+            </div>
+            <div class="field full">
+              <label for="safety">Безопасность</label>
+              <div id="safety" class="text-area" contenteditable="true" data-placeholder="Требования по охране труда/БДД"></div>
+            </div>
+          </div>
+        </details>
+
+        <details class="section">
+          <summary>Финансы и вложения</summary>
+          <div class="section-body">
+            <div class="field-grid">
+              <div class="field">
+                <label for="finance">Ориентировочная стоимость, ₽</label>
+                <input id="finance" type="number" min="0" step="0.01" placeholder="Например: 85000">
+              </div>
+              <div class="field">
+                <label for="billing_type">Тип расчёта</label>
+                <select id="billing_type">
+                  <option value="">Не выбран</option>
+                  <option>Фиксированная ставка</option>
+                  <option>Почасовая</option>
+                  <option>Посуточная</option>
+                  <option>За рейс</option>
+                </select>
+              </div>
+            </div>
+            <div class="field full">
+              <label for="attachments">Вложения</label>
+              <div id="attachments" class="text-area" contenteditable="true" data-placeholder="Текстовые заметки к вложениям (необязательно)"></div>
+
+              <div class="row mt-2">
+                <label for="files">Файлы</label>
+                <input id="files" type="file" multiple
+                       accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg,.gif,.webp,.heic,.txt,.csv,.zip">
+                <div id="files-list" class="muted text-sm mt-1">Файлы не выбраны.</div>
+              </div>
+            </div>
+          </div>
+        </details>
+
+        <div id="formMessage"></div>
+
+        <div class="button-row">
+          <button id="btnSave" type="submit" class="btn link" data-action="save">Сохранить черновик</button>
+          <button id="btnSubmitApproval" type="submit" class="btn action" data-action="submit">Отправить на согласование</button>
+        </div>
+      </form>
+      <section id="approvalSection" class="approval-section" hidden>
+        <div class="approval-section__head">
+          <div>
+            <h2 class="approval-section__title">Согласование заявки</h2>
+            <p class="approval-section__description">Назначьте согласующих и отслеживайте статус решений по заявке.</p>
+          </div>
+        </div>
+        <div class="approval-section__body">
+          <div id="approvalBlockCard" class="approval-card" hidden>
+            <div class="muted" id="approvalBlockHint">После назначения и отправки состав согласующих появится здесь.</div>
+            <div id="approval-block-mount"></div>
+          </div>
+        </div>
+        <div id="approverModal" class="approver-modal" hidden>
+          <div class="approver-modal__panel">
+            <div class="approver-modal__head">
+              <h3 class="approver-modal__title">Назначить согласующих</h3>
+              <button type="button" class="approver-modal__close" id="approverModalClose" aria-label="Закрыть окно">&times;</button>
+            </div>
+            <div class="approver-modal__body">
+              <div class="field" id="approverPickerField" hidden>
+                <label for="approversSearch">Выберите сотрудников</label>
+                <div id="approversSelect" class="approver-search">
+                  <div id="approversDisplay" class="approver-selected empty" aria-live="polite"></div>
+                  <input id="approversSearch" class="approver-search__input" type="search" placeholder="Начните вводить фамилию, должность или email" autocomplete="off" spellcheck="false">
+                  <div id="approversOptions" class="approver-options" role="listbox" aria-multiselectable="true"></div>
+                </div>
+                <div class="hint" id="approversHelp">Начните вводить фамилию, должность или email.</div>
+              </div>
+            </div>
+            <div class="approver-modal__actions">
+              <button type="button" class="btn link" id="approverModalCancel">Отмена</button>
+              <button type="button" class="btn action" id="approverModalApply">Готово</button>
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
+  </div>
+
+  <!-- скрипты -->
+  <script type="module" src="/js/transport-request.js"></script>
+</body>
+</html>

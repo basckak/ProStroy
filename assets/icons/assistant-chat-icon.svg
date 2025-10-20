@@ -1,0 +1,52 @@
+<svg width="256" height="256" viewBox="0 0 256 256" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Assistant Robot">
+  <title>Assistant Robot</title>
+  <desc>Minimal white-only helper robot with friendly face and chat motif.</desc>
+  <defs>
+    <!-- Общий стиль линий -->
+    <style>
+      .s{stroke:#fff;stroke-linecap:round;stroke-linejoin:round;vector-effect:non-scaling-stroke}
+    </style>
+    <!-- Лёгкое свечение (чисто белым) -->
+    <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur in="SourceGraphic" stdDeviation="3" result="b"/>
+      <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+
+  <!-- Голова-капсула -->
+  <g filter="url(#glow)">
+    <rect x="56" y="48" width="144" height="96" rx="28" fill="rgba(255,255,255,.08)" class="s" stroke-width="1"/>
+  </g>
+
+  <!-- Антенна -->
+  <line x1="128" y1="32" x2="128" y2="44" class="s" stroke-width="1"/>
+  <circle cx="128" cy="26" r="6" fill="#fff"/>
+
+  <!-- Глаза -->
+  <g>
+    <circle cx="94" cy="96" r="8" fill="#fff"/>
+    <circle cx="162" cy="96" r="8" fill="#fff"/>
+  </g>
+
+  <!-- Улыбка -->
+  <path d="M98 116c8 10 20 16 30 16s22-6 30-16" class="s" stroke-width="1" fill="none" opacity=".85"/>
+
+  <!-- Корпус с намёком на чат-пузырь -->
+  <path d="M64 164c0-13 11-24 24-24h80c13 0 24 11 24 24v22c0 13-11 24-24 24H120l-14 14c-2 2-6 .7-6-2.3V210H88c-13 0-24-11-24-24v-22z"
+        fill="rgba(255,255,255,.08)" class="s" stroke-width="1"/>
+
+  <!-- «AI-намёк»: маленькая сеть узлов на корпусе -->
+  <g opacity=".9">
+    <line x1="166" y1="174" x2="182" y2="166" class="s" stroke-width="1"/>
+    <line x1="166" y1="174" x2="178" y2="190" class="s" stroke-width="1"/>
+    <line x1="182" y1="166" x2="196" y2="178" class="s" stroke-width="1"/>
+    <circle cx="166" cy="174" r="3.5" fill="#fff"/>
+    <circle cx="182" cy="166" r="3.5" fill="#fff" opacity=".9"/>
+    <circle cx="196" cy="178" r="3"   fill="#fff" opacity=".75"/>
+    <circle cx="178" cy="190" r="3"   fill="#fff" opacity=".75"/>
+  </g>
+
+  <!-- Блики -->
+  <path d="M72 66c0-7 6-12 13-12h86c9 0 17 8 17 17v3" fill="rgba(255,255,255,.12)"/>
+  <path d="M88 188c6-6 18-10 30-11 18-1 48 1 60 5" class="s" stroke-width="3" opacity=".25"/>
+</svg>

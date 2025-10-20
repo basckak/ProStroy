@@ -1,0 +1,654 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>ProStroy — Просмотр сессии</title>
+  <meta name="color-scheme" content="dark">
+  <link rel="stylesheet" href="assets/styles/base.css">
+  <link rel="stylesheet" href="assets/styles/header.css">
+  <style>
+    :root{
+      --surface:rgba(6,10,18,.58);
+      --border-soft:rgba(148,163,184,.2);
+      --muted:rgba(191,219,254,.72);
+      --card-shadow:0 24px 48px rgba(6,12,24,.42);
+    }
+    body{
+      margin:0;
+      min-height:100dvh;
+      background:var(--bg,#0b1220);
+      color:var(--text,#eef3f9);
+      font-family:var(--font-sans,system-ui,-apple-system,"Segoe UI",Roboto,Inter,Arial);
+      overflow-y:scroll;
+    }
+    video.bg{
+      position:fixed;
+      inset:0;
+      width:100%;
+      height:100%;
+      object-fit:cover;
+      z-index:-2;
+      filter:brightness(.72);
+    }
+    .overlay{
+      position:fixed;
+      inset:0;
+      z-index:-1;
+      background:linear-gradient(185deg,rgba(5,8,13,.18),rgba(5,8,13,.78));
+    }
+    .wrap{padding:24px;}
+    .page{
+      max-width:1280px;
+      margin:0 auto;
+      display:grid;
+      gap:22px;
+    }
+    .card{
+      background:var(--surface);
+      border:1px solid var(--border-soft);
+      border-radius:22px;
+      padding:24px 26px;
+      backdrop-filter:blur(14px);
+      box-shadow:var(--card-shadow);
+    }
+    .card h1{
+      margin:6px 0 10px;
+      font-size:1.9rem;
+    }
+    .card p.sub{
+      margin:0;
+      color:var(--muted);
+    }
+    .breadcrumbs{
+      display:flex;
+      flex-wrap:wrap;
+      align-items:center;
+      gap:8px;
+      font-size:.9rem;
+      color:var(--muted);
+    }
+    .breadcrumbs a{
+      color:inherit;
+      text-decoration:none;
+    }
+    .breadcrumbs a:hover{
+      text-decoration:underline;
+    }
+    .session-info{
+      display:grid;
+      gap:14px;
+      grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
+    }
+    .session-info__item{
+      display:flex;
+      flex-direction:column;
+      gap:4px;
+    }
+    .session-info__label{
+      font-size:.86rem;
+      color:var(--muted);
+    }
+    .session-info__value{
+      font-size:1rem;
+    }
+    .controls{
+      display:flex;
+      flex-wrap:wrap;
+      gap:12px;
+      align-items:center;
+    }
+    .controls button,
+    .controls a{
+      display:inline-flex;
+      gap:8px;
+      align-items:center;
+      justify-content:center;
+      padding:10px 16px;
+      border-radius:14px;
+      border:1px solid rgba(148,163,184,.24);
+      background:rgba(255,255,255,.08);
+      color:inherit;
+      font-weight:600;
+      cursor:pointer;
+      text-decoration:none;
+      transition:filter .2s ease,border-color .2s ease;
+    }
+    .controls button:hover,
+    .controls a:hover{
+      filter:brightness(1.05);
+      border-color:rgba(148,163,184,.4);
+    }
+    .controls button:disabled{
+      opacity:.6;
+      cursor:not-allowed;
+    }
+    .status-line{
+      margin-top:12px;
+      font-size:.92rem;
+      color:var(--muted);
+    }
+    .status-line.err{
+      color:#fecaca;
+    }
+    .status-line.ok{
+      color:#bbf7d0;
+    }
+    .gallery{
+      display:grid;
+      gap:12px;
+      grid-template-columns:repeat(auto-fill,minmax(200px,1fr));
+    }
+    .media-card{
+      position:relative;
+      border-radius:16px;
+      overflow:hidden;
+      border:1px solid rgba(148,163,184,.22);
+      background:rgba(14,23,42,.74);
+      cursor:pointer;
+      transition:transform .16s ease,border-color .2s ease;
+    }
+    .media-card:hover{
+      transform:translateY(-2px);
+      border-color:rgba(148,163,184,.32);
+    }
+    .media-card img,
+    .media-card video{
+      width:100%;
+      height:160px;
+      object-fit:cover;
+      display:block;
+    }
+    .media-card video{
+      background:#000;
+    }
+    .media-card__meta{
+      position:absolute;
+      left:8px;
+      bottom:8px;
+      padding:4px 8px;
+      border-radius:999px;
+      background:rgba(0,0,0,.55);
+      font-size:.75rem;
+      letter-spacing:.05em;
+      text-transform:uppercase;
+    }
+    .loader,
+    .empty-state{
+      padding:24px;
+      text-align:center;
+      color:var(--muted);
+    }
+    .more-wrap{
+      display:flex;
+      justify-content:center;
+      margin-top:16px;
+    }
+    .more-wrap button{
+      padding:10px 22px;
+      border-radius:14px;
+      border:1px solid rgba(148,163,184,.26);
+      background:rgba(255,255,255,.08);
+      color:inherit;
+      font-weight:600;
+      cursor:pointer;
+      transition:filter .2s ease,border-color .2s ease;
+    }
+    .more-wrap button:hover{
+      filter:brightness(1.05);
+      border-color:rgba(148,163,184,.4);
+    }
+    .lightbox{
+      position:fixed;
+      inset:0;
+      z-index:40;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      background:rgba(4,7,12,.82);
+      backdrop-filter:blur(8px);
+    }
+    .lightbox[hidden]{
+      display:none;
+    }
+    .lightbox__dialog{
+      position:relative;
+      max-width:min(90vw,1040px);
+      max-height:min(90vh,820px);
+      background:rgba(9,15,25,.92);
+      border:1px solid rgba(148,163,184,.28);
+      border-radius:18px;
+      padding:24px;
+      display:grid;
+      gap:16px;
+      box-shadow:0 32px 68px rgba(0,0,0,.6);
+    }
+    .lightbox__media{
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      max-height:60vh;
+    }
+    .lightbox__media img,
+    .lightbox__media video{
+      max-width:100%;
+      max-height:60vh;
+      border-radius:14px;
+      box-shadow:0 18px 38px rgba(0,0,0,.42);
+    }
+    .lightbox__controls{
+      display:flex;
+      flex-wrap:wrap;
+      gap:10px;
+      justify-content:space-between;
+      align-items:center;
+    }
+    .lightbox__buttons{
+      display:flex;
+      gap:10px;
+    }
+    .lightbox__buttons button,
+    .lightbox__buttons a{
+      padding:8px 14px;
+      border-radius:12px;
+      border:1px solid rgba(148,163,184,.24);
+      background:rgba(255,255,255,.08);
+      color:inherit;
+      cursor:pointer;
+      text-decoration:none;
+    }
+    .lightbox__close{
+      position:absolute;
+      top:12px;
+      right:12px;
+      width:34px;
+      height:34px;
+      border-radius:12px;
+      border:1px solid rgba(148,163,184,.24);
+      background:rgba(255,255,255,.08);
+      color:inherit;
+      font-size:1.1rem;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      cursor:pointer;
+    }
+  </style>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js" defer></script>
+  <script src="/js/supabaseClient.js" defer></script>
+  <script src="/header.js" defer></script>
+</head>
+<body>
+  <video class="bg" autoplay muted loop playsinline preload="auto">
+    <source src="https://assets.mixkit.co/videos/30431/30431-720.mp4" type="video/mp4">
+  </video>
+  <div class="overlay"></div>
+
+  <div id="header-mount">
+    <div id="header"></div>
+  </div>
+
+  <div class="wrap">
+    <div class="page">
+      <section class="card">
+        <nav class="breadcrumbs">
+          <a href="./photo-reports.html">Фотоотчёт</a>
+          <span>/</span>
+          <a id="breadcrumbObject" href="#">Объект</a>
+          <span>/</span>
+          <span id="breadcrumbSession">Сессия</span>
+        </nav>
+        <h1 id="pageTitle">Сессия</h1>
+        <p class="sub" id="pageSubtitle">Загрузка сведений…</p>
+      </section>
+
+      <section class="card">
+        <div class="session-info">
+          <div class="session-info__item">
+            <span class="session-info__label">Период</span>
+            <span class="session-info__value" id="infoPeriod">—</span>
+          </div>
+          <div class="session-info__item">
+            <span class="session-info__label">Создано</span>
+            <span class="session-info__value" id="infoCreated">—</span>
+          </div>
+          <div class="session-info__item">
+            <span class="session-info__label">Обновлено</span>
+            <span class="session-info__value" id="infoUpdated">—</span>
+          </div>
+          <div class="session-info__item">
+            <span class="session-info__label">Файлов</span>
+            <span class="session-info__value" id="infoCount">0</span>
+          </div>
+        </div>
+      </section>
+
+      <section class="card">
+        <div class="controls">
+          <button type="button" id="addFilesBtn">Добавить фото</button>
+          <input type="file" id="addFilesInput" accept="image/*,video/*" multiple hidden>
+          <span class="status-line" id="uploadStatus" hidden></span>
+        </div>
+      </section>
+
+      <section class="card">
+        <div id="galleryContainer">
+          <div class="loader">Загружаем файлы…</div>
+        </div>
+        <div class="more-wrap" id="moreWrap" hidden>
+          <button type="button" id="showMore">Показать ещё</button>
+        </div>
+      </section>
+    </div>
+  </div>
+
+  <div class="lightbox" id="lightbox" hidden>
+    <div class="lightbox__dialog" role="dialog" aria-modal="true" aria-labelledby="lightboxCaption">
+      <button type="button" class="lightbox__close" data-action="close" aria-label="Закрыть">×</button>
+      <div class="lightbox__media" id="lightboxMedia"></div>
+      <div class="lightbox__controls">
+        <div class="lightbox__buttons">
+          <button type="button" data-action="prev" aria-label="Предыдущее">&larr;</button>
+          <button type="button" data-action="next" aria-label="Следующее">&rarr;</button>
+        </div>
+        <div class="lightbox__buttons">
+          <a id="lightboxDownload" download>Скачать</a>
+          <a id="lightboxOpen" target="_blank" rel="noopener">Открыть оригинал</a>
+        </div>
+        <div id="lightboxCaption"></div>
+      </div>
+    </div>
+  </div>
+
+  <script type="module">
+    import {
+      fetchSessionManifest,
+      listSessionFiles,
+      appendFilesToSession,
+      fetchObjectSummary
+    } from "./js/photo-reports-api.js";
+
+    const params = new URLSearchParams(location.search);
+    const objectId = params.get("object");
+    const sessionId = params.get("session");
+
+    const breadcrumbObject = document.getElementById("breadcrumbObject");
+    const breadcrumbSession = document.getElementById("breadcrumbSession");
+    const pageTitle = document.getElementById("pageTitle");
+    const pageSubtitle = document.getElementById("pageSubtitle");
+    const infoPeriod = document.getElementById("infoPeriod");
+    const infoCreated = document.getElementById("infoCreated");
+    const infoUpdated = document.getElementById("infoUpdated");
+    const infoCount = document.getElementById("infoCount");
+    const galleryContainer = document.getElementById("galleryContainer");
+    const showMoreBtn = document.getElementById("showMore");
+    const moreWrap = document.getElementById("moreWrap");
+    const addFilesBtn = document.getElementById("addFilesBtn");
+    const addFilesInput = document.getElementById("addFilesInput");
+    const uploadStatus = document.getElementById("uploadStatus");
+    const lightbox = document.getElementById("lightbox");
+    const lightboxMedia = document.getElementById("lightboxMedia");
+    const lightboxCaption = document.getElementById("lightboxCaption");
+    const lightboxDownload = document.getElementById("lightboxDownload");
+    const lightboxOpen = document.getElementById("lightboxOpen");
+
+    const PAGE_STEP = 48;
+    let displayCount = PAGE_STEP;
+    let allFiles = [];
+    let currentObject = null;
+    let sessionInfo = null;
+    let currentIndex = -1;
+
+    if (!objectId || !sessionId){
+      galleryContainer.innerHTML = '<div class="empty-state">Укажите object и session в адресной строке.</div>';
+      throw new Error("Missing object/session");
+    }
+
+    function isVideo(name){
+      return /\.(mp4|mov|webm|m4v|avi)$/i.test(name || "");
+    }
+
+    function formatDate(value){
+      if (!value) return "—";
+      const date = new Date(value);
+      if (Number.isNaN(date.getTime())) return "—";
+      return date.toLocaleString("ru-RU");
+    }
+
+    function formatPeriod(manifest){
+      if (!manifest) return "—";
+      const start = manifest.period_start ? new Date(manifest.period_start) : null;
+      const end = manifest.period_end ? new Date(manifest.period_end) : null;
+      if (start && end){
+        return `${start.toLocaleDateString("ru-RU")} — ${end.toLocaleDateString("ru-RU")}`;
+      }
+      if (start){
+        return start.toLocaleDateString("ru-RU");
+      }
+      if (end){
+        return end.toLocaleDateString("ru-RU");
+      }
+      return "Не указан";
+    }
+
+    function renderGallery(){
+      if (!allFiles.length){
+        galleryContainer.innerHTML = '<div class="empty-state">Файлы не найдены.</div>';
+        moreWrap.hidden = true;
+        return;
+      }
+      const fragment = document.createDocumentFragment();
+      const grid = document.createElement("div");
+      grid.className = "gallery";
+      allFiles.slice(0, displayCount).forEach((file, index)=>{
+        const card = document.createElement("div");
+        card.className = "media-card";
+        card.dataset.index = String(index);
+
+        if (isVideo(file.name)){
+          const video = document.createElement("video");
+          video.src = file.publicUrl;
+          video.preload = "metadata";
+          video.muted = true;
+          video.playsInline = true;
+          video.loading = "lazy";
+          card.appendChild(video);
+          const meta = document.createElement("div");
+          meta.className = "media-card__meta";
+          meta.textContent = "Видео";
+          card.appendChild(meta);
+        }else{
+          const img = document.createElement("img");
+          img.src = file.publicUrl;
+          img.alt = file.name;
+          img.loading = "lazy";
+          card.appendChild(img);
+        }
+        fragment.appendChild(card);
+      });
+
+      grid.appendChild(fragment);
+      galleryContainer.innerHTML = "";
+      galleryContainer.appendChild(grid);
+
+      moreWrap.hidden = displayCount >= allFiles.length;
+    }
+
+    function updateInfo(manifest){
+      infoPeriod.textContent = formatPeriod(manifest);
+      infoCreated.textContent = formatDate(manifest?.created_at);
+      infoUpdated.textContent = sessionInfo?.last_update ? formatDate(sessionInfo.last_update) : formatDate(manifest?.created_at);
+      infoCount.textContent = String(allFiles.length);
+    }
+
+    function updateSessionInfo(summary){
+      sessionInfo = (summary?.sessions || []).find((session)=> session.session_id === sessionId) || sessionInfo;
+      infoUpdated.textContent = sessionInfo?.last_update ? formatDate(sessionInfo.last_update) : infoUpdated.textContent;
+      infoCount.textContent = String(sessionInfo?.count ?? allFiles.length);
+    }
+
+    function openLightbox(index){
+      currentIndex = index;
+      const file = allFiles[index];
+      if (!file) return;
+      lightboxMedia.innerHTML = "";
+      if (isVideo(file.name)){
+        const video = document.createElement("video");
+        video.src = file.publicUrl;
+        video.controls = true;
+        video.autoplay = true;
+        video.playsInline = true;
+        video.style.maxHeight = "60vh";
+        lightboxMedia.appendChild(video);
+      }else{
+        const img = document.createElement("img");
+        img.src = file.publicUrl;
+        img.alt = file.name;
+        lightboxMedia.appendChild(img);
+      }
+      lightboxCaption.textContent = file.name;
+      lightboxDownload.href = file.publicUrl;
+      lightboxDownload.download = file.name;
+      lightboxOpen.href = file.publicUrl;
+      lightbox.hidden = false;
+      lightbox.focus();
+    }
+
+    function closeLightbox(){
+      lightbox.hidden = true;
+      currentIndex = -1;
+    }
+
+    function stepLightbox(direction){
+      if (currentIndex < 0) return;
+      const next = currentIndex + direction;
+      if (next < 0 || next >= allFiles.length) return;
+      openLightbox(next);
+    }
+
+    async function loadObject(){
+      const client = window.sb;
+      if (!client) throw new Error("Supabase client не инициализирован.");
+      const { data, error } = await client
+        .from("objects")
+        .select("id, title")
+        .eq("id", objectId)
+        .maybeSingle();
+      if (error) throw error;
+      if (!data) throw new Error("Объект не найден.");
+      currentObject = data;
+      const title = data.title || `Объект ${data.id}`;
+      breadcrumbObject.textContent = title;
+      breadcrumbObject.href = `./photo-object.html?object=${encodeURIComponent(objectId)}`;
+      pageSubtitle.textContent = title;
+    }
+
+    async function refreshSummary(){
+      try{
+        const summary = await fetchObjectSummary(objectId);
+        updateSessionInfo(summary);
+      }catch(error){
+        console.warn("Не удалось обновить суммарную информацию", error);
+      }
+    }
+
+    async function loadData(){
+      galleryContainer.innerHTML = '<div class="loader">Загружаем файлы…</div>';
+      const manifest = await fetchSessionManifest(objectId, sessionId);
+      const title = manifest?.title || sessionId;
+      breadcrumbSession.textContent = title;
+      pageTitle.textContent = title;
+      const files = await listSessionFiles(objectId, sessionId);
+      allFiles = files;
+      displayCount = PAGE_STEP;
+      updateInfo(manifest);
+      renderGallery();
+      await refreshSummary();
+    }
+
+    showMoreBtn.addEventListener("click", ()=>{
+      displayCount += PAGE_STEP;
+      renderGallery();
+    });
+
+    galleryContainer.addEventListener("click", (event)=>{
+      const card = event.target.closest(".media-card");
+      if (!card) return;
+      const index = Number(card.dataset.index);
+      if (Number.isNaN(index)) return;
+      openLightbox(index);
+    });
+
+    lightbox.addEventListener("click", (event)=>{
+      if (event.target === lightbox){
+        closeLightbox();
+        return;
+      }
+      const action = event.target.dataset.action;
+      if (action === "close"){
+        closeLightbox();
+        return;
+      }
+      if (action === "prev"){
+        stepLightbox(-1);
+      }else if (action === "next"){
+        stepLightbox(1);
+      }
+    });
+
+    document.addEventListener("keydown", (event)=>{
+      if (lightbox.hidden) return;
+      if (event.key === "Escape"){
+        closeLightbox();
+      }else if (event.key === "ArrowLeft"){
+        stepLightbox(-1);
+      }else if (event.key === "ArrowRight"){
+        stepLightbox(1);
+      }
+    });
+
+    addFilesBtn.addEventListener("click", ()=>{
+      addFilesInput.click();
+    });
+
+    addFilesInput.addEventListener("change", async ()=>{
+      const files = Array.from(addFilesInput.files || []);
+      if (!files.length) return;
+      uploadStatus.hidden = false;
+      uploadStatus.className = "status-line";
+      uploadStatus.textContent = "Загружаем файлы…";
+      addFilesBtn.disabled = true;
+      try{
+        await appendFilesToSession(objectId, sessionId, files, {
+          onProgress: ({ uploaded, total })=>{
+            uploadStatus.textContent = `Загрузка: ${uploaded} / ${total}`;
+          }
+        });
+        uploadStatus.textContent = "Файлы добавлены.";
+        uploadStatus.className = "status-line ok";
+        addFilesInput.value = "";
+        await loadData();
+      }catch(error){
+        console.error("Не удалось добавить файлы", error);
+        uploadStatus.textContent = error.message || "Не удалось добавить файлы.";
+        uploadStatus.className = "status-line err";
+      }finally{
+        addFilesBtn.disabled = false;
+      }
+    });
+
+    async function init(){
+      await (window.headerReady || Promise.resolve());
+      try{
+        await loadObject();
+        await loadData();
+      }catch(error){
+        console.error("Ошибка инициализации", error);
+        galleryContainer.innerHTML = `<div class="empty-state">${error.message || "Не удалось загрузить данные."}</div>`;
+      }
+    }
+
+    init();
+  </script>
+</body>
+</html>

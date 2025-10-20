@@ -1,0 +1,155 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>ProStroy — Заявка</title>
+  <meta name="color-scheme" content="dark">
+  <link rel="stylesheet" href="assets/styles/base.css">
+  <link rel="stylesheet" href="assets/styles/header.css">
+  <link rel="stylesheet" href="assets/styles/request-view.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js" defer></script>
+  <script src="/js/supabaseClient.js" defer></script>
+  <script src="/header.js" defer></script>
+</head>
+<body class="request-view">
+  <!-- фон-видео -->
+  <video class="bg" autoplay muted loop playsinline preload="auto">
+    <source src="https://assets.mixkit.co/videos/30431/30431-720.mp4" type="video/mp4">
+  </video>
+
+  <!-- общий header -->
+  <div id="header"></div>
+
+  <!-- контент -->
+  <div class="wrap">
+    <div class="page-head card">
+      <div class="page-head__top">
+        <div class="page-head__title-box">
+          <p class="mode-label">Заявка на автотранспорт</p>
+          <h1 id="req-no" class="page-head__title">—</h1>
+        </div>
+        <div class="page-head__status">
+          <span class="page-head__status-label">Статус заявки:</span>
+          <span id="req-status" class="status-badge status-on_review">—</span>
+        </div>
+      </div>
+      <div class="page-head__meta">
+        <span class="page-head__meta-item">Создана: <span id="req-created">—</span></span>
+        <span class="page-head__meta-item">Автор: <span id="req-author">—</span></span>
+      </div>
+    </div>
+
+    <div class="request-layout">
+      <div class="request-main">
+        <section class="card">
+          <h2>Детали заявки</h2>
+          <div class="info-grid">
+            <div class="info-cell">
+              <span class="info-label">Куда</span>
+              <span id="kv-destination" class="info-value">—</span>
+            </div>
+            <div class="info-cell">
+              <span class="info-label">Даты</span>
+              <span id="kv-dates" class="info-value">—</span>
+            </div>
+            <div class="info-cell">
+              <span class="info-label">Техника</span>
+              <span id="kv-vehicle" class="info-value">—</span>
+            </div>
+            <div class="info-cell">
+              <span class="info-label">Загрузка</span>
+              <span id="kv-loading" class="info-value">—</span>
+            </div>
+            <div class="info-cell">
+              <span class="info-label">Условия загрузки</span>
+              <span id="kv-loading-conditions" class="info-value">—</span>
+            </div>
+            <div class="info-cell">
+              <span class="info-label">Приоритет</span>
+              <span id="kv-priority" class="info-value">—</span>
+            </div>
+            <div class="info-cell">
+              <span class="info-label">Финансы</span>
+              <span id="kv-finance" class="info-value">—</span>
+            </div>
+            <div class="info-cell">
+              <span class="info-label">Тип оплаты</span>
+              <span id="kv-billing" class="info-value">—</span>
+            </div>
+            <div class="info-cell info-cell--wide">
+              <span class="info-label">Маршрут</span>
+              <span id="kv-route" class="info-value note">—</span>
+            </div>
+            <div class="info-cell info-cell--wide">
+              <span class="info-label">Безопасность</span>
+              <span id="kv-safety" class="info-value note">—</span>
+            </div>
+            <div class="info-cell info-cell--wide">
+              <span class="info-label">Вложения</span>
+              <span id="kv-attachments" class="info-value note">—</span>
+            </div>
+          </div>
+        </section>
+
+        <section class="card">
+          <h2>Груз</h2>
+          <div class="info-grid">
+            <div class="info-cell">
+              <span class="info-label">Наименование</span>
+              <span id="cg-name" class="info-value">—</span>
+            </div>
+            <div class="info-cell">
+              <span class="info-label">Тип</span>
+              <span id="cg-type" class="info-value">—</span>
+            </div>
+            <div class="info-cell">
+              <span class="info-label">Класс опасности</span>
+              <span id="cg-hazard" class="info-value">—</span>
+            </div>
+            <div class="info-cell">
+              <span class="info-label">Масса, т</span>
+              <span id="cg-weight" class="info-value">—</span>
+            </div>
+            <div class="info-cell">
+              <span class="info-label">Объём, м³</span>
+              <span id="cg-volume" class="info-value">—</span>
+            </div>
+            <div class="info-cell">
+              <span class="info-label">Упаковка</span>
+              <span id="cg-packaging" class="info-value">—</span>
+            </div>
+            <div class="info-cell info-cell--wide">
+              <span class="info-label">Примечания</span>
+              <span id="cg-notes" class="info-value note">—</span>
+            </div>
+          </div>
+        </section>
+
+        <section class="card" id="historyCard">
+          <h2>История решений</h2>
+          <div id="history" class="history-list">
+            <div class="muted">Загружаем…</div>
+          </div>
+        </section>
+      </div>
+    </div>
+
+    <section id="approvalSection" class="approval-section">
+      <div class="approval-section__head">
+        <div>
+          <h2 class="approval-section__title">Согласование заявки</h2>
+          <p class="approval-section__description">Лист согласования, статусы и решения по заявке.</p>
+        </div>
+      </div>
+      <div class="approval-section__body">
+        <div id="approvalBlockCard" class="approval-card">
+          <div id="approval-block-mount" class="approval-block-placeholder">Загружаем согласование…</div>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <script type="module" src="/js/request-view.js"></script>
+</body>
+</html>

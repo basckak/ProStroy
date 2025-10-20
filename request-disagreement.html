@@ -1,0 +1,362 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>ProStroy — Протокол разногласий</title>
+  <meta name="color-scheme" content="dark">
+  <link rel="stylesheet" href="assets/styles/base.css">
+  <link rel="stylesheet" href="assets/styles/header.css">
+  <link rel="stylesheet" href="assets/styles/contract-form.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js" defer></script>
+  <script src="/js/supabaseClient.js" defer></script>
+  <script src="/header.js" defer></script>
+</head>
+<body style="--bg-video-filter: brightness(0.7);">
+  <video class="bg" autoplay muted loop playsinline preload="auto">
+    <source src="https://assets.mixkit.co/videos/30431/30431-720.mp4" type="video/mp4">
+  </video>
+
+  <div id="header"></div>
+
+  <div class="wrap">
+    <div class="page">
+      <section class="card">
+        <h1>Протокол разногласий</h1>
+        <p>Заполните ключевые поля и прикрепите подписанный протокол разногласий. Документ будет привязан к выбранному договору.</p>
+
+        <div id="ok" class="status-pane status-ok">Протокол разногласий сохранён.</div>
+        <div id="err" class="status-pane status-err">Ошибка сохранения протокола.</div>
+
+        <form id="disagreementForm">
+          <div class="grid-2">
+            <div class="row">
+              <label for="docNumber">Номер протокола *</label>
+              <input id="docNumber" required placeholder="ПР-01/2024">
+            </div>
+            <div class="row">
+              <label for="docDate">Дата подписания *</label>
+              <input id="docDate" type="date" required>
+            </div>
+          </div>
+
+          <div class="grid-2">
+            <div class="row">
+              <label for="baseContract">Базовый договор *</label>
+              <select id="baseContract" required>
+                <option value="" selected disabled>Выберите договор</option>
+              </select>
+              <div class="muted text-note" id="contractHint">Загрузка договоров…</div>
+            </div>
+            <div class="row">
+              <label for="objectId">Объект</label>
+              <select id="objectId">
+                <option value="" selected>Не выбран</option>
+              </select>
+              <div class="muted text-note" id="objectsHint">Загрузка объектов…</div>
+            </div>
+          </div>
+
+          <div class="row">
+            <label for="scope">Суть разногласий *</label>
+            <textarea id="scope" required placeholder="Опишите спорные условия договора и предлагаемые изменения"></textarea>
+          </div>
+
+          <div class="row">
+            <label for="notes">Примечания</label>
+            <textarea id="notes" placeholder="Дополнительные комментарии"></textarea>
+          </div>
+
+          <div class="row">
+            <label for="fileInput">Файл протокола *</label>
+            <div class="file-box">
+              <input id="fileInput" type="file" accept=".pdf,.doc,.docx,.xls,.xlsx" required>
+              <span class="file-hint">Подпишите и загрузите документ (до 20 МБ).</span>
+              <span id="fileName" class="file-name" hidden></span>
+            </div>
+          </div>
+
+          <div class="row">
+            <label for="approversDisplay">Согласующие</label>
+            <div id="approversSelect" class="approver-search">
+              <div id="approversDisplay" class="approver-selected empty" aria-live="polite">Загружаем сотрудников…</div>
+              <div class="approver-search__field">
+                <input id="approversSearch" type="search" placeholder="Начните вводить фамилию, должность или email" autocomplete="off" spellcheck="false">
+              </div>
+              <div id="approversOptions" class="approver-options" role="listbox" aria-multiselectable="true"></div>
+            </div>
+            <div class="muted text-note" id="approversHelp">Загружаем сотрудников…</div>
+          </div>
+
+          <div class="actions">
+            <button id="submitBtn" class="btn btn-primary" type="submit">Сохранить</button>
+            <button class="btn btn-ghost" type="button" id="resetBtn">Очистить форму</button>
+          </div>
+        </form>
+      </section>
+    </div>
+  </div>
+
+  <script type="module">
+    import supabase, { requireSession } from "./supabaseClient.js";
+        import { createApprovalPicker } from "./approvalPicker.js";
+        const headerReady = window.headerReady || Promise.resolve();
+    const STORAGE_BUCKET = "contract-docs";
+    const TABLE_NAME = "contract_documents";
+
+    await headerReady;
+
+    const okBox = document.getElementById("ok");
+    const errBox = document.getElementById("err");
+    const form = document.getElementById("disagreementForm");
+    const submitBtn = document.getElementById("submitBtn");
+    const resetBtn = document.getElementById("resetBtn");
+    const fileInput = document.getElementById("fileInput");
+    const fileNameLabel = document.getElementById("fileName");
+    const baseContractSelect = document.getElementById("baseContract");
+    const contractHint = document.getElementById("contractHint");
+    const objectSelect = document.getElementById("objectId");
+    const objectsHint = document.getElementById("objectsHint");
+    const approvalPicker = createApprovalPicker({
+      supabase,
+      wrapper: "approversSelect",
+      display: "approversDisplay",
+      search: "approversSearch",
+      options: "approversOptions",
+      help: "approversHelp"
+    });
+    let currentUser = null;
+
+    async function ensureUser(){
+      const { user } = await requireSession();
+      currentUser = user;
+      return user;
+    }
+
+    function showOk(message){
+      okBox.textContent = message;
+      okBox.style.display = "block";
+      errBox.style.display = "none";
+    }
+
+    function showErr(message){
+      errBox.textContent = message;
+      errBox.style.display = "block";
+      okBox.style.display = "none";
+    }
+
+    function sanitizeFilename(name){
+      return (name || "document")
+        .replace(/[\\\s]+/g, "-")
+        .replace(/[^0-9A-Za-zА-Яа-яЁё_.-]/g, "-")
+        .replace(/-+/g, "-")
+        .replace(/^(-|\.)+/, "")
+        .slice(0, 120) || "document";
+    }
+
+    async function loadObjects(){
+      try{
+        const { data, error } = await supabase
+          .from("objects")
+          .select("id, title, status")
+          .eq("status", "активен")
+          .order("title", { ascending: true });
+        if (error) throw error;
+        if (!data?.length){
+          objectsHint.textContent = "Нет активных объектов. Добавьте объект в разделе \"Объекты\".";
+          objectSelect.disabled = true;
+          return;
+        }
+        const frag = document.createDocumentFragment();
+        data.forEach((row)=>{
+          const option = document.createElement("option");
+          option.value = row.id;
+          option.textContent = row.title || "Без названия";
+          frag.appendChild(option);
+        });
+        objectSelect.appendChild(frag);
+        objectSelect.disabled = false;
+        objectsHint.textContent = "При необходимости выберите объект вручную.";
+      }catch(error){
+        console.error("Не удалось загрузить объекты", error);
+        objectsHint.textContent = "Ошибка загрузки объектов.";
+        objectSelect.disabled = true;
+      }
+    }
+
+    async function loadContracts(){
+      try{
+        const { data, error } = await supabase
+          .from("contract_documents")
+          .select("id, contract_number, contractor_id, contractor_name, contractor_type, object_id, contract_type, created_at")
+          .neq("contract_type", "disagreement")
+          .order("created_at", { ascending: false })
+          .limit(200);
+        if (error) throw error;
+        if (!data?.length){
+          contractHint.textContent = "Нет договоров. Сначала создайте базовый договор.";
+          baseContractSelect.disabled = true;
+          return;
+        }
+        const frag = document.createDocumentFragment();
+        data.forEach((row)=>{
+          const option = document.createElement("option");
+          option.value = row.id;
+          const label = [row.contract_number, row.contractor_name].filter(Boolean).join(" · ") || row.contract_number || row.id;
+          option.textContent = label;
+          option.dataset.contractorId = row.contractor_id || "";
+          option.dataset.contractorName = row.contractor_name || "";
+          option.dataset.contractorType = row.contractor_type || "";
+          option.dataset.objectId = row.object_id || "";
+          option.dataset.contractType = row.contract_type || "";
+          frag.appendChild(option);
+        });
+        baseContractSelect.appendChild(frag);
+        baseContractSelect.disabled = false;
+        contractHint.textContent = "Выберите договор, к которому прикрепить протокол.";
+      }catch(error){
+        console.error("Не удалось загрузить договоры", error);
+        contractHint.textContent = "Ошибка загрузки договоров.";
+        baseContractSelect.disabled = true;
+      }
+    }
+
+    fileInput.addEventListener("change", ()=>{
+      const file = fileInput.files?.[0];
+      if (file){
+        fileNameLabel.textContent = `${file.name} (${(file.size / 1024 / 1024).toFixed(2)} МБ)`;
+        fileNameLabel.hidden = false;
+      }else{
+        fileNameLabel.hidden = true;
+      }
+    });
+
+    resetBtn.addEventListener("click", ()=>{
+      form.reset();
+      fileNameLabel.hidden = true;
+      okBox.style.display = "none";
+      errBox.style.display = "none";
+      if (baseContractSelect.options.length) baseContractSelect.selectedIndex = 0;
+      if (objectSelect.options.length) objectSelect.selectedIndex = 0;
+      approvalPicker.reset();
+    });
+
+    form.addEventListener("submit", async (event)=>{
+      event.preventDefault();
+      okBox.style.display = "none";
+      errBox.style.display = "none";
+
+      const file = fileInput.files?.[0];
+      if (!file){
+        showErr("Прикрепите файл протокола.");
+        return;
+      }
+      if (file.size > 20 * 1024 * 1024){
+        showErr("Файл превышает 20 МБ.");
+        return;
+      }
+
+      if (!baseContractSelect.value){
+        showErr("Выберите базовый договор.");
+        return;
+      }
+
+      let session;
+      try{
+        session = await requireSession();
+        currentUser = session.user;
+      }catch(authError){
+        showErr(authError.message || "Необходимо авторизоваться.");
+        return;
+      }
+
+      submitBtn.disabled = true;
+      submitBtn.textContent = "Сохранение…";
+
+      try{
+        const recordId = crypto.randomUUID();
+        const sanitizedName = sanitizeFilename(file.name);
+        const storagePath = `${session.user.id}/${recordId}/${sanitizedName}`;
+
+        const { error: uploadError } = await supabase
+          .storage
+          .from(STORAGE_BUCKET)
+          .upload(storagePath, file, {
+            upsert: true,
+            contentType: file.type || "application/octet-stream"
+          });
+        if (uploadError){
+          throw uploadError;
+        }
+
+        const selectedOption = baseContractSelect.options[baseContractSelect.selectedIndex];
+        const approverIds = approvalPicker.getSelectedIds();
+        const approvalPayload = approverIds.length ? {
+          approver_ids: approverIds,
+          approver_names: approvalPicker.getSelectedNames()
+        } : null;
+        const payload = {
+          id: recordId,
+          contract_number: document.getElementById("docNumber").value.trim(),
+          contract_date: document.getElementById("docDate").value || null,
+          created_by: session.user.id,
+          contract_type: "disagreement",
+          base_contract_id: baseContractSelect.value,
+          contractor_id: selectedOption?.dataset?.contractorId || null,
+          contractor_name: selectedOption?.dataset?.contractorName || null,
+          contractor_type: selectedOption?.dataset?.contractorType || null,
+          amount: null,
+          object_id: objectSelect.value || selectedOption?.dataset?.objectId || null,
+          scope: document.getElementById("scope").value.trim(),
+          notes: document.getElementById("notes").value.trim() || null,
+          file_path: storagePath,
+          file_name: sanitizedName,
+          file_type: file.type || null,
+          file_size: file.size,
+          approver_ids: approverIds,
+          approval: approvalPayload,
+          status: "draft"
+        };
+
+        const { error: insertError } = await supabase
+          .from(TABLE_NAME)
+          .insert(payload);
+        if (insertError){
+          await supabase.storage.from(STORAGE_BUCKET).remove([storagePath]).catch(()=>{});
+          throw insertError;
+        }
+
+        showOk("Протокол разногласий сохранён.");
+        form.reset();
+        fileNameLabel.hidden = true;
+        if (baseContractSelect.options.length) baseContractSelect.selectedIndex = 0;
+        if (objectSelect.options.length) objectSelect.selectedIndex = 0;
+        approvalPicker.reset();
+      }catch(error){
+        console.error("Ошибка сохранения протокола разногласий", error);
+        showErr(error.message || "Не удалось сохранить протокол разногласий.");
+      }finally{
+        submitBtn.disabled = false;
+        submitBtn.textContent = "Сохранить";
+      }
+    });
+
+    await ensureUser();
+    await Promise.all([loadContracts(), loadObjects()]);
+    approvalPicker.loadDirectory().catch((error)=>{
+      console.error("Не удалось загрузить согласующих", error);
+    });
+
+    supabase.auth.onAuthStateChange((_evt, session)=>{
+      if (!session){
+        location.replace("./index.html");
+        return;
+      }
+      currentUser = session.user;
+      approvalPicker.loadDirectory().catch((error)=>{
+        console.error("Не удалось обновить список согласующих", error);
+      });
+    });
+  </script>
+</body>
+</html>

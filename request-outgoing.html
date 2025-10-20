@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>ProStroy — Исходящий документ</title>
+  <meta name="color-scheme" content="dark">
+  <link rel="stylesheet" href="assets/styles/base.css">
+  <link rel="stylesheet" href="assets/styles/header.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js" defer></script>
+  <script src="/js/supabaseClient.js" defer></script>
+  <script src="/header.js" defer></script>
+</head>
+<body style="--bg-video-filter: brightness(0.7);">
+  <video class="bg" autoplay muted loop playsinline preload="auto">
+    <source src="https://assets.mixkit.co/videos/30431/30431-720.mp4" type="video/mp4">
+  </video>
+  <div id="header"></div>
+  <div class="wrap">
+    <div class="page">
+      <section class="card">
+        <h1>Исходящий документ</h1>
+        <p>Сформируйте официальное письмо: укажите адресата, тему, текст обращения и приложения.</p>
+        <form id="outForm">
+          <div class="grid-2">
+            <div class="row">
+              <label for="number">Номер *</label>
+              <input id="number" required placeholder="ИСХ-2024/097">
+            </div>
+            <div class="row">
+              <label for="date">Дата *</label>
+              <input id="date" type="date" required>
+            </div>
+          </div>
+          <div class="row">
+            <label for="recipient">Адресат *</label>
+            <textarea id="recipient" required placeholder="Организация, должность, ФИО"></textarea>
+          </div>
+          <div class="row">
+            <label for="topic">Тема *</label>
+            <input id="topic" required placeholder="О предоставлении гарантийного письма">
+          </div>
+          <div class="row">
+            <label for="body">Текст письма *</label>
+            <textarea id="body" required placeholder="Укажите суть обращения, ссылки на документы"></textarea>
+          </div>
+          <div class="grid-2">
+            <div class="row">
+              <label for="contact">Контактное лицо</label>
+              <input id="contact" placeholder="Имя, телефон, email">
+            </div>
+            <div class="row">
+              <label for="deadline">Желаемый срок ответа</label>
+              <input id="deadline" type="date">
+            </div>
+          </div>
+          <div class="row">
+            <label for="attachments">Приложения</label>
+            <textarea id="attachments" placeholder="Перечислите приложенные документы"></textarea>
+          </div>
+          <div class="actions">
+            <button class="btn btn-primary" type="submit">Сформировать текст</button>
+            <button class="btn btn-ghost" type="button" id="copyBtn">Скопировать</button>
+            <button class="btn btn-ghost" type="button" id="downloadBtn">Скачать TXT</button>
+          </div>
+        </form>
+      </section>
+      <section class="card">
+        <h2>Предпросмотр</h2>
+        <div id="preview" class="preview">После заполнения полей появится текст исходящего письма.</div>
+      </section>
+    </div>
+  </div>
+  <script type="module">
+    const headerReady = window.headerReady || Promise.resolve();
+        await headerReady;
+    const byId = (id)=>document.getElementById(id);
+    const preview = byId("preview");
+    function formatPreview(){
+      const number = byId("number").value.trim() || "[номер]";
+      const date = byId("date").value ? new Date(byId("date").value).toLocaleDateString() : "[дата]";
+      const recipient = byId("recipient").value.trim() || "[адресат]";
+      const topic = byId("topic").value.trim() || "[тема]";
+      const body = byId("body").value.trim() || "[текст письма]";
+      const contact = byId("contact").value.trim();
+      const deadline = byId("deadline").value ? new Date(byId("deadline").value).toLocaleDateString() : "";
+      const attachments = byId("attachments").value.trim();
+      let text = `Исходящий № ${number}\nот ${date}\n\nАдресат:\n${recipient}\n\nТема: ${topic}\n\nТекст письма:\n${body}\n`;
+      if (deadline){ text += `\nПросим предоставить ответ до ${deadline}.\n`; }
+      if (contact){ text += `\nКонтакт для связи: ${contact}.\n`; }
+      if (attachments){ text += `\nПриложения:\n${attachments}\n`; }
+      text += "\nС уважением,\n_____________________________\n";
+      preview.textContent = text;
+      return text;
+    }
+    byId("outForm").addEventListener("submit", (evt)=>{evt.preventDefault();formatPreview();preview.scrollIntoView({behavior:"smooth",block:"start"});});
+    const copyPreview = ()=>{const text=formatPreview();navigator.clipboard?.writeText(text).then(()=>window.alert("Текст письма скопирован.")) .catch(()=>window.alert("Не удалось скопировать текст."));};
+    const downloadPreview = ()=>{const text=formatPreview();const blob=new Blob([text],{type:"text/plain;charset=utf-8"});const link=document.createElement("a");link.href=URL.createObjectURL(blob);link.download=`outgoing-${byId("number").value || "draft"}.txt`;link.click();URL.revokeObjectURL(link.href);};
+    byId("copyBtn").addEventListener("click", copyPreview);
+    byId("downloadBtn").addEventListener("click", downloadPreview);
+  </script>
+</body>
+</html>

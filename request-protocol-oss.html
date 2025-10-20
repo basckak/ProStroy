@@ -1,0 +1,260 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>ProStroy — Протокол ОСС</title>
+  <meta name="color-scheme" content="dark">
+  <link rel="stylesheet" href="assets/styles/base.css">
+  <link rel="stylesheet" href="assets/styles/header.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js" defer></script>
+  <script src="/js/supabaseClient.js" defer></script>
+  <script src="/header.js" defer></script>
+</head>
+<body style="--bg-video-filter: brightness(0.7);">
+  <video class="bg" autoplay muted loop playsinline preload="auto">
+    <source src="https://assets.mixkit.co/videos/30431/30431-720.mp4" type="video/mp4">
+  </video>
+
+  <div id="header"></div>
+
+  <div class="wrap">
+    <div class="page">
+      <section class="card">
+        <h1>Протокол общего собрания</h1>
+        <p>Зафиксируйте ход и результаты заседания: повестку, голоса и принятые решения. Шаблон подходит для собраний участников, советов директоров, комиссий.</p>
+
+        <form id="protocolForm">
+          <div class="grid-2">
+            <div class="row">
+              <label for="meetingType">Тип собрания *</label>
+              <input id="meetingType" required placeholder="Очередное общее собрание участников">
+            </div>
+            <div class="row">
+              <label for="meetingDate">Дата и время *</label>
+              <input id="meetingDate" type="datetime-local" required>
+            </div>
+          </div>
+
+          <div class="grid-2">
+            <div class="row">
+              <label for="location">Место проведения *</label>
+              <input id="location" required placeholder="г. Москва, ул. Строителей, д.1, офис 503">
+            </div>
+            <div class="row">
+              <label for="chairman">Председатель *</label>
+              <input id="chairman" required placeholder="Иванов И.И., генеральный директор">
+            </div>
+          </div>
+
+          <div class="row">
+            <label for="secretary">Секретарь</label>
+            <input id="secretary" placeholder="Петрова А.А., специалист отдела корпоративного управления">
+          </div>
+
+          <div class="row">
+            <label>Состав участников</label>
+            <div class="muted">Добавьте присутствующих и отметьте форму участия.</div>
+            <div id="participantsList" class="list"></div>
+            <button type="button" class="btn btn-ghost" id="addParticipant">+ Добавить участника</button>
+          </div>
+
+          <div class="row">
+            <label for="quorum">Кворум *</label>
+            <input id="quorum" required placeholder="Присутствуют участники, владеющие 85% голосов">
+          </div>
+
+          <div class="row">
+            <label>Повестка дня *</label>
+            <div id="agendaList" class="list"></div>
+            <button type="button" class="btn btn-ghost" id="addAgenda">+ Добавить вопрос</button>
+          </div>
+
+          <div class="row">
+            <label>Результаты голосования</label>
+            <div class="muted">Для каждого вопроса укажите итоговое решение.</div>
+            <div id="decisionsList" class="list"></div>
+            <button type="button" class="btn btn-ghost" id="addDecision">+ Добавить решение</button>
+          </div>
+
+          <div class="row">
+            <label for="notes">Дополнительные сведения</label>
+            <textarea id="notes" placeholder="Замечания, особые мнения, поручения"></textarea>
+          </div>
+
+          <div class="actions">
+            <button class="btn btn-primary" type="submit">Сформировать текст</button>
+            <button class="btn btn-ghost" type="button" id="copyBtn">Скопировать</button>
+            <button class="btn btn-ghost" type="button" id="downloadBtn">Скачать TXT</button>
+          </div>
+        </form>
+      </section>
+
+      <section class="card">
+        <h2>Предпросмотр</h2>
+        <div id="preview" class="preview">Заполните поля, чтобы сформировать протокол.</div>
+      </section>
+    </div>
+  </div>
+
+  <script type="module">
+    const headerReady = window.headerReady || Promise.resolve();
+    
+    await headerReady;
+
+    const byId = (id)=>document.getElementById(id);
+    const participants = [];
+    const agenda = [];
+    const decisions = [];
+
+    const participantsList = byId("participantsList");
+    const agendaList = byId("agendaList");
+    const decisionsList = byId("decisionsList");
+    const preview = byId("preview");
+
+    function renderCollection(list, items, emptyText){
+      list.innerHTML = "";
+      if (!items.length){
+        const empty = document.createElement("div");
+        empty.className = "muted";
+        empty.textContent = emptyText;
+        list.appendChild(empty);
+      }
+      items.forEach((item, idx)=>{
+        const row = document.createElement("div");
+        row.className = "item";
+        row.innerHTML = `<div><strong>${item.title || item.name || `Пункт ${idx+1}`}</strong><div class=\"muted\">${item.details || ""}</div></div>`;
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.className = "btn btn-ghost";
+        btn.textContent = "Удалить";
+        btn.addEventListener("click", ()=>{
+          items.splice(idx,1);
+          renderAll();
+        });
+        row.appendChild(btn);
+        list.appendChild(row);
+      });
+    }
+
+    function renderAll(){
+      renderCollection(participantsList, participants, "Участники не добавлены.");
+      renderCollection(agendaList, agenda, "Повестка не заполнена.");
+      renderCollection(decisionsList, decisions, "Решения ещё не внесены.");
+    }
+
+    renderAll();
+
+    function promptParticipant(){
+      const name = window.prompt("Участник (ФИО, должность):");
+      if (name == null) return null;
+      const details = window.prompt("Форма участия (очно/видеоконференция), доля голосов:");
+      if (details == null) return null;
+      return { name: name.trim(), details: details.trim() };
+    }
+
+    function promptAgenda(){
+      const title = window.prompt("Формулировка вопроса повестки:");
+      if (title == null) return null;
+      const details = window.prompt("Докладчик / дополнительные сведения:");
+      if (details == null) return null;
+      return { title: title.trim(), details: details.trim() };
+    }
+
+    function promptDecision(){
+      const title = window.prompt("К какому вопросу относится решение:");
+      if (title == null) return null;
+      const details = window.prompt("Результат голосования и содержание решения:");
+      if (details == null) return null;
+      return { title: title.trim(), details: details.trim() };
+    }
+
+    byId("addParticipant").addEventListener("click", ()=>{
+      const item = promptParticipant();
+      if (item){ participants.push(item); renderAll(); }
+    });
+
+    byId("addAgenda").addEventListener("click", ()=>{
+      const item = promptAgenda();
+      if (item){ agenda.push(item); renderAll(); }
+    });
+
+    byId("addDecision").addEventListener("click", ()=>{
+      const item = promptDecision();
+      if (item){ decisions.push(item); renderAll(); }
+    });
+
+    function formatPreview(){
+      const meetingType = byId("meetingType").value.trim() || "[Тип собрания]";
+      const meetingDate = byId("meetingDate").value ? new Date(byId("meetingDate").value).toLocaleString() : "[дата и время]";
+      const location = byId("location").value.trim() || "[место]";
+      const chairman = byId("chairman").value.trim() || "[Председатель]";
+      const secretary = byId("secretary").value.trim();
+      const quorum = byId("quorum").value.trim() || "[Сведения о кворуме]";
+      const notes = byId("notes").value.trim();
+
+      let text = `ПРОТОКОЛ\n${meetingType.toUpperCase()}\n\nДата и время: ${meetingDate}\nМесто проведения: ${location}\nПредседатель: ${chairman}\n`;
+      if (secretary){ text += `Секретарь: ${secretary}\n`; }
+      text += `\nПрисутствовали:\n`;
+      if (participants.length){
+        participants.forEach((p, idx)=>{
+          text += `${idx+1}. ${p.name || "[участник]"}${p.details ? ` (${p.details})` : ""}.\n`;
+        });
+      }else{
+        text += "[Участники не указаны]\n";
+      }
+      text += `\nКворум: ${quorum}.\n\nПовестка дня:\n`;
+      if (agenda.length){
+        agenda.forEach((a, idx)=>{
+          text += `${idx+1}. ${a.title || "[вопрос]"}${a.details ? ` — ${a.details}` : ""}.\n`;
+        });
+      }else{
+        text += "1. [Укажите вопросы повестки].\n";
+      }
+
+      text += "\nХод рассмотрения вопросов и принятые решения:\n";
+      if (decisions.length){
+        decisions.forEach((d, idx)=>{
+          text += `${idx+1}. Вопрос: ${d.title || "[вопрос]"}. Решение: ${d.details || "[решение]"}.\n`;
+        });
+      }else{
+        text += "[Решения будут внесены после заседания].\n";
+      }
+
+      if (notes){
+        text += `\nДополнительные сведения:\n${notes}\n`;
+      }
+
+      text += "\nПодписи:\nПредседатель ______________________\nСекретарь ________________________\n";
+
+      preview.textContent = text;
+      return text;
+    }
+
+    byId("protocolForm").addEventListener("submit", (evt)=>{
+      evt.preventDefault();
+      formatPreview();
+      preview.scrollIntoView({ behavior:"smooth", block:"start" });
+    });
+
+    function copyPreview(){
+      const text = formatPreview();
+      navigator.clipboard?.writeText(text).then(()=> window.alert("Текст протокола скопирован."))
+        .catch(()=> window.alert("Не удалось скопировать текст."));
+    }
+
+    function downloadPreview(){
+      const text = formatPreview();
+      const blob = new Blob([text], { type:"text/plain;charset=utf-8" });
+      const link = document.createElement("a");
+      link.href = URL.createObjectURL(blob);
+      link.download = "protokol-oss.txt";
+      link.click();
+      URL.revokeObjectURL(link.href);
+    }
+
+    byId("copyBtn").addEventListener("click", copyPreview);
+    byId("downloadBtn").addEventListener("click", downloadPreview);
+  </script>
+</body>
+</html>

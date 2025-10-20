@@ -1,0 +1,257 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>ProStroy — Договор подряда (внешний контрагент)</title>
+  <meta name="color-scheme" content="dark">
+  <link rel="stylesheet" href="assets/styles/base.css">
+  <link rel="stylesheet" href="assets/styles/header.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js" defer></script>
+  <script src="/js/supabaseClient.js" defer></script>
+  <script src="/header.js" defer></script>
+</head>
+<body style="--bg-video-filter: brightness(0.7);">
+  <video class="bg" autoplay muted loop playsinline preload="auto">
+    <source src="https://assets.mixkit.co/videos/30431/30431-720.mp4" type="video/mp4">
+  </video>
+
+  <div id="header"></div>
+
+  <div class="wrap">
+    <div class="page">
+      <section class="card">
+        <h1>Договор подряда с внешним контрагентом</h1>
+        <p>Форма предназначена для заключения договора на выполнение строительных или иных работ сторонними организациями. Укажите объект, объём, график, смету и контроль качества.</p>
+
+        <form id="subcontractForm">
+          <div class="grid-2">
+            <div class="row">
+              <label for="contractDate">Дата заключения *</label>
+              <input id="contractDate" type="date" required>
+            </div>
+            <div class="row">
+              <label for="contractNumber">Номер</label>
+              <input id="contractNumber" placeholder="ПР-2024/12">
+            </div>
+          </div>
+
+          <div class="grid-2">
+            <div class="row">
+              <label for="customer">Заказчик *</label>
+              <textarea id="customer" required placeholder="ООО «Прострой», реквизиты, представитель"></textarea>
+            </div>
+            <div class="row">
+              <label for="contractor">Подрядчик *</label>
+              <textarea id="contractor" required placeholder="ООО «СтройСервис», реквизиты, представитель"></textarea>
+            </div>
+          </div>
+
+          <div class="row">
+            <label for="object">Объект и адрес *</label>
+            <textarea id="object" required placeholder="Строительная площадка по адресу ..., блок ..."></textarea>
+          </div>
+
+          <div class="row">
+            <label for="scope">Объём работ *</label>
+            <textarea id="scope" required placeholder="Устройство монолитного каркаса, монтаж инженерных систем"></textarea>
+          </div>
+
+          <div class="grid-3">
+            <div class="row">
+              <label for="term">Срок выполнения *</label>
+              <input id="term" required placeholder="с 01.07.2024 по 30.09.2024">
+            </div>
+            <div class="row">
+              <label for="price">Стоимость *</label>
+              <input id="price" required placeholder="10 500 000 руб. с НДС">
+            </div>
+            <div class="row">
+              <label for="payment">Порядок расчётов *</label>
+              <input id="payment" required placeholder="Аванс 30%, промежуточные платежи по актам КС-2/КС-3">
+            </div>
+          </div>
+
+          <div class="row">
+            <label>Календарный план</label>
+            <div class="muted">Расписать ключевые этапы и контрольные точки.</div>
+            <div id="scheduleList" class="list"></div>
+            <button type="button" class="btn btn-ghost" id="addSchedule">+ Добавить этап</button>
+          </div>
+
+          <div class="grid-2">
+            <div class="row">
+              <label for="materials">Материалы и техника</label>
+              <textarea id="materials" placeholder="Материалы предоставляет подрядчик, техника заказчика по графику"></textarea>
+            </div>
+            <div class="row">
+              <label for="quality">Контроль качества *</label>
+              <textarea id="quality" required placeholder="Авторский и технический надзор, лабораторные испытания, фотофиксация"></textarea>
+            </div>
+          </div>
+
+          <div class="grid-2">
+            <div class="row">
+              <label for="safety">Охрана труда и допуски</label>
+              <textarea id="safety" placeholder="Наличие СРО, допусков, выполнение инструктажей"></textarea>
+            </div>
+            <div class="row">
+              <label for="liability">Ответственность и штрафы</label>
+              <textarea id="liability" placeholder="Штраф за просрочку 0,1% за каждый день, компенсация ущерба"></textarea>
+            </div>
+          </div>
+
+          <div class="row">
+            <label for="warranty">Гарантийные обязательства</label>
+            <textarea id="warranty" placeholder="Гарантийный срок 24 месяца, порядок устранения дефектов"></textarea>
+          </div>
+
+          <div class="row">
+            <label for="termination">Расторжение и односторонний отказ</label>
+            <textarea id="termination" placeholder="Основания и порядок расторжения, уведомление за 15 дней"></textarea>
+          </div>
+
+          <div class="row">
+            <label for="appendices">Приложения</label>
+            <textarea id="appendices" placeholder="Смета, график работ, перечень материалов, схема мобилизации"></textarea>
+          </div>
+
+          <div class="actions">
+            <button class="btn btn-primary" type="submit">Сформировать текст</button>
+            <button class="btn btn-ghost" type="button" id="copyBtn">Скопировать</button>
+            <button class="btn btn-ghost" type="button" id="downloadBtn">Скачать TXT</button>
+          </div>
+        </form>
+      </section>
+
+      <section class="card">
+        <h2>Предпросмотр</h2>
+        <div id="preview" class="preview">Заполните данные, чтобы собрать договор подряда.</div>
+      </section>
+    </div>
+  </div>
+
+  <script type="module">
+    const headerReady = window.headerReady || Promise.resolve();
+    
+    await headerReady;
+
+    const byId = (id)=>document.getElementById(id);
+    const schedule = [];
+    const scheduleList = byId("scheduleList");
+    const preview = byId("preview");
+
+    function renderSchedule(){
+      scheduleList.innerHTML = "";
+      if (!schedule.length){
+        const empty = document.createElement("div");
+        empty.className = "muted";
+        empty.textContent = "Этапы календарного плана не добавлены.";
+        scheduleList.appendChild(empty);
+      }
+      schedule.forEach((item, idx)=>{
+        const row = document.createElement("div");
+        row.className = "item";
+        row.innerHTML = `<div><strong>${item.milestone || `Этап ${idx+1}`}</strong><div class=\"muted\">${item.deadline || "Срок не указан"}</div></div>`;
+        const btn = document.createElement("button");
+        btn.className = "btn btn-ghost";
+        btn.type = "button";
+        btn.textContent = "Удалить";
+        btn.addEventListener("click", ()=>{ schedule.splice(idx,1); renderSchedule(); });
+        row.appendChild(btn);
+        scheduleList.appendChild(row);
+      });
+    }
+
+    renderSchedule();
+
+    function promptSchedule(){
+      const milestone = window.prompt("Название этапа/работы:");
+      if (milestone == null) return null;
+      const deadline = window.prompt("Срок или период выполнения:");
+      if (deadline == null) return null;
+      return { milestone: milestone.trim(), deadline: deadline.trim() };
+    }
+
+    byId("addSchedule").addEventListener("click", ()=>{
+      const item = promptSchedule();
+      if (item){ schedule.push(item); renderSchedule(); }
+    });
+
+    function formatPreview(){
+      const date = byId("contractDate").value ? new Date(byId("contractDate").value).toLocaleDateString() : "[дата]";
+      const number = byId("contractNumber").value.trim();
+      const customer = byId("customer").value.trim() || "[Заказчик]";
+      const contractor = byId("contractor").value.trim() || "[Подрядчик]";
+      const object = byId("object").value.trim() || "[Объект работ]";
+      const scope = byId("scope").value.trim() || "[Объём работ]";
+      const term = byId("term").value.trim() || "[Срок]";
+      const price = byId("price").value.trim() || "[Стоимость]";
+      const payment = byId("payment").value.trim() || "[Порядок расчётов]";
+      const materials = byId("materials").value.trim();
+      const quality = byId("quality").value.trim() || "[Контроль качества]";
+      const safety = byId("safety").value.trim();
+      const liability = byId("liability").value.trim();
+      const warranty = byId("warranty").value.trim();
+      const termination = byId("termination").value.trim();
+      const appendices = byId("appendices").value.trim();
+
+      let text = `ДОГОВОР ПОДРЯДА ${number ? `№ ${number}` : ""}\n\nг. ____________ ${date}\n\n${customer}, именуемое "Заказчик", и ${contractor}, именуемое "Подрядчик", совместно именуемые "Стороны", заключили настоящий договор о нижеследующем.\n\n`;
+
+      text += `1. Предмет договора\n1.1. Подрядчик обязуется выполнить работы на объекте ${object}, включая ${scope}, а Заказчик — принять и оплатить результат.\n`;
+
+      text += `\n2. Сроки выполнения\n2.1. Работы выполняются в период: ${term}.\n`;
+      if (schedule.length){
+        text += "2.2. Календарный план:\n";
+        schedule.forEach((item, idx)=>{
+          text += ` - ${idx+1}) ${item.milestone || "Этап"} — ${item.deadline || "срок"}.\n`;
+        });
+      }
+
+      text += `\n3. Цена и порядок расчётов\n3.1. Стоимость работ составляет ${price}.\n3.2. Расчёты осуществляются следующим образом: ${payment}.\n`;
+
+      if (materials){
+        text += `\n4. Материалы и техника\n${materials}\n`;
+      }
+
+      text += `\n5. Контроль качества и приёмка\n${quality}\n`;
+
+      if (safety){ text += `\n6. Охрана труда и допуски\n${safety}\n`; }
+      if (liability){ text += `\n7. Ответственность сторон\n${liability}\n`; }
+      if (warranty){ text += `\n8. Гарантии\n${warranty}\n`; }
+      if (termination){ text += `\n9. Расторжение договора\n${termination}\n`; }
+      if (appendices){ text += `\n10. Приложения\n${appendices}\n`; }
+
+      text += "\nНастоящий договор составлен в двух экземплярах, имеющих равную юридическую силу.\n\nЗаказчик _______________________\nПодрядчик ______________________\n";
+
+      preview.textContent = text;
+      return text;
+    }
+
+    byId("subcontractForm").addEventListener("submit", (evt)=>{
+      evt.preventDefault();
+      formatPreview();
+      preview.scrollIntoView({ behavior:"smooth", block:"start" });
+    });
+
+    function copyPreview(){
+      const text = formatPreview();
+      navigator.clipboard?.writeText(text).then(()=> window.alert("Текст договора скопирован."))
+        .catch(()=> window.alert("Не удалось скопировать текст."));
+    }
+
+    function downloadPreview(){
+      const text = formatPreview();
+      const blob = new Blob([text], { type:"text/plain;charset=utf-8" });
+      const link = document.createElement("a");
+      link.href = URL.createObjectURL(blob);
+      link.download = `dogovor-podryada-${byId("contractNumber").value || "draft"}.txt`;
+      link.click();
+      URL.revokeObjectURL(link.href);
+    }
+
+    byId("copyBtn").addEventListener("click", copyPreview);
+    byId("downloadBtn").addEventListener("click", downloadPreview);
+  </script>
+</body>
+</html>

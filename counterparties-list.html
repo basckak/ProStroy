@@ -1,0 +1,248 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>ProStroy — Контрагенты</title>
+  <meta name="color-scheme" content="dark">
+  <link rel="stylesheet" href="assets/styles/base.css">
+  <link rel="stylesheet" href="assets/styles/header.css">
+  <style>
+    :root{
+      --surface:rgba(6,10,18,.58);
+      --border-soft:rgba(255,255,255,.12);
+      --accent:#22c55e;
+    }
+    body{margin:0;min-height:100dvh;background:var(--bg,#0b1220);color:var(--text,#eef3f9);font-family:var(--font-sans,system-ui,-apple-system,"Segoe UI",Roboto,Inter,Arial);overflow-y:scroll}
+    video.bg{position:fixed;inset:0;width:100%;height:100%;object-fit:cover;z-index:-2;filter:brightness(.72)}
+    .overlay{position:fixed;inset:0;z-index:-1;background:linear-gradient(180deg,rgba(5,8,13,.2),rgba(5,8,13,.72))}
+    .wrap{padding:20px}
+    .page{max-width:1200px;margin:0 auto;display:grid;gap:18px}
+    .card{background:var(--surface);border:1px solid var(--border-soft);border-radius:18px;padding:18px 22px;backdrop-filter:blur(10px);box-shadow:0 18px 40px rgba(0,0,0,.42)}
+    .cp-head{display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap}
+    .cp-head > div{flex:1 1 320px}
+    .cp-head .btn{flex-shrink:0}
+    .filters{display:flex;gap:12px;flex-wrap:wrap;align-items:center}
+    .filters input,.filters select{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.18);border-radius:12px;padding:10px 14px;color:inherit;font:inherit;min-width:180px}
+    .filters input{flex:1 1 260px}
+    .btn{display:inline-flex;align-items:center;justify-content:center;padding:10px 16px;border-radius:12px;border:1px solid rgba(255,255,255,.18);background:rgba(255,255,255,.08);color:inherit;font-weight:600;cursor:pointer;transition:filter .2s ease,border-color .2s ease;text-decoration:none}
+    .btn:hover{filter:brightness(1.05);border-color:rgba(255,255,255,.28)}
+    .btn.ghost{background:transparent}
+    .btn.action{background:#22c55e;border:0;color:#0b1b14;box-shadow:0 10px 24px rgba(34,197,94,.18)}
+    table.cp-table{width:100%;border-collapse:collapse;font-size:.95rem}
+    table.cp-table thead{background:rgba(255,255,255,.06)}
+    table.cp-table th,table.cp-table td{padding:12px 14px;border-bottom:1px solid rgba(255,255,255,.08);text-align:left}
+    .badge{display:inline-flex;align-items:center;gap:6px;padding:4px 10px;border-radius:999px;font-size:.78rem;font-weight:600;border:1px solid transparent}
+    .badge.type-legal{background:rgba(34,197,94,.18);color:#86efac;border-color:rgba(34,197,94,.32)}
+    .badge.type-individual{background:rgba(125,211,255,.16);color:#d6e4ff;border-color:rgba(125,211,255,.28)}
+    .actions{display:flex;gap:8px}
+    .btn.sm{padding:6px 10px;font-size:.85rem;border-radius:10px}
+    .empty-state{padding:30px;text-align:center;color:var(--muted)}
+    .error-state{padding:24px;border-radius:14px;background:rgba(255,122,122,.12);border:1px solid rgba(255,122,122,.28);color:#ffc1c1}
+    @media(max-width:900px){
+      .wrap{padding:16px}
+      .cp-head{align-items:flex-start}
+      table.cp-table{font-size:.9rem}
+      table.cp-table thead{display:none}
+      table.cp-table tbody tr{display:grid;border:1px solid rgba(255,255,255,.08);border-radius:14px;padding:12px;margin-bottom:12px}
+      table.cp-table td{border:0;padding:6px 0}
+      table.cp-table td[data-label]:before{content:attr(data-label)": ";color:var(--muted);font-size:.82rem}
+      .actions{justify-content:flex-start}
+    }
+  </style>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js" defer></script>
+  <script src="/js/supabaseClient.js" defer></script>
+  <script src="/header.js" defer></script>
+</head>
+<body>
+  <video class="bg" autoplay muted loop playsinline preload="auto">
+    <source src="https://assets.mixkit.co/videos/30431/30431-720.mp4" type="video/mp4">
+  </video>
+  <div class="overlay"></div>
+
+  <div id="header"></div>
+
+  <div class="wrap">
+    <div class="page">
+      <section class="card cp-head">
+        <div>
+          <h1>Контрагенты</h1>
+          <p class="muted">Единый перечень партнёров компании с фильтрами и быстрым поиском.</p>
+        </div>
+        <a class="btn action" href="./counterparties.html">+ Добавить контрагента</a>
+      </section>
+
+      <section class="card">
+        <form id="filters" class="filters" autocomplete="off">
+          <input id="search" placeholder="Поиск: название, ИНН, менеджер…">
+          <select id="typeFilter">
+            <option value="">Тип: любой</option>
+            <option value="legal">Юр лицо</option>
+            <option value="individual">Физ лицо / ИП</option>
+          </select>
+          <select id="statusFilter">
+            <option value="">Статус: любой</option>
+            <option value="active">Активен</option>
+            <option value="pending">На проверке</option>
+            <option value="blocked">Заблокирован</option>
+          </select>
+          <button class="btn ghost" type="button" id="resetBtn">Сброс</button>
+          <button class="btn" type="submit">Применить</button>
+        </form>
+      </section>
+
+      <section class="card">
+        <div id="list" class="cp-table-wrap">
+          <div class="loader">Загрузка контрагентов…</div>
+        </div>
+      </section>
+    </div>
+  </div>
+  <script type="module">
+    import supabase, { requireSession } from "./supabaseClient.js";
+    const headerReady = window.headerReady || Promise.resolve();
+    
+    await headerReady;
+
+    const listEl = document.getElementById("list");
+    const filtersForm = document.getElementById("filters");
+    const searchInput = document.getElementById("search");
+    const typeSelect = document.getElementById("typeFilter");
+    const statusSelect = document.getElementById("statusFilter");
+    const resetBtn = document.getElementById("resetBtn");
+
+    function escapeHtml(value){
+      return String(value ?? "—").replace(/[&<>"']/g, ch => ({
+        "&": "&amp;",
+        "<": "&lt;",
+        ">": "&gt;",
+        '"': "&quot;",
+        "'": "&#39;"
+      })[ch] || ch);
+    }
+
+    function renderEmpty(message){
+      listEl.innerHTML = `<div class="empty-state">${escapeHtml(message)}</div>`;
+    }
+
+    function formatDate(value){
+      if (!value) return "—";
+      const dt = new Date(value);
+      return Number.isNaN(dt.getTime()) ? "—" : dt.toLocaleString("ru-RU", { day:"2-digit", month:"2-digit", year:"numeric", hour:"2-digit", minute:"2-digit" });
+    }
+
+    function renderList(rows){
+      if (!rows?.length){
+        renderEmpty("Контрагенты не найдены.");
+        return;
+      }
+      const tableRows = rows.map(row => {
+        const typeLabel = row.type === "legal" ? "Юр лицо" : "Физ лицо / ИП";
+        const statusLabel = ({
+          active: "Активен",
+          pending: "На проверке",
+          blocked: "Заблокирован"
+        })[row.status || ""] || (row.status || "—");
+        const roleLabel = ({
+          supplier: "Поставщик",
+          contractor: "Подрядчик",
+          customer: "Заказчик",
+          subcontractor: "Субподрядчик",
+          leasing: "Лизингодатель",
+          other: "Другое"
+        })[row.role || ""] || (row.role || "—");
+        const viewHref = `./counterparty-view.html?id=${encodeURIComponent(row.id)}`;
+        const editHref = `./counterparty-edit.html?id=${encodeURIComponent(row.id)}`;
+        return `
+          <tr>
+            <td data-label="Название">
+              <div class="title">${escapeHtml(row.name)}</div>
+              <div class="muted text-xs">${escapeHtml(typeLabel)}</div>
+            </td>
+            <td data-label="ИНН">${escapeHtml(row.inn || "—")}</td>
+            <td data-label="Роль">${escapeHtml(roleLabel)}</td>
+            <td data-label="Статус">${escapeHtml(statusLabel)}</td>
+            <td data-label="Менеджер">${escapeHtml(row.manager || "—")}</td>
+            <td data-label="Контакты">${escapeHtml(row.contact || "—")}</td>
+            <td data-label="Добавлен">${escapeHtml(formatDate(row.created_at))}</td>
+            <td data-label="Действия" class="actions">
+              <a class="btn ghost sm" href="${viewHref}">Открыть</a>
+              <a class="btn ghost sm" href="${editHref}">Редактировать</a>
+            </td>
+          </tr>
+        `;
+      }).join("");
+      listEl.innerHTML = `
+        <table class="cp-table">
+          <thead>
+            <tr>
+              <th>Название / Тип</th>
+              <th>ИНН</th>
+              <th>Роль</th>
+              <th>Статус</th>
+              <th>Менеджер</th>
+              <th>Контакты</th>
+              <th>Добавлен</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>${tableRows}</tbody>
+        </table>
+      `;
+    }
+
+    async function loadCounterparties(){
+      listEl.innerHTML = '<div class="loader">Загрузка контрагентов…</div>';
+      const search = searchInput.value.trim();
+      const type = typeSelect.value;
+      const status = statusSelect.value;
+
+      let query = supabase
+        .from("counterparties")
+        .select("id, name, type, role, status, manager, inn, contact, created_at")
+        .order("created_at", { ascending: false })
+        .limit(200);
+
+      if (type){
+        query = query.eq("type", type);
+      }
+      if (status){
+        query = query.eq("status", status);
+      }
+      if (search){
+        const like = `%${search.replace(/%/g, "")}%`;
+        query = query.or(`name.ilike.${like},inn.ilike.${like},manager.ilike.${like},contact.ilike.${like}`);
+      }
+
+      const { data, error } = await query;
+      if (error){
+        console.error("Не удалось загрузить контрагентов", error);
+        renderEmpty("Ошибка загрузки списка. Попробуйте позже.");
+        return;
+      }
+      renderList(data);
+    }
+
+    filtersForm.addEventListener("submit", async (evt)=>{
+      evt.preventDefault();
+      await loadCounterparties();
+    });
+
+    resetBtn.addEventListener("click", async ()=>{
+      searchInput.value = "";
+      typeSelect.value = "";
+      statusSelect.value = "";
+      await loadCounterparties();
+    });
+
+    await requireSession();
+    await loadCounterparties();
+
+    supabase.auth.onAuthStateChange((_evt, session)=>{
+      if (!session){
+        location.replace("./index.html");
+      }
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>ProStroy — Письма / уведомления</title>
+  <meta name="color-scheme" content="dark">
+  <link rel="stylesheet" href="../../assets/styles/base.css">
+  <link rel="stylesheet" href="../../assets/styles/header.css">
+  <link rel="stylesheet" href="../document-form.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js" defer></script>
+  <script src="/js/supabaseClient.js" defer></script>
+  <script src="/header.js" defer></script>
+</head>
+<body>
+  <video class="bg" autoplay muted loop playsinline preload="auto">
+    <source src="https://assets.mixkit.co/videos/30431/30431-720.mp4" type="video/mp4">
+  </video>
+  <div class="overlay"></div>
+  <div id="header"></div>
+
+  <div class="wrap">
+    <div class="form-shell">
+      <section class="card">
+        <h1 id="docFormTitle">Создать письмо / уведомление</h1>
+        <p id="docFormHint" class="muted">Приложите текст письма и опишите контрагента или адресата.</p>
+        <form id="docForm" autocomplete="off">
+          <div class="row">
+            <label for="title">Название документа *</label>
+            <input id="title" name="title" required placeholder="Письмо контрагенту …">
+          </div>
+          <div class="row">
+            <label for="number">Номер</label>
+            <input id="number" name="number" placeholder="Исходящий номер">
+          </div>
+          <div class="row">
+            <label for="doc_date">Дата документа</label>
+            <input id="doc_date" name="doc_date" type="date">
+          </div>
+          <div class="row">
+            <label for="notes">Примечания</label>
+            <textarea id="notes" name="notes" placeholder="Адресат, краткое содержание"></textarea>
+          </div>
+          <div class="row">
+            <label for="file">Файл письма *</label>
+            <input id="file" name="file" type="file" accept=".pdf,.doc,.docx">
+            <div id="currentFileLink"></div>
+          </div>
+          <div class="row">
+            <label for="status">Статус</label>
+            <select id="status" name="status">
+              <option value="draft">Черновик</option>
+              <option value="in_review">На согласовании</option>
+            </select>
+          </div>
+          <div class="buttons">
+            <button id="btnSaveDraft" type="button" class="btn ghost">Сохранить черновик</button>
+            <button id="btnSubmit" type="button" class="btn action">Отправить на согласование</button>
+          </div>
+        </form>
+        <div id="formMessage" class="ok" style="display:none"></div>
+      </section>
+    </div>
+  </div>
+
+  <script type="module">
+    import initDocumentForm from "../document-form.js";
+    initDocumentForm({
+      category: "misc",
+      subtype: "letters",
+      title: "Создать письмо / уведомление",
+      hint: "Приложите текст письма и опишите контрагента или адресата."
+    }).catch(console.error);
+  </script>
+</body>
+</html>

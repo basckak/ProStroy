@@ -1,0 +1,151 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>ProStroy — Заявка на оплату ремонтных работ</title>
+  <meta name="color-scheme" content="dark">
+  <link rel="stylesheet" href="assets/styles/base.css">
+  <link rel="stylesheet" href="assets/styles/header.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js" defer></script>
+  <script src="/js/supabaseClient.js" defer></script>
+  <script src="/header.js" defer></script>
+</head>
+<body style="--bg-video-filter: brightness(0.7);">
+  <video class="bg" autoplay muted loop playsinline preload="auto">
+    <source src="https://assets.mixkit.co/videos/30431/30431-720.mp4" type="video/mp4">
+  </video>
+
+  <div id="header"></div>
+
+  <div class="wrap">
+    <div class="page">
+      <section class="card">
+        <h1>Заявка на оплату ремонтных работ</h1>
+        <p>Формализуйте оплату выполненных ремонтных работ: объект, подрядчик, акты и суммы. Шаблон подходит для передачи в финансы и ПТО.</p>
+
+        <form id="repairForm">
+          <div class="grid-2">
+            <div class="row">
+              <label for="requester">Инициатор *</label>
+              <input id="requester" required placeholder="ФИО, должность">
+            </div>
+            <div class="row">
+              <label for="date">Дата *</label>
+              <input id="date" type="date" required>
+            </div>
+          </div>
+
+          <div class="row">
+            <label for="object">Объект ремонта *</label>
+            <textarea id="object" required placeholder="Адрес, участок, код проекта"></textarea>
+          </div>
+
+          <div class="row">
+            <label for="contractor">Подрядчик *</label>
+            <input id="contractor" required placeholder="ООО «Ремстрой», договор №...">
+          </div>
+
+          <div class="row">
+            <label for="works">Содержание работ *</label>
+            <textarea id="works" required placeholder="Кратко опишите выполненные работы"></textarea>
+          </div>
+
+          <div class="row">
+            <label for="documents">Акты и подтверждения *</label>
+            <textarea id="documents" required placeholder="Акты КС-2 №..., КС-3, фотофиксация"></textarea>
+          </div>
+
+          <div class="grid-2">
+            <div class="row">
+              <label for="amount">Сумма к оплате *</label>
+              <input id="amount" required placeholder="1 250 000 руб. с НДС">
+            </div>
+            <div class="row">
+              <label for="budget">Статья бюджета / код затрат *</label>
+              <input id="budget" required placeholder="CAPEX-2024-05">
+            </div>
+          </div>
+
+          <div class="row">
+            <label for="bank">Реквизиты для оплаты *</label>
+            <textarea id="bank" required placeholder="Банк получателя, БИК, счёт"></textarea>
+          </div>
+
+          <div class="row">
+            <label for="comment">Комментарии</label>
+            <textarea id="comment" placeholder="Особые условия, информация о гарантийных удержаниях"></textarea>
+          </div>
+
+          <div class="actions">
+            <button class="btn btn-primary" type="submit">Сформировать текст</button>
+            <button class="btn btn-ghost" type="button" id="copyBtn">Скопировать</button>
+            <button class="btn btn-ghost" type="button" id="downloadBtn">Скачать TXT</button>
+          </div>
+        </form>
+      </section>
+
+      <section class="card">
+        <h2>Предпросмотр</h2>
+        <div id="preview" class="preview">После заполнения полей появится заявка для передачи в финансы.</div>
+      </section>
+    </div>
+  </div>
+
+  <script type="module">
+    const headerReady = window.headerReady || Promise.resolve();
+    
+    await headerReady;
+
+    const byId = (id)=>document.getElementById(id);
+    const preview = byId("preview");
+
+    function formatPreview(){
+      const requester = byId("requester").value.trim() || "[инициатор]";
+      const date = byId("date").value ? new Date(byId("date").value).toLocaleDateString() : "[дата]";
+      const object = byId("object").value.trim() || "[объект]";
+      const contractor = byId("contractor").value.trim() || "[подрядчик]";
+      const works = byId("works").value.trim() || "[описание работ]";
+      const documents = byId("documents").value.trim() || "[акты]";
+      const amount = byId("amount").value.trim() || "[сумма]";
+      const budget = byId("budget").value.trim() || "[статья бюджета]";
+      const bank = byId("bank").value.trim() || "[реквизиты]";
+      const comment = byId("comment").value.trim();
+
+      let text = `Заявка на оплату ремонтных работ\nДата: ${date}\nИнициатор: ${requester}\n\nОбъект: ${object}\nПодрядчик: ${contractor}\n\nОписание выполненных работ:\n${works}\n\nАкты и подтверждающие документы:\n${documents}\n\nСумма к оплате: ${amount}\nСтатья бюджета: ${budget}\nРеквизиты для перечисления:\n${bank}\n`;
+
+      if (comment){ text += `\nДополнительные комментарии:\n${comment}\n`; }
+
+      text += "\nПросьба согласовать и провести оплату указанной суммы.\n\nПодпись инициатора ____________________\n";
+
+      preview.textContent = text;
+      return text;
+    }
+
+    byId("repairForm").addEventListener("submit", (evt)=>{
+      evt.preventDefault();
+      formatPreview();
+      preview.scrollIntoView({ behavior:"smooth", block:"start" });
+    });
+
+    const copyPreview = ()=>{
+      const text = formatPreview();
+      navigator.clipboard?.writeText(text).then(()=> window.alert("Текст заявки скопирован."))
+        .catch(()=> window.alert("Не удалось скопировать текст."));
+    };
+
+    const downloadPreview = ()=>{
+      const text = formatPreview();
+      const blob = new Blob([text], { type:"text/plain;charset=utf-8" });
+      const link = document.createElement("a");
+      link.href = URL.createObjectURL(blob);
+      link.download = `repair-payment-${byId("date").value || "draft"}.txt`;
+      link.click();
+      URL.revokeObjectURL(link.href);
+    };
+
+    byId("copyBtn").addEventListener("click", copyPreview);
+    byId("downloadBtn").addEventListener("click", downloadPreview);
+  </script>
+</body>
+</html>

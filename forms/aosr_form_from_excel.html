@@ -1,0 +1,176 @@
+<form id="aosrForm" class="aosr-form">
+  <div class="form-field">
+    <label for="OBJECT_NAME">Объект капитального строительства</label>
+    <input id="OBJECT_NAME" name="OBJECT_NAME" type="text" required />
+    <p class="hint">Наименование объекта капитального строительства в соответствии с проектной документацией, почтовый или строительный адрес объекта капитального строительства.</p>
+  </div>
+  <div class="form-field">
+    <label for="DEVELOPER_INFO">Застройщик, технический заказчик, лицо, ответственное за эксплуатацию здания, сооружения, или региональный оператор</label>
+    <textarea id="DEVELOPER_INFO" name="DEVELOPER_INFO" rows="2"></textarea>
+    <p class="hint">Наименование, ОГРН, ИНН (для индивидуального предпринимателя — полное и (или) сокращенное наименование), адрес юридического лица и адрес его места нахождения, телефон (факс), адрес (e-mail) саморегулируемой организации в области строительства, реквизиты выданных аттестатов соответствия, копия документов, подтверждающих полномочия, свидетельства и лицензии, разрешения на строительство, решения о введении объекта капитального строительства в эксплуатацию (при наличии) и иные документы, предусмотренные законодательством Российской Федерации.</p>
+  </div>
+  <div class="form-field">
+    <label for="BUILDER_INFO">Лицо, осуществляющее строительство, реконструкцию, капитальный ремонт</label>
+    <textarea id="BUILDER_INFO" name="BUILDER_INFO" rows="2"></textarea>
+    <p class="hint">Наименование, ОГРН, ИНН (для индивидуального предпринимателя — полное и (или) сокращенное наименование), адрес юридического лица и адрес его места нахождения, телефон (факс), адрес (e-mail) саморегулируемой организации в области строительства, реквизиты выданных аттестатов соответствия, копия документов, подтверждающих полномочия представителя, сведения об опыте выполнения аналогичных работ.</p>
+  </div>
+  <div class="form-field">
+    <label for="DESIGNER_INFO">Лицо, осуществившее подготовку проектной документации</label>
+    <textarea id="DESIGNER_INFO" name="DESIGNER_INFO" rows="2"></textarea>
+    <p class="hint">Наименование, ОГРН, ИНН, адрес юридического лица и адрес его места нахождения, телефон (факс), адрес (e-mail) саморегулируемой организации в области архитектурно-строительного проектирования (при наличии, требуется), реквизиты, выданных аттестатов соответствия, копия документов, подтверждающих полномочия, сведения об опыте выполнения аналогичных работ.</p>
+  </div>
+
+  <div class="form-row">
+    <div class="form-field">
+      <label for="AOSR_NUMBER">Номер АОСР</label>
+      <input id="AOSR_NUMBER" name="AOSR_NUMBER" type="text" required />
+    </div>
+    <div class="form-field">
+      <label for="Date">День окончания работ</label>
+      <input id="Date" name="Date" type="text" placeholder="день" />
+    </div>
+    <div class="form-field">
+      <label for="Month">Месяц окончания работ</label>
+      <input id="Month" name="Month" type="text" placeholder="месяц" />
+    </div>
+    <div class="form-field">
+      <label for="year">Год окончания работ</label>
+      <input id="year" name="year" type="text" placeholder="2024" />
+    </div>
+  </div>
+
+  <div class="form-field">
+    <label for="INSPECTOR_INFO">Представитель заказчика</label>
+    <textarea id="INSPECTOR_INFO" name="INSPECTOR_INFO" rows="2" required></textarea>
+    <p class="hint">Должность (при наличии), фамилия, инициалы, реквизиты распорядительного документа, подтверждающего полномочия.</p>
+  </div>
+  <div class="form-field">
+    <label for="CONTRACTOR_REP">Представитель лица, осуществляющего строительство, реконструкцию, капитальный ремонт</label>
+    <textarea id="CONTRACTOR_REP" name="CONTRACTOR_REP" rows="2" required></textarea>
+    <p class="hint">Должность (при наличии), фамилия, инициалы, реквизиты распорядительного документа, подтверждающего полномочия.</p>
+  </div>
+  <div class="form-field">
+    <label for="CONTRACTOR_STROYCONTROL">Представитель лица, осуществляющего строительный контроль</label>
+    <textarea id="CONTRACTOR_STROYCONTROL" name="CONTRACTOR_STROYCONTROL" rows="2"></textarea>
+    <p class="hint">Должность (при наличии), фамилия, инициалы, реквизиты распорядительного документа, подтверждающего полномочия.</p>
+  </div>
+  <div class="form-field">
+    <label for="CONTRACTOR_ID">Представитель лица, осуществившего подготовку проектной документации</label>
+    <textarea id="CONTRACTOR_ID" name="CONTRACTOR_ID" rows="2"></textarea>
+    <p class="hint">Должность (при наличии), фамилия, инициалы, реквизиты распорядительного документа, подтверждающего полномочия.</p>
+  </div>
+  <div class="form-field">
+    <label for="PREDSTAVITEL">Представитель лица, выполниевшего работы, подлежащие освидетельствованию</label>
+    <textarea id="PREDSTAVITEL" name="PREDSTAVITEL" rows="2"></textarea>
+    <p class="hint">Должность (при наличии), фамилия, инициалы, реквизиты распорядительного документа, подтверждающего полномочия.</p>
+  </div>
+  <div class="form-field">
+    <label for="PODRYDCHIK">произвели осмотр работ, выполненных</label>
+    <textarea id="PODRYDCHIK" name="PODRYDCHIK" rows="2"></textarea>
+    <p class="hint">(полное и (или) сокращённое наименование или фамилия, имя, отчество (последнее - при наличии) лица, выполнившего работы, подлежащие освидетельствованию).</p>
+  </div>
+
+  <div class="form-field">
+    <label for="NAME_AOSR">1. К освидетельствованию предъявлены следующие работы:</label>
+    <textarea id="NAME_AOSR" name="NAME_AOSR" rows="3" required></textarea>
+    <p class="hint">(наименование скрытых работ)</p>
+  </div>
+  <div class="form-field">
+    <label for="OCNOVANIE_AOSR">2. Работы выполнены по проектной документации:</label>
+    <textarea id="OCNOVANIE_AOSR" name="OCNOVANIE_AOSR" rows="3"></textarea>
+    <p class="hint">(номер, другие реквизиты чертежа, наименование проектной и (или) рабочей документации, сведения о лицах, осуществляющих подготовку раздела проектной и (или) рабочей документации)</p>
+  </div>
+  <div class="form-field">
+    <label for="MATERIALS">3. При выполнении работ применены:</label>
+    <textarea id="MATERIALS" name="MATERIALS" rows="3"></textarea>
+    <p class="hint">(наименования строительных материалов (изделий), реквизиты сертификатов и (или) других документов, подтверждающих их качество и безопасность, в случае если необходимо указывать более 5 документов, указывается ссылка на их реестр, который является неотъемлемой частью акта)</p>
+  </div>
+  <div class="form-field">
+    <label for="ISPOLNITELNYA_SCHEMA">4. Предъявлены документы, подтверждающие соответствие работ предъявляемым к ним требованиям:</label>
+    <textarea id="ISPOLNITELNYA_SCHEMA" name="ISPOLNITELNYA_SCHEMA" rows="3"></textarea>
+    <p class="hint">(исполнительные схемы и чертежи, результаты экспертиз, обследований, лабораторных и иных испытаний выполненных работ, проведенных в процессе строительного контроля)</p>
+  </div>
+
+  <div class="form-row">
+    <div class="form-field">
+      <label for="ND">День начала работ</label>
+      <input id="ND" name="ND" type="text" placeholder="день" />
+    </div>
+    <div class="form-field">
+      <label for="NM">Месяц начала работ</label>
+      <input id="NM" name="NM" type="text" placeholder="месяц" />
+    </div>
+    <div class="form-field">
+      <label for="NG">Год начала работ</label>
+      <input id="NG" name="NG" type="text" placeholder="год" />
+    </div>
+  </div>
+  <div class="form-row">
+    <div class="form-field">
+      <label for="KD">День окончания работ</label>
+      <input id="KD" name="KD" type="text" placeholder="день" />
+    </div>
+    <div class="form-field">
+      <label for="KM">Месяц окончания работ</label>
+      <input id="KM" name="KM" type="text" placeholder="месяц" />
+    </div>
+    <div class="form-field">
+      <label for="KG">Год окончания работ</label>
+      <input id="KG" name="KG" type="text" placeholder="год" />
+    </div>
+  </div>
+
+  <div class="form-field">
+    <label for="NORMS">6. Работы выполнены в соответствии с:</label>
+    <textarea id="NORMS" name="NORMS" rows="3"></textarea>
+    <p class="hint">(наименование и структурные единицы технических регламентов, иных нормативных правовых актов, разделы проектной и (или) рабочей документации)</p>
+  </div>
+  <div class="form-field">
+    <label for="NEXT_WORKS">7. Разрешается производство последующих работ:</label>
+    <textarea id="NEXT_WORKS" name="NEXT_WORKS" rows="3"></textarea>
+    <p class="hint">(наименование работ, строительных конструкций, участков сетей инженерно-технического обеспечения)</p>
+  </div>
+  <div class="form-field">
+    <label for="EXTRA_INFO">Дополнительные сведения:</label>
+    <textarea id="EXTRA_INFO" name="EXTRA_INFO" rows="3"></textarea>
+  </div>
+  <div class="form-field">
+    <label for="N">Акт составлен в скольких экземплярах (в случае заполнения акта на бумажном носителе)</label>
+    <input id="N" name="N" type="text" />
+  </div>
+  <div class="form-field">
+    <label for="ATTACHMENTS">Приложения:</label>
+    <textarea id="ATTACHMENTS" name="ATTACHMENTS" rows="3"></textarea>
+    <p class="hint">(исполнительные схемы и чертежи, результаты экспертиз, обследований, лабораторных и иных испытаний)</p>
+  </div>
+
+  <div class="form-row">
+    <div class="form-field">
+      <label for="FIO_INSPECTOR">Представитель застройщика, технического заказчика, лица, ответственного за эксплуатацию здания, сооружения, или регионального оператора по вопросам строительного контроля</label>
+      <input id="FIO_INSPECTOR" name="FIO_INSPECTOR" type="text" />
+      <p class="hint">(фамилия, инициалы)</p>
+    </div>
+    <div class="form-field">
+      <label for="FIO_CONSRUCTOR">Представитель лица, осуществляющего строительство, реконструкцию, капитальный ремонт</label>
+      <input id="FIO_CONSRUCTOR" name="FIO_CONSRUCTOR" type="text" />
+      <p class="hint">(фамилия, инициалы)</p>
+    </div>
+  </div>
+  <div class="form-row">
+    <div class="form-field">
+      <label for="FIO_STROYCONTROL">Представитель лица, осуществляющего строительный контроль</label>
+      <input id="FIO_STROYCONTROL" name="FIO_STROYCONTROL" type="text" />
+      <p class="hint">(фамилия, инициалы)</p>
+    </div>
+    <div class="form-field">
+      <label for="FIO_ID">Представитель лица, осуществляющего подготовку проектной документации (в случае привлечения застройщиком лица, осуществляющего подготовку проектной документации, для проверки соответствия выполненных работ проектной документации согласно части 2 статьи 53 Градостроительного кодекса Российской Федерации)</label>
+      <input id="FIO_ID" name="FIO_ID" type="text" />
+      <p class="hint">(фамилия, инициалы)</p>
+    </div>
+  </div>
+  <div class="form-field">
+    <label for="FIO_WORKER">Представитель лица, выполнившего работы, подлежащие освидетельствованию (в случае выполнения работ по договорам о строительстве, реконструкции, капитальном ремонте объектов капитального строительства, заключенным с иными лицами)</label>
+    <input id="FIO_WORKER" name="FIO_WORKER" type="text" />
+    <p class="hint">(фамилия, инициалы)</p>
+  </div>
+</form>

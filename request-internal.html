@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>ProStroy — Внутренний документ</title>
+  <meta name="color-scheme" content="dark">
+  <link rel="stylesheet" href="assets/styles/base.css">
+  <link rel="stylesheet" href="assets/styles/header.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js" defer></script>
+  <script src="/js/supabaseClient.js" defer></script>
+  <script src="/header.js" defer></script>
+</head>
+<body style="--bg-video-filter: brightness(0.7);">
+  <video class="bg" autoplay muted loop playsinline preload="auto">
+    <source src="https://assets.mixkit.co/videos/30431/30431-720.mp4" type="video/mp4">
+  </video>
+  <div id="header"></div>
+  <div class="wrap">
+    <div class="page">
+      <section class="card">
+        <h1>Внутренний документ</h1>
+        <p>Шаблон для локальных инструкций, уведомлений и распоряжений, которые распространяются внутри компании.</p>
+        <form id="internalForm">
+          <div class="row">
+            <label for="title">Название *</label>
+            <input id="title" required placeholder="Уведомление о переносе совещания">
+          </div>
+          <div class="row">
+            <label for="author">Автор *</label>
+            <input id="author" required placeholder="ФИО, должность">
+          </div>
+          <div class="row">
+            <label for="distribution">Кому направить *</label>
+            <textarea id="distribution" required placeholder="Список подразделений или групп"></textarea>
+          </div>
+          <div class="row">
+            <label for="message">Основной текст *</label>
+            <textarea id="message" required placeholder="Фактическая информация, действия сотрудников"></textarea>
+          </div>
+          <div class="row">
+            <label for="actions">Контроль / ответственные</label>
+            <textarea id="actions" placeholder="Кто контролирует исполнение, сроки"></textarea>
+          </div>
+          <div class="row">
+            <label for="attachments">Приложения</label>
+            <textarea id="attachments" placeholder="Файлы, ссылки, формы"></textarea>
+          </div>
+          <div class="actions">
+            <button class="btn btn-primary" type="submit">Сформировать текст</button>
+            <button class="btn btn-ghost" type="button" id="copyBtn">Скопировать</button>
+            <button class="btn btn-ghost" type="button" id="downloadBtn">Скачать TXT</button>
+          </div>
+        </form>
+      </section>
+      <section class="card">
+        <h2>Предпросмотр</h2>
+        <div id="preview" class="preview">Заполните форму, чтобы получить текст внутреннего уведомления.</div>
+      </section>
+    </div>
+  </div>
+  <script type="module">
+    const headerReady = window.headerReady || Promise.resolve();
+        await headerReady;
+    const byId = (id)=>document.getElementById(id);
+    const preview = byId("preview");
+    function formatPreview(){
+      const title = byId("title").value.trim() || "[Название]";
+      const author = byId("author").value.trim() || "[Автор]";
+      const distribution = byId("distribution").value.trim() || "[Адресаты]";
+      const message = byId("message").value.trim() || "[Текст документа]";
+      const actions = byId("actions").value.trim();
+      const attachments = byId("attachments").value.trim();
+      let text = `${title}\nАвтор: ${author}\n\nАдресаты:\n${distribution}\n\nТекст документа:\n${message}\n`;
+      if (actions){ text += `\nКонтроль и ответственные:\n${actions}\n`; }
+      if (attachments){ text += `\nПриложения:\n${attachments}\n`; }
+      text += "\nСогласовано ______________________\n";
+      preview.textContent = text;
+      return text;
+    }
+    byId("internalForm").addEventListener("submit", (evt)=>{evt.preventDefault();formatPreview();preview.scrollIntoView({behavior:"smooth",block:"start"});});
+    const copyPreview = ()=>{const text=formatPreview();navigator.clipboard?.writeText(text).then(()=>window.alert("Текст скопирован.")) .catch(()=>window.alert("Не удалось скопировать текст."));};
+    const downloadPreview = ()=>{const text=formatPreview();const blob=new Blob([text],{type:"text/plain;charset=utf-8"});const link=document.createElement("a");link.href=URL.createObjectURL(blob);link.download=`internal-${byId("title").value || "draft"}.txt`;link.click();URL.revokeObjectURL(link.href);};
+    byId("copyBtn").addEventListener("click", copyPreview);
+    byId("downloadBtn").addEventListener("click", downloadPreview);
+  </script>
+</body>
+</html>

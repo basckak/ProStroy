@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>ProStroy — Заявка на заключение договора</title>
+  <meta name="color-scheme" content="dark">
+  <link rel="stylesheet" href="assets/styles/base.css">
+  <link rel="stylesheet" href="assets/styles/header.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js" defer></script>
+  <script src="/js/supabaseClient.js" defer></script>
+  <script src="/header.js" defer></script>
+</head>
+<body style="--bg-video-filter: brightness(0.7);">
+  <video class="bg" autoplay muted loop playsinline preload="auto">
+    <source src="https://assets.mixkit.co/videos/30431/30431-720.mp4" type="video/mp4">
+  </video>
+  <div id="header"></div>
+  <div class="wrap">
+    <div class="page">
+      <section class="card">
+        <h1>Заявка на заключение договора / доп. соглашения</h1>
+        <p>Подготовьте сведения для юристов и согласующих: существующий договор, цель изменений, ключевые условия.</p>
+        <form id="agreementForm">
+          <div class="grid-2">
+            <div class="row">
+              <label for="requester">Инициатор *</label>
+              <input id="requester" required placeholder="ФИО, подразделение">
+            </div>
+            <div class="row">
+              <label for="date">Дата *</label>
+              <input id="date" type="date" required>
+            </div>
+          </div>
+          <div class="row">
+            <label for="baseContract">Исходный договор</label>
+            <textarea id="baseContract" placeholder="Номер, дата, контрагент, основные условия"></textarea>
+          </div>
+          <div class="row">
+            <label for="goal">Цель заключения / изменений *</label>
+            <textarea id="goal" required placeholder="Заключение нового договора на поставку/доп. соглашение на увеличение объёма"></textarea>
+          </div>
+          <div class="row">
+            <label for="conditions">Ключевые условия *</label>
+            <textarea id="conditions" required placeholder="Описание предмета, стоимость, сроки, особые условия"></textarea>
+          </div>
+          <div class="row">
+            <label for="budget">Бюджет / источник финансирования</label>
+            <input id="budget" placeholder="CAPEX-2024-07, лимит 12 млн руб.">
+          </div>
+          <div class="row">
+            <label for="deadline">Требуемый срок подачи контрагенту</label>
+            <input id="deadline" type="date">
+          </div>
+          <div class="row">
+            <label for="approvers">Предлагаемые согласующие</label>
+            <textarea id="approvers" placeholder="Юридический отдел, финансы, служба безопасности"></textarea>
+          </div>
+          <div class="row">
+            <label for="attachments">Приложения</label>
+            <textarea id="attachments" placeholder="Проект договора, переписка, расчёты"></textarea>
+          </div>
+          <div class="actions">
+            <button class="btn btn-primary" type="submit">Сформировать текст</button>
+            <button class="btn btn-ghost" type="button" id="copyBtn">Скопировать</button>
+            <button class="btn btn-ghost" type="button" id="downloadBtn">Скачать TXT</button>
+          </div>
+        </form>
+      </section>
+      <section class="card">
+        <h2>Предпросмотр</h2>
+        <div id="preview" class="preview">После заполнения полей появится заявка для отправки юристам.</div>
+      </section>
+    </div>
+  </div>
+  <script type="module">
+    const headerReady = window.headerReady || Promise.resolve();
+        await headerReady;
+    const byId = (id)=>document.getElementById(id);
+    const preview = byId("preview");
+    function formatPreview(){
+      const requester = byId("requester").value.trim() || "[инициатор]";
+      const date = byId("date").value ? new Date(byId("date").value).toLocaleDateString() : "[дата]";
+      const base = byId("baseContract").value.trim();
+      const goal = byId("goal").value.trim() || "[цель]";
+      const conditions = byId("conditions").value.trim() || "[условия]";
+      const budget = byId("budget").value.trim();
+      const deadline = byId("deadline").value ? new Date(byId("deadline").value).toLocaleDateString() : "";
+      const approvers = byId("approvers").value.trim();
+      const attachments = byId("attachments").value.trim();
+      let text = `Заявка на подготовку договора\nДата: ${date}\nИнициатор: ${requester}\n`;
+      if (base){ text += `Исходный договор: ${base}\n`; }
+      text += `\nЦель: ${goal}\n\nКлючевые условия:\n${conditions}\n`;
+      if (budget){ text += `\nБюджет / источник финансирования:\n${budget}\n`; }
+      if (deadline){ text += `\nТребуемый срок подготовки: ${deadline}\n`; }
+      if (approvers){ text += `\nПредлагаемые согласующие:\n${approvers}\n`; }
+      if (attachments){ text += `\nПриложения:\n${attachments}\n`; }
+      text += "\nПрошу включить заявку в план согласования и подготовить проект документа.\n\nПодпись инициатора ____________________\n";
+      preview.textContent = text;
+      return text;
+    }
+    byId("agreementForm").addEventListener("submit", (evt)=>{evt.preventDefault();formatPreview();preview.scrollIntoView({behavior:"smooth",block:"start"});});
+    const copyPreview = ()=>{const text=formatPreview();navigator.clipboard?.writeText(text).then(()=>window.alert("Текст заявки скопирован.")) .catch(()=>window.alert("Не удалось скопировать текст."));};
+    const downloadPreview = ()=>{const text=formatPreview();const blob=new Blob([text],{type:"text/plain;charset=utf-8"});const link=document.createElement("a");link.href=URL.createObjectURL(blob);link.download=`agreement-request-${byId("date").value || "draft"}.txt`;link.click();URL.revokeObjectURL(link.href);};
+    byId("copyBtn").addEventListener("click", copyPreview);
+    byId("downloadBtn").addEventListener("click", downloadPreview);
+  </script>
+</body>
+</html>

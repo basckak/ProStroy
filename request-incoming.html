@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>ProStroy — Регистрация входящего документа</title>
+  <meta name="color-scheme" content="dark">
+  <link rel="stylesheet" href="assets/styles/base.css">
+  <link rel="stylesheet" href="assets/styles/header.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js" defer></script>
+  <script src="/js/supabaseClient.js" defer></script>
+  <script src="/header.js" defer></script>
+</head>
+<body style="--bg-video-filter: brightness(0.7);">
+  <video class="bg" autoplay muted loop playsinline preload="auto">
+    <source src="https://assets.mixkit.co/videos/30431/30431-720.mp4" type="video/mp4">
+  </video>
+  <div id="header"></div>
+  <div class="wrap">
+    <div class="page">
+      <section class="card">
+        <h1>Входящий документ</h1>
+        <p>Зафиксируйте регистрацию входящей корреспонденции и назначьте ответственного за подготовку ответа.</p>
+        <form id="incomingForm">
+          <div class="row">
+            <label for="regNumber">Регистрационный номер *</label>
+            <input id="regNumber" required placeholder="ВХ-2024/123">
+          </div>
+          <div class="grid-2">
+            <div class="row">
+              <label for="receivedDate">Дата получения *</label>
+              <input id="receivedDate" type="date" required>
+            </div>
+            <div class="row">
+              <label for="channel">Канал получения</label>
+              <input id="channel" placeholder="Почта, курьер, электронная почта">
+            </div>
+          </div>
+          <div class="row">
+            <label for="sender">Отправитель *</label>
+            <textarea id="sender" required placeholder="Наименование организации, контактное лицо"></textarea>
+          </div>
+          <div class="row">
+            <label for="summary">Краткое содержание *</label>
+            <textarea id="summary" required placeholder="О чём документ, что требует внимания"></textarea>
+          </div>
+          <div class="grid-2">
+            <div class="row">
+              <label for="owner">Ответственный за обработку *</label>
+              <input id="owner" required placeholder="ФИО, подразделение">
+            </div>
+            <div class="row">
+              <label for="dueDate">Срок ответа</label>
+              <input id="dueDate" type="date">
+            </div>
+          </div>
+          <div class="row">
+            <label for="attachments">Приложения</label>
+            <textarea id="attachments" placeholder="Сопроводительные документы"></textarea>
+          </div>
+          <div class="row">
+            <label for="notes">Заметки</label>
+            <textarea id="notes" placeholder="Дополнительные комментарии"></textarea>
+          </div>
+          <div class="actions">
+            <button class="btn btn-primary" type="submit">Сформировать текст</button>
+            <button class="btn btn-ghost" type="button" id="copyBtn">Скопировать</button>
+            <button class="btn btn-ghost" type="button" id="downloadBtn">Скачать TXT</button>
+          </div>
+        </form>
+      </section>
+      <section class="card">
+        <h2>Предпросмотр</h2>
+        <div id="preview" class="preview">Заполните форму, чтобы сформировать карточку входящего документа.</div>
+      </section>
+    </div>
+  </div>
+  <script type="module">
+    const headerReady = window.headerReady || Promise.resolve();
+        await headerReady;
+    const byId = (id)=>document.getElementById(id);
+    const preview = byId("preview");
+    function formatPreview(){
+      const regNumber = byId("regNumber").value.trim() || "[номер]";
+      const receivedDate = byId("receivedDate").value ? new Date(byId("receivedDate").value).toLocaleDateString() : "[дата]";
+      const channel = byId("channel").value.trim();
+      const sender = byId("sender").value.trim() || "[отправитель]";
+      const summary = byId("summary").value.trim() || "[содержание]";
+      const owner = byId("owner").value.trim() || "[ответственный]";
+      const due = byId("dueDate").value ? new Date(byId("dueDate").value).toLocaleDateString() : "";
+      const attachments = byId("attachments").value.trim();
+      const notes = byId("notes").value.trim();
+      let text = `Карточка входящего документа\nНомер: ${regNumber}\nДата получения: ${receivedDate}\n`;
+      if (channel){ text += `Канал: ${channel}\n`; }
+      text += `Отправитель: ${sender}\n\nСодержание:\n${summary}\n\nОтветственный: ${owner}`;
+      if (due){ text += `\nСрок ответа: ${due}`; }
+      if (attachments){ text += `\nПриложения:\n${attachments}`; }
+      if (notes){ text += `\nЗаметки:\n${notes}`; }
+      text += "\n\nПодпись регистратора ____________________\n";
+      preview.textContent = text;
+      return text;
+    }
+    byId("incomingForm").addEventListener("submit", (evt)=>{evt.preventDefault();formatPreview();preview.scrollIntoView({behavior:"smooth",block:"start"});});
+    const copyPreview = ()=>{const text = formatPreview();navigator.clipboard?.writeText(text).then(()=>window.alert("Текст скопирован.")) .catch(()=>window.alert("Не удалось скопировать текст."));};
+    const downloadPreview = ()=>{const text = formatPreview();const blob = new Blob([text],{type:"text/plain;charset=utf-8"});const link=document.createElement("a");link.href=URL.createObjectURL(blob);link.download=`incoming-${byId("regNumber").value || "draft"}.txt`;link.click();URL.revokeObjectURL(link.href);};
+    byId("copyBtn").addEventListener("click", copyPreview);
+    byId("downloadBtn").addEventListener("click", downloadPreview);
+  </script>
+</body>
+</html>
